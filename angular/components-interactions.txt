@@ -1,0 +1,41 @@
+1. ANY - ANY ***************************************
+1). service (create, add to app.module.ts providers)
+
+        import { Injectable } from '@angular/core';
+        import { BehaviorSubject } from 'rxjs';
+
+        @Injectable({
+            providedIn: 'root'
+            })
+        export class AnyToAnyService {
+            registerMode = new BehaviorSubject<boolean>(false);     //false is def velue
+            regMode = this.registerMode.asObservable();
+            constructor() { }
+
+            setRegisterMode(val){
+                this.registerMode.next(val);                           //reset def value, from calling comp
+            }
+        }
+2). calling component:
+
+            (imports here)
+
+            @Component({
+                selector: 'app-register',
+                templateUrl: './register.component.html',
+                styleUrls: ['./register.component.css']
+                })
+            export class RegisterComponent implements OnInit {
+            regMode = false;
+
+            constructor(private anyToAnyService: AnyToAnyService) { }
+
+            ngOnInit() {
+                this.anyToAnyService.registerMode.subscribe(mode => this.regMode = mode);   //reads on load service's value
+            }
+
+            cancelRegisterMode(){
+                this.anyToAnyService.setRegisterMode(false);                    //resets service's def value
+            }
+
+            }

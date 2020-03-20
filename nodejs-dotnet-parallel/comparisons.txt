@@ -1,0 +1,36 @@
+1. status code
+    ASP.NET, return from Controller:  public async Task<IActionResult> Login(UserForLoginDto userForLoginDto){}      
+        BadRequest("Username already exists")
+        Unauthorized()
+        NoContent()
+        CreatedAtRoute("GetMessage", new {userId, id = message.Id}, messageToReturn);
+        NotFound()
+        Ok(photo)
+
+    Node.js res.status(404).json({})   // .json('')
+
+2. datatypes (ASP.NET)
+    int, string, byte[], DateTime, ICollection<Photo>
+
+    (ex. in model):
+         public class User
+    {
+        public int Id { get; set; }
+        public string Username { get; set; }
+        public byte[] PasswordHash { get; set; }
+        public byte[] PasswordSalt { get; set; }       
+        public DateTime DateOfBirth { get; set; }
+       
+        public virtual ICollection<Photo> Photos { get; set; }
+       
+    }
+    (returning type of functions):
+        if status returned, see #1
+        if data returned (ex. in Repository):
+            public async Task<bool> UserExists(string username){}  -> return true;
+            public async Task<User> Register(User user, string password)  -> return user;
+            public async Task<IEnumerable<User>> GetUsers(UserParams userParams)  -> return users;
+
+
+
+

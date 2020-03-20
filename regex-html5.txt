@@ -1,0 +1,22 @@
+ re = /^\w+$/;
+    if(!re.test(value)) {}  // letters, numbers, underscores
+
+(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W)
+
+(?=.*[a-z])        // at least one lower case letter exists
+(?=.*[A-Z])        // at least one upper case letter exists
+(?=.*\d)           // at least one digit exists
+(?=.*\W])        // at least one non-word character exists
+
+(?=.*@\d+)       //anywhere @ followed by at least one digit
+
+/\d{3,5}/    3-5 digits
+/\d{3,}/    3 or more digits   
+
+/\d{1,}/    1 or more  ->  /\d+/ 
+/\d{0,}/    1 or more  ->  /\d*/ 
+
+***************************************************************************************************************
+
+const re = new RegExp('(?=.*[a-z])');
+re.test(value);

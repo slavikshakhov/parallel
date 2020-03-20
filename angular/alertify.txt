@@ -1,0 +1,43 @@
+1. (npm) alertifyjs
+
+2. (style.css) @import '../node_modules/alertifyjs/build/css/alertify.min.css';
+
+3. >>ng g s alertify
+
+      import * as alertify from 'alertifyjs';
+
+      @Injectable({
+        providedIn: 'root'
+      })
+      export class AlertifyService {
+        constructor() {}
+
+        confirm(message: string, okCallback: () => any) {
+          alertify.confirm(message, (e: any) => {
+            if (e) {
+              okCallback();
+            } else {
+            }
+          });
+        }
+        success(message: string) {
+          alertify.success(message);
+        }
+        error(message: string) {
+          alertify.error(message);
+        }
+        warning(message: string) {
+          alertify.warning(message);
+        }
+        message(message: string) {
+          alertify.message(message);
+        }
+      }
+4. create (src/typings.d.ts) declare module 'alertifyjs';  (for compiler)
+
+5. (in comp):
+      import { AuthService } from '../_services/auth.service';
+
+      (in comp's method body):
+      this.alertify.success('Logged in successfully');
+      this.alertify.error(error);

@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="navbar-3-breakpoints-login.css">
+    <title>Document</title>
+</head>
+<body>
+    <nav class="navbar">
+
+        <div class="burger-container">
+
+            <input type="checkbox" id="burger-check" class="burger-check">
+            <label class="burger" for="burger-check">
+                <div class="burger-line"></div>
+                <div class="burger-line"></div>
+                <div class="burger-line"></div>
+            </label>
+            <div class="side-menu" id="sideMenu">
+                <a href="" class="close-side-menu">&times;</a>
+                <a href="" class="side-menu-item main-link">LanguageTandem</a>
+                <a href="" class="side-menu-item hover-item">about</a>
+                <a href="" class="side-menu-item hover-item">contact</a>
+
+                <div *ngIf="!loggedIn" class="form-container">
+                    <p class="heading">Login</p>
+                    <div class="input-group">
+                        <input type="text" id="name" class="input" required autocomplete="off">
+                        <label for="name" class="label">Name</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="email" id="name" class="input" required autocomplete="off">
+                        <label for="name" class="label">email</label>
+                    </div>
+                    <div class="line"></div>
+                    <button type="submit" class="btn-raise btn-design">Login</button>
+                </div>
+
+            </div>
+
+
+        </div>
+
+        <div class="top-menu">
+            <div class="links">
+                <a href="" class="top-menu-item main-link">LanguageTandem</a>
+                <a href="" class="top-menu-item">about</a>
+                <a href="" class="top-menu-item">contact</a>
+            </div>
+            <div action="" class="login-form">
+                <input type="text" placeholder="Name" class="inline-input">
+                <input type="text" placeholder="password" class="inline-input">
+                <button  type="submit" href="" class="btn-raise btn-design">Login</button>
+            </div>
+        </div>
+
+
+
+    </nav>
+
+
+</body>
+</html>
+
+
+
+

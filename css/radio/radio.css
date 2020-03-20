@@ -1,0 +1,54 @@
+@import "../utilities/variables.css";
+@import "../utilities/global.css";
+@import "../utilities/component-templates.css";
+.holder {
+    padding: 5rem;
+    background-color: var(--gray-700);
+}
+
+.radio-label {
+    display: inline-flex;
+    font-size: 1.125rem;
+    color: var(--white);
+    font-weight: 600;
+    text-transform: capitalize;
+    margin-right: 0.75rem;
+    padding-left: 2rem;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.radio-label input[type="radio"] {
+    margin-right: 1rem;
+    display: none;
+}
+
+.input-copy {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 2px solid var(--blue-400);
+    pointer-events: none;
+}
+
+.input-copy:after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    height: 8px;
+    width: 8px;
+    border-radius: 50%;
+    background-color: #63b3ed;
+    opacity: 0;
+    transition: all .5s ease;
+}
+
+.radio-label input[type="radio"]:checked~.input-copy:after {
+    opacity: 1;
+}

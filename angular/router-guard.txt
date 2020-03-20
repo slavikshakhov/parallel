@@ -1,0 +1,31 @@
+1. >>ng g guard auth
+2. (app.module.ts, providers)
+3. (in guard):
+        import { Injectable } from '@angular/core';
+        import { CanActivate, Router } from '@angular/router';
+        import { AuthService } from '../_services/auth.service';
+        import { AlertifyService } from '../_services/alertify.service';
+
+        @Injectable({
+        providedIn: 'root'
+        })
+        export class AuthGuard implements CanActivate {
+
+            constructor(private authService: AuthService) {}
+
+            canActivate(): boolean {
+                if (this.authService.loggedIn()) {
+                return true;
+                }
+                //message - must be logged in!
+                //redirect to home (for not logged in users)
+                return false;
+            }
+        }
+4. (in authService):
+         (in service's field): jwtHelper = new JwtHelperService();
+        loggedIn() {
+            const token = localStorage.getItem('token');  //was saved in localStorage when logged in
+            return !this.jwtHelper.isTokenExpired(token);
+        }
+        //++++jwtHelper, see https://www.npmjs.com/package/@auth0/angular-jwt    usage:standalone

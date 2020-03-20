@@ -1,0 +1,16 @@
+1. create (user.ts):
+
+        import { Photo } from './photo';
+
+        export interface User {
+        id: number;
+        username: string;
+        created: Date;
+        lastActive: any;
+        interests?: string;
+        photos?: Photo[];
+        }
+2. using model in comp's field to collect data from form:
+    user: User;  //reactive form
+    model: any = {};  //template form
+3. using model in comp-service as arg (user: User) vs (model: any)

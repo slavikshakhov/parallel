@@ -1,0 +1,76 @@
+JAVASCRIPT CODE SNIPPETS (VS CODE)
+
+
+import (front)
+
+imp→	import fs from 'fs';
+imn→	import 'animate.css'
+imd→	import {rename} from 'fs';
+
+
+require, export (node.js)
+
+rqr→	require('');
+mde→	module.exports = {};
+enf→	export const log = (parameter) => { console.log(parameter);};
+edf→	export default (parameter) => { console.log(parameter);};
+ecl→	export default class Calculator { };
+
+Class helpers
+
+con→	constructor() {}
+met→	add() {}          //creates a method inside a class
+
+Methods
+
+fre→	array.forEach(el => {})
+fof→	for(const el of object) {}
+fin→	for(const el in object) {}
+anfn→	(params) => {}               //creates an anonymous function
+nfn→	const fun = (params) => {}
+dob→	const {rename} = fs        //destructing obj
+dar→	const [first, second] = [1,2]       //destructing arr
+
+
+sto→	set timeout helper method setTimeout(() => {});
+
+prom→	return new Promise((resolve, reject) => {});
+thenc→	 .then((res) => {).catch((err) => {});              //adds then and catch declaration to a promise
+
+
+Console methods
+
+clg→	console log console.log(object)
+clo→	console log object with name console.log('object :', object);
+
+**************************************************************************************************************
+SIMPLE REACT SNIPPETS (VS CODE)
+
+
+
+imr	    Import React
+imrc	Import React / Component
+
+
+cc	    Class Component
+ccc	    Class Component With Constructor
+sfc	    Stateless Function Component
+
+
+cdm	    componentDidMount
+cwm	    componentWillMount
+cwrp	componentWillReceiveProps
+scu	    shouldComponentUpdate
+cwu	    componentWillUpdate
+cdu	    componentDidUpdate
+cwu	    componentWillUpdate
+
+
+ss  	setState
+ssf 	Functional setState    // this.setState(prevState => {  return {x : prevState.x };  });
+ren	    render
+
+hoc	    Higher Order Component
+
+******************************************************************************************
+

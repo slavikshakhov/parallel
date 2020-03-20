@@ -1,0 +1,50 @@
+****************************************************************************************************************
+******************************  GENERAL STEPS ******************************************************************
+
+1. create ASP.NET server with routing (see controller-server.txt)
+2. connect to MySql (see databases/mysql.txt; nodejs/express-MySql.js)
+3. follow steps in nodejs/algorithms
+
+
+
+
+
+********************************************************************************************************************
+************************************  REGISTER  **********************************************************************
+see data-from-front.txt
+    data-to-db.txt
+
+1. user with this name (in lowercase) exists in MySql? 
+      if yes -> return BadRequest
+      if not -> hash password and salt;
+                attach passwordHash and passwordSalt to user and save user in db
+                return status 201 to front
+!!! Controller -> Repository -> db
+    Controller: get data from front (dto, validate in dto)
+                all mappings (dto -> User,  user -> dto)
+    Repository: interactions with db
+
+
+
+*********************************************************************************************************************
+*****************************************  LOGIN  ********************************************************************
+
+
+1. user with this name (in lowercase) exists in MySql?
+      if yes -> return Unautherized to front
+      if not -> verify password from front with password hash / password salt from db
+                     if not -> return Unautherized to front
+                     if yes -> create token
+                               return token and user (without password) to front
+!!! Controller: get data from front (dto, validate in dto)
+                all mappings (dto -> User, user -> dto)
+                create token
+    Repository: interactins with db
+                verify password 
+
+
+
+
+
+
+

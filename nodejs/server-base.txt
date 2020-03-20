@@ -1,0 +1,40 @@
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+
+var cors = require('cors');
+
+
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+// Set Public Folder (not if React, Angular)
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(cors());
+
+// Route Files
+let users = require('./routes/users');
+app.use('/users', users);
+
+// Start Server
+app.listen(3000, function(){
+  console.log('Server started on port 3000...');
+});
+
+
+************************************************************************************************************
+routes/users.js
+
+const express = require('express');
+const router = express.Router();
+
+router.get('/register', function(req, res){         // '/users/register'
+  const {name, password} = req.body;
+  res.json('register');
+});
+
+module.exports = router;
+
+

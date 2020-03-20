@@ -1,0 +1,121 @@
+@import "../utilities/variables.css";
+@import "../utilities/global.css";
+@import "../utilities/component-templates.css";
+.navbar {
+    width: 100vw;
+    height: 5rem;
+    background-color: var(--blue-700);
+    display: flex;
+    align-items: center;
+}
+
+.burger {
+    margin-left: 0.75rem;
+
+}
+.burger-check {
+    display: none;
+}
+
+.burger-line {
+    width: 2rem;
+    height: 0.25rem;
+    margin: 0.5rem;
+    background-color: var(--white);
+}
+
+.top-menu {
+    margin-left: 4rem;
+}
+
+.top-menu-item {
+    display: inline-block;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    border-radius: 0.25rem;
+    border: none;
+    color: var(--white);
+    font-weight: 600;
+    text-transform: capitalize;
+    text-decoration: none;
+    letter-spacing: 0.025em;
+    font-size: 1.25rem;
+    transition: .5s ease-out;
+}
+
+.top-menu-item:hover {
+    background-color: var(--blue-500);
+}
+
+.side-menu {
+    background-color: var(--gray-800);
+    height: 100vh;
+    padding-top: 4rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    opacity: 1;
+    overflow: hidden;
+    width: 0;
+    transition: width .5s;
+    z-index: 100;
+}
+.burger-check:checked +.side-menu {
+    width: 300px;
+}
+
+.close-side-menu {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin-top: 0.75rem;
+    margin-right: 1.5rem;
+    font-size: 2.25rem;
+    font-weight: 400;
+    text-decoration: none;
+    color: var(--white);
+}
+
+.side-menu-item {
+    display: block;
+    width: 6rem;
+    margin-left: 1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    border-radius: 0.25rem;
+    color: var(--white);
+    text-transform: capitalize;
+    text-decoration: none;
+    letter-spacing: 0.025em;
+    font-size: 1.25rem;
+    font-weight: 600;
+    transition: 0.5s ease-out;
+}
+
+.side-menu-item:hover {
+    background-color: var(--blue-500);
+}
+
+@media (min-width: 768px) {
+    .burger-container {
+        display: none;
+    }
+    .top-menu {
+        display: block;
+    }
+    .side-menu {
+        display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    .burger-container {
+        display: block;
+    }
+    .top-menu {
+        display: none;
+    }
+    .side-menu {
+        display: block;
+    }
+}

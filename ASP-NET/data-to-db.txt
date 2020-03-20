@@ -1,0 +1,142 @@
+***************************************************************************************************************
+******************************* SQLITE **********************************************************************
+!!! see Microsoft docs, Configure a DbContext (Using DbContext with dependency injection)
+1. create Model:
+
+    public class User
+    {
+        public int Id { get; set; }
+        public string Username { get; set; }
+        public byte[] PasswordHash { get; set; }
+        public byte[] PasswordSalt { get; set; }
+        public DateTime DateOfBirth { get; set; }
+        public DateTime Created { get; set; }
+        public virtual ICollection<Photo> Photos { get; set; }
+    }
+
+    public class Photo
+    {
+        public int Id { get; set; }
+        public string Url { get; set; }
+        public virtual User User { get; set; }
+        public int UserId { get; set; }
+    }
+
+2. Setup dotnet + Sqlite
+
+    using DatingApp.API.Models;
+    using Microsoft.EntityFrameworkCore;  //pkg Microsoft.EntityFrameworkCore.Sqlite
+
+    public class DataContext : DbContext
+    {
+        public DataContext(DbContextOptions<DataContext> options) : base(options) { }
+
+        public DbSet<User> Users { get; set; }
+        public DbSet<Photo> Photos { get; set; }
+    }
+
+
+3. Startup.cs
+********
+public void ConfigureDevelopmentServices(IServiceCollection services)
+        {
+            services.AddDbContext<DataContext>(x =>
+            {
+                x.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
+            });
+        }
+4. appsettings.json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Database=datingapp"
+  }
+}
+5 (Repository)   !!! injected in Controller and its methods called from there
+    1. (interface, ex. IAuthRepository):    
+       
+            public interface IAuthRepository
+            {
+                Task<User> Register(User user, string password);                
+            }
+    2. (implementation of interface):
+
+        public class AuthRepository : IAuthRepository
+        {
+            private readonly DataContext _context;
+            public AuthRepository(DataContext context)
+            {
+                _context = context;
+            }        
+
+            public async Task<User> Register(User user, string password)
+            {
+                (code here)
+                await _context.Users.AddAsync(user);                   //more db methods, see below
+                await _context.SaveChangesAsync();
+
+                return user;
+            }        
+        }
+    3. (Startup.cs) 
+            services.AddScoped<IAuthRepository, AuthRepository>();
+
+    !!! db methods: 
+        //_context is DataContext; all funs async - await;
+            
+            _context.Users.FirstOrDefaultAsync( condition);    !!! function return type: Task<Model>
+            _context.Users.AnyAsync( condition);     !!! function return type: Task<bool>
+            _context.Users.AddAsync( model); 
+            _context.Users.ToListAsync();         !!! function return type: Task<IEnumerable<Model>>
+
+            //to get one modelA / all modelAs including attached ModelBs to it: A-Bs
+            _context.ModelAs.Include(modelA => modelA.ModelBs).FirstOrDefaultAsync( condition);
+                        //or .ToListAsync()
+
+            //to get one modelB / all modelBs belonging to this modelA: A-Bs
+            _context.ModelBs.Where(modelA => modelA.ModelAId ==  idValue).FirstOrDefaultAsync( condition);
+
+            //after altering table, not reading:
+            _context.SaveChangesAsync();      !!! function return type: Task<bool>
+
+
+***********************************************************************************************************
+****************************** MySql *********************************************************************
+
+!!! byte[] is BINARY(255) or VARBINARY(255) in MySql
+     
+
+1. microsoft docs database providers - overview: 
+    copy links and install pkg-s: 
+        Microsoft.EntityFrameworkCore
+        Microsoft.EntityFrameworkCore.SqlServer
+        Pomelo.EntityFrameworkCore.MySql
+2. see Microsoft docs, Configure a DbContext (Using DbContext with dependency injection)
+pkg:  Microsoft.EntityFrameworkCore 
+
+(Startup.cs, ConfigureServices)
+
+     services.AddDbContext<DataContext>(x => {                 
+                 x.UseMySql("Server=localhost;Port=3306;Database=languagesaspnet;User=root;Password=gerKanuk55");
+            }); 
+__________________________________________________________
+
+SEED DATA WITH Users
+
+ public class UserDbContext : DbContext
+    {
+        public DbSet<User> Users { get; set; }
+
+        public UserDbContext(DbContextOptions<DbContext> options) : base(options)
+        {
+            LoadDefaultUsers();
+        }
+
+         public DbSet<User> Users { get; set; }
+
+        private void LoadDefaultUsers()
+        {
+            Users.Add(new User { UserId = 100L, DateOfBirth = DateTime.Now, FirstName = "Tom" });
+            Users.Add(new User { UserId = 200L, DateOfBirth = DateTime.Now, FirstName = "Arthur" });
+        }
+    }
+}

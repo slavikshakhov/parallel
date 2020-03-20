@@ -1,0 +1,35 @@
+!!! first login -> token to front, then request + token from front
+
+1. (***.csproj) Microsoft.AspNetCore.Authentication.JwtBearer (pkg)
+2. (Startup.cs) 
+    services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options => 
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII
+                                .GetBytes(Configuration.GetSection("AppSettings:Token").Value)),
+                            ValidateIssuer = false,
+                            ValidateAudience = false
+                        };
+                    });
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+4. (appsettings.json)
+    "AppSettings": {
+        "Token": "super secret key"
+    },
+3. (in Controller)
+[Authorize]
+[Route("api/[controller]")]
+[ApiController]
+public class UsersController : ControllerBase {
+    [AllowAnonymous]
+    [HttpGet]
+    (fun)
+}
+
+!!! func-level [AllowAnonymous] ignores class-level [Authorize]
+    test w postman: register -> token's val -> req of protected route: Headers Key-Authorization Value-token's val

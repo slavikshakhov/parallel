@@ -1,0 +1,178 @@
+************************************************************************************************************
+**************************** CONTROLLER ********************************************************************
+
+(imports here)
+
+namespace DatingApp.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthController : ControllerBase
+    {              
+        public AuthController(){}
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(UserForRegisterDto userForRegisterDto)
+        {
+            (code here, to call repo's functions, use await)
+            (to use repo, first inject repo's interface, see data-to-db.txt)
+
+            return (one of IActionResult types, see server-base.txt)
+        }       
+    }
+}
+**************************************************************************************************************
+************************************** REPOSITORY ***********************************************************
+
+see data-to-db.txt
+
+
+************************************************************************************************************
+**************************** DTO  + VALIDATION ********************************************************************
+
+
+namespace DatingApp.API.Dtos
+{
+    public class UserForRegisterDto
+    {
+       // [Required]
+        public string Username { get; set; }
+
+       // [Required]
+       // [StringLength(8, MinimumLength = 4, ErrorMessage = "You must specify password between 4 and 8 characters")]
+        public string Password { get; set; }
+
+        //[Required]
+        public string Gender { get; set; }
+
+       // [Required]
+        public string KnownAs { get; set; }
+
+       // [Required]
+        public DateTime DateOfBirth { get; set; }
+
+       // [Required]
+        public string City { get; set; }
+
+        //[Required]
+        public string Country { get; set; }
+        public DateTime Created { get; set; }
+        public DateTime LastActive { get; set; }
+
+        public UserForRegisterDto()
+        {
+            Created = DateTime.Now;
+            LastActive = DateTime.Now;
+        }
+    }
+}
+
+*************************************************************************************************************
+****************************** MAPPER ***********************************************************************
+
+
+//Source, Dest - Model, Dto; 
+1. pkg in .csproj: AutoMapper.Extensions.Microsoft.DependencyInjection
+2. (Startup.cs) 
+    services.AddAutoMapper(typeof( Repository).Assembly)
+3. (Helpers/AutoMapperProfiles.cs)
+    class: Profile...in K's b:   
+        CreateMap< Source,  Dest>();
+    //sourceField (modify)-> DestField
+        CreateMap<Source, Dest>()                
+                    .ForMember(dest => dest.DestField, opt =>
+                        {
+                        opt.MapFrom(source => source. SourceField. ExtensionMeth());
+                        });
+                    
+4. (AuthController.cs)
+    (K) public AuthController(IAuthRepository repo, IConfiguration config, IMapper mapper)
+            {
+                _mapper = mapper;               
+            }
+
+    //sourceInst -> destInst  
+        var  destInst = _mapper.Map< Dest>( sourceInst); //inj IMapper
+
+  !!! _mapper.Map<IEnumerable<Dest>>
+
+1. pkg in .csproj: AutoMapper.Extensions.Microsoft.DependencyInjection
+2. (Startup.cs) 
+    services.AddAutoMapper(typeof( Repository).Assembly)
+
+3. (helpers/Automapper.cs)
+
+    public class AutoMapperProfiles : Profile
+    {
+        public AutoMapperProfiles()
+        {
+            CreateMap<User, UserForListDto>()
+                .ForMember(dest => dest.PhotoUrl, opt =>
+                {
+                    opt.MapFrom(src => src.Photos.FirstOrDefault(p => p.IsMain).Url);
+                })
+                .ForMember(dest => dest.Age, opt =>
+                {
+                    opt.MapFrom(d => d.DateOfBirth.CalculateAge());
+                });
+                
+
+                //User (db) -> Dto (front), dest is dto, opt is User (src.Photos is User's field, from db)
+
+            CreateMap<User, UserForDetailedDto>()
+                .ForMember(dest => dest.PhotoUrl, opt =>
+                {
+                    opt.MapFrom(src => src.Photos.FirstOrDefault(p => p.IsMain).Url);
+                })
+                .ForMember(dest => dest.Age, opt =>
+                {
+                    opt.MapFrom(d => d.DateOfBirth.CalculateAge());
+                });
+            CreateMap<Photo, PhotosForDetailedDto>();
+            CreateMap<Photo, PhotoForReturnDto>();
+            CreateMap<PhotoForCreationDto, Photo>();
+            CreateMap<UserForUpdateDto, User>();
+            CreateMap<UserForRegisterDto, User>();
+            CreateMap<MessageForCreationDto, Message>().ReverseMap();
+            CreateMap<Message, MessageToReturnDto>()
+                .ForMember(m => m.SenderPhotoUrl, opt => opt
+                    .MapFrom(u => u.Sender.Photos.FirstOrDefault(p => p.IsMain).Url))
+                .ForMember(m => m.RecipientPhotoUrl, opt => opt
+                    .MapFrom(u => u.Recipient.Photos.FirstOrDefault(p => p.IsMain).Url));
+        }
+    }
+}
+4. (Controller)
+
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthController : ControllerBase
+    {              
+        private readonly IMapper _mapper;
+        public AuthController(IMapper mapper)
+        {
+            _mapper = mapper;         
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(UserForRegisterDto userForRegisterDto)
+        {
+            (code here)
+            (to interact with db, first connect to repository)
+
+            var userToCreate = _mapper.Map<User>(userForRegisterDto);    // front -> db
+
+            **************         
+
+            var userToReturn = _mapper.Map<UserForDetailedDto>(createdUser);  // db -> front
+
+            return (one of IActionResult types)
+
+        }
+    }
+
+
+
+        
+
+

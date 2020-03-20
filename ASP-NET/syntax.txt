@@ -1,0 +1,207 @@
+***********************************************************************************************************
+*********************** ASP.NET CORE function return types ************************************************
+
+Specific type result
+IActionResult 
+ActionResult<T>
+
+1. Specific type result (!!! if need to return status, use return Response.StatusCode = ...)
+    !!! fun rt or var dt, fun rt use more generic, ex. IEnumerable<string>, var dt use List<string>
+
+        string, int, 
+        IEnumerable<string>  // List<string>
+        IEnumerable<int>   //  List<int>
+
+    [HttpGet("{id}")]  
+    public IEnumerable<string> GetById(int id)  
+    {  
+        if (id > 0)  
+        {  
+            return new List<String>(){ "a", "b", "c"}              
+        }  
+        return null;  
+    }  
+2. IActionResult  (!!! status in form of BadRequest(); ...)  // or ActionResult
+    to return data and status: return Ok(...)
+    !!! IActionResult<IEnumerable<string>  same as IActionResult  (fun returns array)
+
+**************************************************************************************************************
+********************************** DATA TYPES C# ************************************************************
+!!! convert dt to dt
+    1. byte[] to string: System.Text.Encoding.UTF8.GetString(byteArray);
+    2. string to byte[]: byte[] bytes = Encoding.ASCII.GetBytes(someString);
+
+1. List (array in js): 
+    var list = new List<string>() {"a", "b", "c"};      -> fun rt: IEnumerable<string>
+    List<int> li = new List<int>() { 1, 2, 3 };
+
+    list.Add(20);   -> [1, 2, 3, 20]
+    list.Count      -> 4
+
+    foreach (int num in list){  Console.WriteLine(num);  }
+    for (int num = 0; num < list.Count; num ++){  Console.WriteLine($"{num}");  }
+
+    list.InsertRange(1, new int[]{100, 200});   -> [1, 100, 200, 2, 3]
+    list.Insert(1, 500);   -> [1, 500, 2, 3]
+
+    list.Clear();   ->  []
+
+    var copy = new List<int>(list); 
+
+    //FILTER
+
+    public IEnumerable<int> Test()  
+        {                                   
+                var list = new List<int>() {1, 2, 3}; 
+                var list2 = new List<int>();                                
+                foreach (int num in list){                    
+                    if(num % 2 == 0){   list2.Add(num);  }                                         
+                }
+                return list2;                              
+        }  
+    !!! alternative, no iteration:  var list2 = list.FindAll(el => el % 2 == 0);
+        or:                         var list2 = list.Where(el => el % 2 == 0).ToList(); 
+
+    // FILTER LIST OF OBJECTS
+
+    public IEnumerable<Person> Test()
+        {
+            
+            Person p1 = new Person("Slavik", 44);
+            Person p2 = new Person("Carlos", 31);
+            Person p3 = new Person("Lena", 48);
+
+            var list = new List<Person>(){p1, p2, p3};
+
+            var res = list.FindAll(el => el.Age > 32);
+
+            return res;
+        }
+    } 
+
+
+2. OBJECT
+    1. anonymous OBJECTS
+        var obj = new {Name = "Slavik", Age = 44};   !!! rt of class: object
+    
+    2. object as instance of a class 
+
+            public class Person
+        {        
+            public string Name { get; set; }
+            public int Age { get; set; }
+
+            public Person(string name, int age)
+            {
+                this.Name = name;
+                this.Age = age;
+            }
+        }
+        (elsewhere):  Person p = new Person("Slavik", 44);  !!! if this class returns p, rt of class: Person
+
+
+
+    *******************************************************************************************************
+    ***************************** SCOPE ******************************************************************
+
+    public bool Test()  
+        {                                   
+                var list = new List<int>() {1, 2, 3};  
+                bool b = false;                
+                foreach (int num in list){                    
+                    if(num == 1){  b = true;  }
+                    else {  b = false;  }
+                    return b;                  
+                }
+                return b;                               
+        }  
+        !!! retured first return that is valid
+            var outside scope must be assigned to be re-assigned, if just declared -> error
+
+
+    public bool Test()  
+        {                                   
+                var list = new List<int>() {1, 2, 3};                   
+                foreach (int num in list){                    
+                    if(num == 1){  return true;  }
+                    else {  return false;  }                                     
+                }
+                return false;                               
+        }  
+    
+
+2. Object: 
+    1. anonymous: 
+        new {name = "Slavik", age = 44 };   -> fun rt: object
+
+*************************************************************************************************************
+****************************** RESPONSE STATUS *************************************************************
+
+1. 200 Ok (by default, if successful res)
+    return Ok();    //return Ok(data)
+2. 204 No Content (by default, if fun returns null)    
+    (if IActionResult)  return NoContent();
+3. 400 Bad Request (client error)
+    return Response.StatusCode = 400;    return null;
+    (if IActionResult)  return BadRequest();    //return BadRequest("message")
+4. return Unauthorized();     //no match in db -> cannot allow access to front
+5. return CreatedAtRoute("GetPhoto", new { userId = userId, id = photo.Id }, photoToReturn);
+    !!! here class level route:  [Route("api/users/{userId}/photos")]
+             another method level route: [HttpGet("{id}", Name = "GetPhoto")]
+                            returns: return Ok(photo);   //code in this method ignored
+
+***********************************************************************************************************
+**************************** PRINTING DATA ****************************************************************
+
+1. (string literal in js)
+    System.Console.WriteLine("my name is: {0}", name);
+    System.Console.WriteLine("my name is: " + $"{name}");   //js:  console.log(`my name is ${name}`);
+
+**********************************************************************************************************
+****************************************** FUNCTIONS ****************************************************
+
+1. EXTENSION METHODS
+    public static class Ext {
+        public static bool isEven(this int x){
+            if(x % 2 == 0){
+                return true;
+            }
+            return false;
+        }
+    }
+    (elsewhere):
+        public bool Test()
+        {
+            var res = 6.isEven();
+            return res;
+        }
+_____________________________
+
+public static class Ext {
+        public static string Capitalize(this string s){
+           var newStr = char.ToUpper(s[0]);
+           return newStr + s.Substring(1);          
+        }
+    }
+(elsewhere):
+    public string Test()
+        {
+            return "slavik".Capitalize();            
+        }
+2. OUT (declare value, but initialize it from another method)
+
+    public static class Calcul {
+        public static void Val(out int i){
+            i = 5;
+        }
+    }
+    (elsewhere):
+         public int Test()
+        {
+            int i;
+            Calcul.Val(out i);
+            return i;           
+        }
+
+
+

@@ -1,0 +1,8 @@
+
+
+1. System.InvalidOperationException: The entity type 'User' requires a primary key to be defined
+    !!! problem not in db (there should be set to id INT AUTO_INCREMENT), 
+        problem in User model, need id prop
+2. after removing pkg (>dotnet remove package <pkg name>) and re-installing a different version ->
+    OmniSharp.MSBuild.ProjectManager  Failed to load project file
+        Solution: >dotnet restore

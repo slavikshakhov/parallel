@@ -1,0 +1,23 @@
+>>dotnet new webapi -n Myapp.API
+>>dotnet watch run
+
+1. VSC extensions:
+        C# for VS Code
+        C# extensions
+        Nuget package manager
+2. VSC, hide bin, obj folders: preferences-settings 'Exclude' - Files - add pkg **/obj   **bin
+3. remove https, leave http:  properties/launchSettings.json (delete https//....)
+                              (Startup.cs)....Configure ..... //app.UseHttpRedirection()
+4. cors: (Startup.cs) ... ConfigureServices .... services.AddCors();
+                        Configure .... app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+
+
+!!!     Program.cs → Includes main function of application
+        Startup.cs → Configure application with middleware
+        app.csproj → Contains dependency of application
+
+!!! ADD PKG  
+        1. via Nuget, strg + up + p 
+        2. via cmd: >dotnet add package MySql.Data.EntityFrameworkCore
+                    >dotnet restore
+

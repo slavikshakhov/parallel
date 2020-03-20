@@ -1,0 +1,122 @@
+*************************** REACT REDUX HOOKS ***************************
+1. src/index.js
+
+        import {createStore} from 'redux'
+        import rootReducer from './reducers'          // src/reducers/index.js --- all reducers in one object
+        import {Provider} from 'react-redux'
+
+        const store = createStore(
+            rootReducer,
+            window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+        )
+
+        ReactDOM.render(<Provider store={store}><App /></Provider>, document.getElementById('root'));
+
+4. src/reducers/index.js
+
+        import currentUser from './currentUser'                 // src/reducers/user.js
+        import counter from './counter'
+        import {combineReducers} from 'redux'
+
+        const rootReducer = combineReducers({
+            currentUser,
+            counter
+        })
+
+        export default rootReducer
+
+3. src/reducers/user.js
+
+            const currentUser = (state = {}, action) => {
+                switch(action.type){
+                    case "SET_USER":
+                        return {
+                            ...state,
+                            user: action.payload,
+                            loggedIn: true
+                        }
+                    case "LOG_OUT":
+                        return {
+                            ...state,
+                            user: {},
+                            loggedIn: false
+                        }
+                    default:
+                        return state
+                }
+            }
+
+            export default currentUser;
+
+1. src/actions/userActions.js:
+        const setUser = (userObj) => {
+            return {
+                type: "SET_USER",
+                payload: userObj
+            }
+        }
+
+        const logOut = () => {
+            return {
+                type: "LOG_OUT"
+            }
+        }
+
+        export default {
+            setUser,
+            logOut
+        }
+2. src/actions/index.js                                //put all actions in one object
+
+        import counterActions from './counterActions'
+        import userActions from './userActions'
+
+        const allActions = {
+            counterActions,
+            userActions
+        }
+
+        export default allActions
+
+
+
+
+******************************************************************************************************************
+
+*********************** DISPATCH ACTIONS *****************************
+
+        import React, {useEffect} from 'react';
+        import {useSelector, useDispatch} from 'react-redux'
+        import './App.css';
+        import allActions from './actions'
+
+
+        const App = () => {
+                const currentUser = useSelector(state => state.currentUser);
+                const dispatch = useDispatch();
+
+                const user = {name: "Rei"}
+
+                useEffect(() => {
+                    dispatch(allActions.userActions.setUser(user))
+                }, [])
+
+                return (
+                    <div className="App">
+                    {
+                        currentUser.loggedIn ?
+                            <>
+                                <h1>Hello, {currentUser.user.name}</h1>
+                                <button onClick={() => dispatch(allActions.userActions.logOut())}>Logout</button>
+                            </>  :
+                            <>
+                                <h1>Login</h1>
+                                <button onClick={() => dispatch(allActions.userActions.setUser(user))}>Login as Rei</button>
+                            </>
+                    }
+                );
+        }
+
+        export default App;
+
+

@@ -1,0 +1,64 @@
+1. (app.module.ts, imports) ReactiveFormsModule  ... import { ReactiveFormsModule } from '@angular/forms';
+2. (comp):
+
+        import { FormGroup, FormControl, Validators, FormBuilder} from '@angular/forms';
+
+        (comp's field): registerForm: FormGroup;
+
+        constructor(private fb: FormBuilder) {}
+
+        ngOnInit() { this.createRegisterForm(); }
+
+        createRegisterForm() {
+            this.registerForm = this.fb.group(
+            {
+                gender: ['male'],
+                username: ['', Validators.required],
+                dateOfBirth: [null, Validators.required],
+                password: ['', [ Validators.required, Validators.minLength(4), Validators.maxLength(8)]],
+                confirmPassword: ['', Validators.required]
+            },
+            { validator: this.passwordMatchValidator }
+            );
+        }
+        passwordMatchValidator(g: FormGroup) {
+            return g.get('password').value === g.get('confirmPassword').value ? null : { mismatch: true };
+        }
+        register() {
+            if (this.registerForm.valid) {
+            this.user = Object.assign({}, this.registerForm.value);
+                    //use this.user to send to service for http post req
+
+                    this.registerForm.reset();    //to empty form
+                }
+            }
+3. (html)
+<form [formGroup]="registerForm" (ngSubmit)="register()">
+    ***
+    <div>
+        <input type="text" [ngClass]="{'is-invalid': registerForm.get('username').errors && registerForm.get('username').touched }"
+                    formControlName="username" />
+        <div class="invalid-feedback" *ngIf="registerForm.get('knownAs').touched && registerForm.get('knownAs').hasError('required')">
+            This field is required
+    </div>
+
+    //or .hasError('minlength') // .hasError('maxlength')
+    -------------------------------------------------------------------------------------------------------------------------
+    <div>
+        <input type="password" [ngClass]="{'is-invalid': (registerForm.get('confirmPassword').errors && registerForm.get('confirmPassword').touched) ||
+                                             (registerForm.get('confirmPassword').touched && registerForm.hasError('mismatch')) }"
+                    formControlName="confirmPassword" />
+        <div class="invalid-feedback" *ngIf="registerForm.get('confirmPassword').touched && registerForm.get('confirmPassword').hasError('required')">
+             Confirm Password is required
+        </div>
+        <div class="invalid-feedback" *ngIf="registerForm.get('confirmPassword').touched && registerForm.hasError('mismatch')">
+             Passwords must match
+        </div>
+    </div>
+  <div">
+    <button class="btn btn-success" [disabled]="!registerForm.valid" type="submit">Register</button>
+  </div">
+</form>
+
+
+

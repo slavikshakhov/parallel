@@ -1,0 +1,28 @@
+1. create (src/app/routes.js):
+        import { Routes } from '@angular/router';
+        import { HomeComponent } from './home/home.component';
+
+
+        export const appRoutes: Routes = [
+                { path: '', component: HomeComponent },
+                ***
+                { path: '**', redirectTo: '', pathMatch: 'full' }
+        ];
+
+2. (app.module.ts, imports):
+RouterModule.forRoot(appRoutes)  .... import { RouterModule } from '@angular/router';
+
+*************************** LINKS, from html ***************************
+
+<a [routerLink]="['/member/edit']">Edit Profile</a
+
+*********************** REDIRECT, from comp.ts ***************************
+
+import { Router } from '@angular/router';
+****
+constructor(private router: Router) {}
+*** in method's body:
+this.router.navigate(['/members']);
+
+***********************************************
+

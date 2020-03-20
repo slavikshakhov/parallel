@@ -1,0 +1,76 @@
+1. //component
+      >>ng g c auth
+      (app.module.ts, declarations)
+
+      import { AuthService } from '../_services/auth.service';
+
+      @Component({
+        selector: 'app-nav',
+        templateUrl: './nav.component.html',
+        styleUrls: ['./nav.component.css']
+      })
+      export class NavComponent implements OnInit {
+        model: any = {};
+
+        constructor(public authService: AuthService) {}
+
+        ngOnInit() {}
+
+        login() {
+          this.authService.login(this.model).subscribe(
+            next => {  ***success message; },
+            error => { ***error message },
+            () => { ***redirect if successful }
+          );
+        }
+      }
+++++++++++++++++++++++++++++++++++++++++++++++++
+2. //authService
+
+      >>ng g s auth
+      (app.module.ts, providers)
+
+
+      import { HttpClient } from '@angular/common/http';
+      import { map } from 'rxjs/operators';
+      import { JwtHelperService } from '@auth0/angular-jwt';
+      import { environment } from 'src/environments/environment';
+      import { User } from '../_models/user';
+
+
+      @Injectable({
+        providedIn: 'root'
+      })
+      export class AuthService {
+        baseUrl = environment.apiUrl + 'auth/';
+        jwtHelper = new JwtHelperService();
+        decodedToken: any;
+        currentUser: User;
+
+        constructor(private http: HttpClient) {}
+
+        login(model: any) {
+          return this.http.post(this.baseUrl + 'login', model).pipe(
+            map((response: any) => {
+              const user = response;
+              if (user) {
+                localStorage.setItem('token', user.token);
+                localStorage.setItem('user', JSON.stringify(user.user));
+                this.decodedToken = this.jwtHelper.decodeToken(user.token);
+                this.currentUser = user.user;
+              }
+            })
+          );
+        }
+        ++++++++++++++++++++++++++++++++++++++++++++
+
+          //+++++ 1. baseUrl:
+          export const environment = {
+            production: false,
+            apiUrl: 'http://localhost:5000/api/'
+          };
+          //++++ 2. jwtHelper, see https://www.npmjs.com/package/@auth0/angular-jwt    usage:standalone
+          //++++ 3. http: (app.module.ts, imports) HttpClientModule ----@angular/common/http
+          //++++ 4. API sends back: {token, user}
+
+

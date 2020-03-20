@@ -1,0 +1,17 @@
+1. (npm) @angular/cli
+>>ng new myproj  >>ng serve -o //npm start //ng serve --port=4500
+2. VSC extensions:
+    angular snippets/files/language service
+    tslint
+    auto-rename tag
+    prettier-code formatter
+    brkacket-pair colorizer
+    debugger for chrome
+    material UI theme
+    angular2-switcher (btw fls of same comp)
+3. F-structure
+    _models
+    _services
+    _guards
+    _resolvers
+

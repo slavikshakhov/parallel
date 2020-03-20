@@ -1,0 +1,49 @@
+****************************************************************************************************************
+******************************  GENERAL STEPS ******************************************************************
+
+1. create node.js server with routing (see express-router.js)
+2. connect to MySql (see databases/mysql.txt; nodejs/express-MySql.js)
+3. follow steps in nodejs/algorithms
+
+
+
+********************************************************************************************************************
+************************************  REGISTER  **********************************************************************
+
+1. register user (express.js + MySql)
+
+    1. validate data from front (see express.validator.js); if errors -> status 400 (bad request)
+    2. user with this name (in lowercase!) exists in MySql?  If error -> end db, message: problem to interact with db
+                                                             if result with at least one el -> status 400, 'user exists';
+    3. hash pw, if error -> cannot hash
+                else -> create user, save in db with hash as pw -> if error: 'problem interacting with db'
+                                                                   else message to front
+
+!!! see: express-validator.js,
+         express-MySql.js,
+         nodejs-hash-check-pw.js
+    (full summary code) - register_login_mysql.js
+    (MySql methods, setup) - databases/mysql.txt
+
+*********************************************************************************************************************
+*****************************************  LOGIN  ********************************************************************
+
+
+2. login user (express.js + MySql)
+
+    1. validate data from front; if errors -> status 400 (bad request)
+    2. user with this name (in lowercase!) exists in MySql? ->
+            if error -> end db, message: problem to interact with db
+            if result with 0 els -> status 401 (unauthorized), 'no user with this name';
+            else -> get hash for this user, compare with password from front ->
+                if no result -> status 403 (Forbidden);
+                else -> create token (see nodejs-jwt-token.js); send res to front with token
+
+    (full summary code) - register_login_mysql.js
+    (to compare db's hash with input's password) - nodejs-hash-check-pw.js
+    (MySql methods, setup) - databases/mysql.txt
+    (token create) - nodejs-jwt-token.js
+
+
+
+

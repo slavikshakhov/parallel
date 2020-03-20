@@ -1,0 +1,10 @@
+1. comp gets data from form to comp's field (model obj); //see reactive-forms.html
+        2.on submit calls service's login(this.model); //see http.ts
+
+3. service returns http post req(API's url, model);
+        4. intercepts resp as {token, user} from API, if exists -> to local storage 'token', 'user';
+        5. decodes token -> to field;
+        6. user -> to field;
+
+7. comp receives http resp from service and subscribes to it -> success mes or error mess, if success -> redirects to els; //see alertify.ts
+

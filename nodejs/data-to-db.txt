@@ -1,0 +1,84 @@
+!!! see databases/mysql.txt
+    in most cases ORM (object relational mapper), like sequelize is used
+            //(see github, see express example, getting started ->  Synchronizing the model with the database
+    put db configuration in separate file
+
+
+const express = require('express');
+const mysql = require('mysql');
+
+// Create connection
+const db = mysql.createConnection({
+    host     : 'localhost',
+    user     : 'root',
+    password : '123456',
+    database : 'myDB'
+});
+
+// Connect
+db.connect((err) => {
+    if(err){
+        throw err;
+    }
+    console.log('MySql Connected...');
+});
+
+const app = express();
+
+// Create DB
+app.get('/createdb', (req, res) => {
+    let sql = 'CREATE DATABASE myDB';
+    db.query(sql, (err, result) => {
+        if(err) throw err;
+        console.log(result);
+        res.send('Database created...');
+    });
+});
+
+app.listen('3000', () => {
+    console.log('Server started on port 3000');
+});
+
+*************************************************************************************************************
+
+    let sql = 'CREATE TABLE posts(id int AUTO_INCREMENT, title VARCHAR(255), body VARCHAR(255), PRIMARY KEY(id))';
+    db.query(sql, (err, result) => {}
+
+
+
+    let sql = 'INSERT INTO posts SET ?';
+    let query = db.query(sql, post, (err, result) => {}
+
+
+
+    let post = {title:'Post Two', body:'This is post number two'};
+    let sql = 'INSERT INTO posts SET ?';
+    let query = db.query(sql, post, (err, result) => {}
+
+
+
+    let sql = 'SELECT * FROM posts';
+    let query = db.query(sql, (err, results) => {}
+
+
+    let sql = `SELECT * FROM posts WHERE id = ${req.params.id}`;
+    let query = db.query(sql, (err, result) => {}
+
+    !!! let sql = `SELECT * FROM posts WHERE id = ?`;
+        let query = db.query(sql, [inputId], (err, result) => {}
+
+    let sql = 'SELECT * FROM posts WHERE id = ?';
+    let query = db.query(sql, 2, (err, result) => {})
+
+    let newTitle = 'Updated Title';
+    let sql = `UPDATE posts SET title = '${newTitle}' WHERE id = ${req.params.id}`;
+    let query = db.query(sql, (err, result) => {}
+
+
+    let newTitle = 'Updated Title';
+    let sql = `DELETE FROM posts WHERE id = ${req.params.id}`;
+    let query = db.query(sql, (err, result) => {}
+
+
+
+

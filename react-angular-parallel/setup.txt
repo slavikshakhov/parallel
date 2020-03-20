@@ -1,0 +1,26 @@
+1. Setup
+    (r) >>npx create-react-app tandem-react .... >>npm start
+        see react/setup.txt
+    (a) >>ng new tandem-angular ... npm start //ng serve --port=4000
+        see angular/setup.txt
+2. Models
+    (r)
+    (a) see angular/models.txt
+
+3. Routing
+    (r) see react-router docs
+    (a) see angular/routing.txt,  angular/redirect.txt
+
+4. Protected routes
+    (r)
+    (a) see angular/router-guard.txt
+
+5. data from from and validation
+    (r) see react/form-hooks.js
+    (a) see angular/reactive-forms.txt
+
+6. http requests to server
+    (r)
+    (a)
+
+
