@@ -1,0 +1,9 @@
+1. FONT AWESOME   // npm: font-awesome
+    React: 
+        (index.js)  import '../node_modules/font-awesome/css/font-awesome.min.css';   
+    Angular:
+        (style.css)   @import '~font-awesome/css/font-awesome.css';
+
+2. countries flags icons: (npm)  flag-icon-css     
+                          (styles.css)  @import '../node_modules/flag-icon-css/css/flag-icon.min.css';
+                          (html)  class="flag-icon flag-icon-it"

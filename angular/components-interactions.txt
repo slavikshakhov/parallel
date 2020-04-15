@@ -1,4 +1,6 @@
-1. ANY - ANY ***************************************
+***********************************************************************************************************
+************************************************* ANY - ANY ***********************************************
+
 1). service (create, add to app.module.ts providers)
 
         import { Injectable } from '@angular/core';
@@ -39,3 +41,32 @@
             }
 
             }
+*************************************************************************************************************
+********************************* PARENT -> CHILD ***********************************************************
+
+(parent.html)
+    <app-parent [user]="user"></app-parent>    
+
+    !!! "user" is parent.js's field, defined
+
+(child.ts)
+     @Input() user: User;
+
+*************************************************************************************************************
+****************************** CHILD -> PARENT **************************************************************
+(child.html)
+    <button (click)="vote('lala')">Submit</button>
+(child.js)
+        @Output() voted = new EventEmitter<string>();        
+
+        vote(val: string) {
+            this.voted.emit(val);            
+        }
+
+(parent.html)
+    <app-child (voted)="onVoted($event)"></app-child>
+
+(parent.ts)
+    onVoted(val: string) {
+        ....user val here ....
+    }

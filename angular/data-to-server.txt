@@ -1,0 +1,76 @@
+1. component
+      >>ng g c auth
+      (!!!app.module.ts, declarations)
+
+      import { AuthService } from '../_services/auth.service';
+
+      
+      export class NavComponent implements OnInit {
+        model: any = {};
+
+        constructor(public authService: AuthService) {}
+
+        ngOnInit() {}
+
+        login() {
+          this.authService.login(this.model).subscribe(
+            next => {  ***success message; },
+            error => { ***error message },
+            () => { ***redirect if successful }
+          );
+        }
+      }
+++++++++++++++++++++++++++++++++++++++++++++++++
+2. authService
+
+      >>ng g s auth
+      (!!! app.module.ts, providers)
+
+
+      import { HttpClient } from '@angular/common/http';
+      import { map } from 'rxjs/operators';      
+      import { environment } from 'src/environments/environment';
+      import { User } from '../_models/user';
+
+     
+      export class AuthService {
+        baseUrl = environment.apiUrl + 'auth/';    
+        currentUser: User;
+
+        constructor(private http: HttpClient) {}
+
+        login(model: any) {
+          return this.http.post(this.baseUrl + 'login', model).pipe(
+            map((response: any) => {
+              const user = response;
+              if (user) {                
+                localStorage.setItem('user', JSON.stringify(user.user));               
+                this.currentUser = user.user;
+              }
+            })
+          );
+        }
+        ++++++++++++++++++++++++++++++++++++++++++++
+
+        !!! baseUrl:
+                export const environment = {
+                    production: false,
+                    apiUrl: 'http://localhost:5000/api/'
+                };
+          
+        !!! http: (app.module.ts, imports) HttpClientModule ---- @angular/common/http
+                in service injected as HttpClient, import { HttpClient } from '@angular/common/http';
+        !!! API sends back: {token, user}
+        !!! pipe() only if need to intercept data to change before returning to front
+        !!! login(model: any){} vs register(user: User){}   in service
+                (user.ts)
+                    export interface User {
+                        id: number;
+                        username: string;                        
+                        created: Date;
+                        lastActive: any;                        
+                        interests?: string;                        
+                        photos?: Photo[];
+                        }
+
+

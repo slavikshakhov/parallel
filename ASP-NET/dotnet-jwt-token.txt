@@ -1,0 +1,39 @@
+//(Controller)
+
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+ 
+
+(in Controller of in separate function)
+
+    var key = new SymmetricSecurityKey (Encoding.UTF8.GetBytes (_config.GetSection ("AppSettings:TokenSecret").Value));
+            
+
+            var tokenDescriptor = new SecurityTokenDescriptor {                
+                Subject = new ClaimsIdentity(
+                    new [] {
+                        new Claim ("id", user.Id.ToString()),  // or ClaimTypes.NameIdentifier
+                        new Claim ("name", user.Name)           // or ClaimTypes.Name
+                    }
+                ),                
+                Expires = DateTime.Now.AddDays (1),
+                SigningCredentials = new SigningCredentials (key, SecurityAlgorithms.HmacSha256Signature)
+            };         
+
+            var token = new JwtSecurityTokenHandler ().CreateToken(tokenDescriptor);
+
+
+    !!!
+    (appsettings.json)
+         "AppSettings": {
+            "TokenSecret": "super secret key"      
+        },
+        !!! secret key > 12 chars, in real proj must be long and complex
+        !!! to access appsettings.json from Controller, inject IConfiguration config as _config
+                            _config.GetSection("AppSettings:TokenSecret").Value));
+       
+header: 
+payload:
+signature:
+
+    

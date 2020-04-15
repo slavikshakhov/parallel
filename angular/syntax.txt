@@ -1,0 +1,103 @@
+1. ITERATION
+     (html):    <li *ngFor="let language of offeredLanguages"  class="list-item">{{language}}</li>
+
+2. FORM BUILDER
+    ***************************************************************************************************
+    !!! without FormBuilder: 
+
+        const heroForm = new FormGroup({
+            'name': new FormControl(),
+            'alterEgo': new FormControl(),
+            'power': new FormControl()
+            });
+    **************************************************************************************************
+    !!! with FormBuilder (all code below)
+    import { FormGroup, FormControl, FormArray, Validators, FormBuilder} from '@angular/forms';
+    1. basic
+        loginForm: FormGroup;
+        constructor(private fb: FormBuilder){
+            this.loginForm = this.fb.group({ 
+                name: ['', Validators.required],
+                password: ['', [ Validators.required]]
+                });
+        }
+    !!! french: [false]   --> initial value false (ex checkbox)
+    2. dynamically, using iteration (ex. checkbox):
+    
+        myForm: FormGroup;
+        offeredLgs = [  {name: 'english', selected: false}, {name: 'french', selected: false} ];
+        constructor(private fb: FormBuilder){
+            this.myForm = this.fb.group({
+                  checkArray: this.fb.array([], [Validators.required])]
+                });
+            }
+            !!! each el of checkArray is:  new FormControl(e.target.value)
+            !!! to access checkArray, any change updates checkArray:  this.myForm.get('checkArray) as FormArray;
+            !!! to access els of checkArray: checkArray.controls.forEach((el: FormControl) => {  ...    });
+            !!! to remove el (FormControl) from checkArray: checkArray.removeAt(i);
+            
+
+        onCheckboxChange(e) {
+            const checkArray: FormArray = this.myForm.get('checkArray') as FormArray;
+
+            if (e.target.checked) {
+                checkArray.push(new FormControl(e.target.value));
+            } else {
+                let i = 0;
+                checkArray.controls.forEach((el: FormControl) => {
+                    if (el.value === e.target.value) {
+                        checkArray.removeAt(i);
+                        return;
+                    }
+                    i++;
+                });
+            }
+        }
+        !!! to access result form's array in js: this.myForm.value.checkArray
+                                          in html: this.myForm.controls['checkArray']
+
+        !!! html
+
+            <form [formGroup]="myForm" (ngSubmit)="submit()">
+                !!! normal input
+
+                    <input type="text" formControlName="name" />
+                    <p>{{myForm.get('password').errors  && myForm.get('password').touched ? 'Password!!!': 'Password'  }}</p>
+
+                !!! checkbox, see js above, checkArray (no formControlName here):
+
+                    <li *ngFor='let offeredLg of offeredLgs; let i=index'>
+                        <input type="checkbox" id='{{offeredLg.name}}' 
+                               [value]='offeredLg.name' (change)="onCheckboxChange($event)" class="">
+                        <label class='popup-label' for='{{offeredLg.name}}'>{{offeredLg.name}}</label>
+                    </li>                 
+
+                    <p class="error" *ngIf="myForm.controls['checkArray'].errors?.required">
+                        Checkbox is required, select at least one value.
+                    </p>
+
+        !!! html, access errors: 
+            1. form level: myForm.errors?.required   
+                !!! in case of FormArray (see above): myForm.controls['checkArray'].errors?.required
+            2. input level: myForm.get('password').errors
+                            myForm.get('password').hasError('required')    // .hasError('minLength')
+
+*************************************************************************************************************
+**************************** HTML **************************************************************************
+
+1. partial list of elements:
+    <li *ngFor='let el of els | slice:0:6'> ... </li>
+
+2. input value, onChange:  
+    <input ... [value]='offeredLg.name' (change)="onCheckboxChange($event)">
+    (js)  onCheckboxChange(e) {  ... e.target.value ... e.target.checked (if checkbox) .... }
+
+3. input checked / unchecked:
+    <input [checked]='offeredLg.selected' />
+
+
+
+                                    
+
+        
+    

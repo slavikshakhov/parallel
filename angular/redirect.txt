@@ -1,7 +1,0 @@
-!!! first setup routing
-
-(in comp):
-import { Router } from '@angular/router';  //inject constructor(private router: Router){}
-
-(in comp's method body):
-this.router.navigate(['/els']);

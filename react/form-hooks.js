@@ -66,4 +66,6 @@ function Search() {
   //! ONLY UPDATE THIS stat's value, not the rest
   useEffect(() => { console.log(`You clicked ${count} times`); }, [count]); // Only re-run the effect if count changes
 
-  //******************************************
+  //****************************************** RESET INPUTS *****************************************
+
+  e.target.reset();   // !!! only resets inputs, html standard

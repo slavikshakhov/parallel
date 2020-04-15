@@ -99,10 +99,42 @@ ActionResult<T>
         }
         (elsewhere):  Person p = new Person("Slavik", 44);  !!! if this class returns p, rt of class: Person
 
+3. props in models (ASP.NET)
+     public virtual ICollection<Photo> Photos { get; set; }
+
+**********************************************************************************************************
+**************************** GETTERS SETTERS *************************************************************
+
+a. public string N { get; set; }
+b. string n;
+   public string N { get { return this.n; }
+                     set { this.n = value; }  } 
+c. public string n;
+   public string N { get { return n; }
+                     set { n = value; }  }    !!! better to use _n
+
+d. public string _n;
+   public string N { get => _n; 
+                     set => _n = value;  } 
+
+TRANSFORM PROP 
+    private string _ns;
+    
+    [NotMapped]
+    public string[] Ns { get => _ns.Split(";"); 
+                         set => _ns = string.Join(";", value);  }
+
+    or
+    private static readonly char delimiter = ';';
+    private string _ns;
+    
+    [NotMapped]
+    public string[] Ns { get => _ns.Split(delimiter); 
+                         set => _ns = string.Join($"{delimiter}", value);  }
 
 
-    *******************************************************************************************************
-    ***************************** SCOPE ******************************************************************
+**********************************************************************************************************
+***************************** SCOPE **********************************************************************
 
     public bool Test()  
         {                                   
@@ -202,6 +234,8 @@ public static class Ext {
             Calcul.Val(out i);
             return i;           
         }
+3. USING
+    
 
 
 

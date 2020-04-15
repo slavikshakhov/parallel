@@ -98,6 +98,14 @@ public void ConfigureDevelopmentServices(IServiceCollection services)
             //after altering table, not reading:
             _context.SaveChangesAsync();      !!! function return type: Task<bool>
 
+  ********************************* update user with all related data
+            await _context.Users.AddAsync(user);    
+            _context.Entry(user).State = Microsoft.EntityFrameworkCore.EntityState.Modified;        
+            if(await _context.SaveChangesAsync() > 0){
+                return user;
+            }
+            return null;
+
 
 ***********************************************************************************************************
 ****************************** MySql *********************************************************************
@@ -120,6 +128,33 @@ pkg:  Microsoft.EntityFrameworkCore
             }); 
 __________________________________________________________
 
+ARRAY AS PROPERTY TO MySql WITH EntityFrameworkCore
+
+1. Model
+    public class Book
+    {        
+        public int Id { get; set; }         
+        public string Title { get; set; }
+        public string[] Strings { get; set; }        
+    }
+2. DATA CONTEXT 
+    public class LibraryContext : DbContext
+    {
+        public LibraryContext(DbContextOptions<LibraryContext> options) : base(options) { }
+        public DbSet<Book> Books { get; set; }    
+        protected override void OnModelCreating(ModelBuilder mb)
+        {
+            mb.Entity<Book>()
+                .Property(e => e.Strings)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries));
+        }
+    }
+
+_______________________________________________________________________________________________________
+
+
 SEED DATA WITH Users
 
  public class UserDbContext : DbContext
@@ -140,3 +175,248 @@ SEED DATA WITH Users
         }
     }
 }
+*************************************************************************************************************
+******************************** MySql *********************************************************************
+
+
+
+https://www.youtube.com/watch?v=PpqdsJDvcxY
+
+
+pks: Pomelo.EntityFrameworkCore.MySql
+     Microsoft.EntityFrameworkCore.Design
+     Microsoft.EntityFrameworkCore.Tools
+     
+        !!! pks version as in dotnet runtime
+        !!! >> dotnet add package MySql.Data.EntityFrameworkCore   //to add new pkg via cmd 
+       
+***********************************  ONE MANY ****************************************************************
+    
+1. MODELS   (here Publisher has many Books, Book has fk)
+
+    public class Book
+    {        
+        public int ID { get; set; }  
+        public string Title { get; set; }
+        (other props)   
+        public int PublisherId { get; set; }  
+        public virtual Publisher Publisher { get; set; }
+    }
+
+    public class Publisher
+    {
+        public int ID { get; set; }
+        public string Name { get; set; }
+        (other props)
+        public virtual ICollection<Book> Books { get; set; }
+    }
+   !!! above prop: 
+            [Required] 
+            (prop)
+
+            [Column(TypeName="decimal(18, 2)")]
+            public decimal Price {get; set;}
+
+            public string? Address {get; set;}  //nullable
+
+    !!! One to Many:
+            One:     public ICollection<Order> Orders {get; set;}
+            Many:    public int CustomerId {get; set;}
+                     public Customer Customer {get; set;}
+
+    !!! Many to Many: 
+            One1:  public ICollection<ManyModel> Orders {get; set;}
+            One2:  public ICollection<ManyModel> Orders {get; set;}
+
+            Many:  public int One1Id {get; set;}
+                   public One1 One1 {get; set;}
+
+                   public int One2Id {get; set;}
+                   public One2 One2 {get; set;}
+2. CONTEXT 
+    public class LibraryContext : DbContext
+    {
+        public LibraryContext(DbContextOptions<LibraryContext> options) : base(options) { }
+        public DbSet<Book> Books { get; set; }
+
+        public DbSet<Publisher> Publishers { get; set; }
+
+           
+    }
+3. Startup.cs (in ConfigureServices):
+    services.AddDbContext<DataContext>(x => x.UseMySql(Configuration.GetConnectionString("DefaultConnection")));
+
+4. appsettings.json
+    "ConnectionStrings": { "DefaultConnection": "Server=localhost;Port=3306;Database=sample;A=root;Password=gerKanuk55" },
+
+!!! now do migration and to db:
+    >> dotnet ef migrations add MyFirstMigration
+    >> dotnet ef database update
+
+
+
+*************************************************************************************************************
+*********************************** MANY MANY ****************************************************************
+
+Models A, B, AB1, AB2 -> Tables A, B, AB1, AB2  (AB1, AB2 created with ModelBuilder)
+
+!!! (ex. User Language -> UserOfferedLanguage, UserWantedLanguage) replace in scheme below:
+    A is User
+    B is Language
+    AB1 is UserOfferedLanguage, AB2 is UserWantedLanguage
+
+
+MODELS    
+
+public class A {
+    public int Id { get; set; }  
+    public string Name { get; set; }  
+    public ICollection<AB>  AB { get; set; }   
+    public ICollection<AD>  AD { get; set; }  
+}
+
+public class B {
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public ICollection<AB>  AB { get; set; }   
+    public ICollection<AD>  AD { get; set; } 
+}
+public class AB {
+        public int AId { get; set; }
+        public A A { get; set; }
+        public int BId { get; set; }
+        public B B { get; set; }
+}
+
+
+DATA CONTEXT 
+    public class DataContext : DbContext
+    {
+        public DataContext(DbContextOptions<DataContext> options) : base(options) { }
+
+        public DbSet<A> As { get; set; }
+        public DbSet<B> Bs { get; set; }
+     
+        
+        protected override void OnModelCreating(ModelBuilder mb)
+        {
+            mb.Entity<AB>()
+                .HasKey(x => new { x.AId, x.BId});                               
+        }
+    }
+    
+!!! updating existing records, here update AB (linked table for A and B):
+DATE FROM FRONT -> ASP.NET Controller: get userDto, contains string<B> BB
+
+1. input: A's id, string list of bs //refered here as idFromFront and bsFromFront
+2. var aFromDB = await _context.As.Include(a => a.AB).FirstOrDefaultAsync(a => a.Id == idFromFront);
+3. get all bs from db, create empty string list, iterate: all bsFromDB + bsFromFront ->
+        if Name matches -> add one by one b of bsFromDB to empty string list (bsSelected);
+4. create empty list of AB (abList)
+        iterate through bsSelected -> for each iteration: 
+            abList.Add(new AB { A = aFromDB, B = one of els of iteration});
+5. aFromDB.AB = abList;
+6.  _context.Attach(aFromDB);
+    _context.Entry(aFromDB).Collection("AB").IsModified = true;
+7. //show result as array list of updated bs for this aFromDB:
+        var abs = _context.AB;
+        var bsFromDB = _context.Bs;
+        var bs = (
+            abs.Where(el => el.AId == aFromDB.Id)
+                .Join(bsFromDB, ab => ab.BId, b => b.Id, (ab, b) => b.Name)
+                    );
+8. return bs.ToList();
+
+
+
+******************************************** SAVE STRING ARRAY AS PROPERTY ********************************
+
+Option 1: Best to create table One to Many table
+
+Option 2: Convert [] -> string, save in db, when getting: string -> [];
+
+1. MODELS
+    public class Book
+    {        
+        public int Id { get; set; }       
+        public string Title { get; set; }
+        public string[] Strings { get; set; }        
+    }
+2. DataContext
+    public class LibraryContext : DbContext
+    {
+        public LibraryContext(DbContextOptions<LibraryContext> options) : base(options) { }
+        public DbSet<Book> Books { get; set; }    
+        protected override void OnModelCreating(ModelBuilder mb)
+        {
+            mb.Entity<Book>()
+                .Property(e => e.Strings)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries));
+        }
+    }
+___________________________________________________________________________________________________________
+
+*********************************************************************************************************
+*********************************** SEEDING DATA ********************************************************
+(in DataContext)
+
+1. no relationships:
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Author>().HasData(
+            new Author
+            {
+                AuthorId = 1,
+                FirstName = "William",
+                LastName = "Shakespeare"
+            }
+        );
+    }
+2. with relationships: 
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Author>().HasData(
+            new Author
+            {
+                AuthorId = 1,
+                FirstName = "William",
+                LastName = "Shakespeare"
+            }
+        );
+        modelBuilder.Entity<Book>().HasData(
+            new Book { BookId = 1, AuthorId = 1, Title = "Hamlet" },
+            new Book { BookId = 2, AuthorId = 1, Title = "King Lear" },
+            new Book { BookId = 3, AuthorId = 1, Title = "Othello" }
+        );
+    }
+!!! using extension method:
+
+1.  public static class ModelBuilderExtensions
+    {
+        public static void Seed(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Author>().HasData(
+                new Author
+                {
+                    AuthorId = 1,
+                    FirstName = "William",
+                    LastName = "Shakespeare"
+                }
+            );
+            modelBuilder.Entity<Book>().HasData(
+                new Book { BookId = 1, AuthorId = 1, Title = "Hamlet" },
+                new Book { BookId = 2, AuthorId = 1, Title = "King Lear" },
+                new Book { BookId = 3, AuthorId = 1, Title = "Othello" }
+            );
+        }
+    }
+2. (in DataContext):
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Seed();
+    }

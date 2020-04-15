@@ -1,0 +1,94 @@
+******************************************************************************************************************
+*************************************** CREATE TOKEN (Server) *****************************************************
+1. Node.js
+    const jwt = require('jsonwebtoken');
+
+    jwt.sign({id: user.id, name: user.name}, 'secretkey', { expiresIn: '30s' }, (err, token) => {               
+              res.json({token});
+    });
+2. ASP.NET
+    var key = new SymmetricSecurityKey (Encoding.UTF8.GetBytes (_config.GetSection ("AppSettings:TokenSecret").Value));
+            
+
+            var tokenDescriptor = new SecurityTokenDescriptor {                
+                Subject = new ClaimsIdentity(
+                    new [] {
+                        new Claim (ClaimTypes.NameIdentifier, user.Id.ToString()),
+                        new Claim (ClaimTypes.Name, user.Name)
+                    }
+                ),                
+                Expires = DateTime.Now.AddDays (1),
+                SigningCredentials = new SigningCredentials (key, SecurityAlgorithms.HmacSha256Signature)
+            };         
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenObj = tokenHandler.CreateToken(tokenDescriptor);
+            
+            var token = tokenHandler.WriteToken(tokenObj);
+***********************************************************************************************************************   
+***************************************  RECEIVE TOKEN (front) *********************************************************
+
+1. React
+    to decode token: 
+         var jwtDecode = require('jwt-decode');
+         jwt_decode(token);       
+
+         !!! use it in redux state, loggedIn: !expired:
+
+            case "LOGGEDIN":
+            const jwtDecode = require('jwt-decode');
+            let isExpired = true;
+            const dateNow = new Date();
+            if(action.payload){
+                const decodedToken =jwtDecode(action.payload);   //payload is token from server
+                
+                if(decodedToken.exp < dateNow.getTime()){
+                    isExpired = false;
+                }
+            }            
+            return {
+                ...state,
+                loggedIn: !isExpired
+            }
+
+2. Angular 
+    (in service)
+        import { map } from 'rxjs/operators';
+        import { JwtHelperService } from '@auth0/angular-jwt';   //npm
+
+        (fields)
+        jwtHelper = new JwtHelperService();
+        decodedToken: any;
+
+    (in service's function)
+        return this.http.post(this.baseUrl + 'login', model).pipe(
+            map((response: any) => {
+                const user = response;
+                if (user) {
+                localStorage.setItem('token', user.token);                
+                this.decodedToken = this.jwtHelper.decodeToken(user.token);                
+                }
+            })
+        );
+    !!! if elsewhere need to check if logged in:
+            (in authService)
+
+                    loggedIn() {
+                        const token = localStorage.getItem('token');
+                        return !this.jwtHelper.isTokenExpired(token);
+                    }
+            (elsewhere)
+                (html) <div *ngIf="loggedIn()"> ... </div>
+                    !!! need to inject authService in .ts as public
+
+        if elsewhere need to have access to logged in user's name: 
+                            (html) Welcome {{ authService.decodedToken?.unique_name | titlecase }}
+                                  !!! need to inject authService in .ts as public
+    _________________________________________________________________________________________
+    REMOVE TOKEN (in login comp)
+
+        logout() {
+            localStorage.removeItem('token');         
+            this.authService.decodedToken = null;            
+            this.alertify.message('logged out');
+            this.router.navigate(['/home']);
+        }

@@ -8,22 +8,21 @@
 
 
 .select {
-    flex: 1 1 0%;
-    appearance: none;
+    height: 6rem;    
     outline: none;
-    border: none;
-    background-color: var(--blue-300);
+    border: 2px solid var(--blue-800);
+    background-color: var(--blue-200);
     color: var(--blue-800);
     font-size: 1.125rem;
     font-weight: 600;
     padding: 0.75rem;
     text-transform: capitalize;
     border-radius: 0.25rem;
-    overflow: hidden;
+    overflow-y: scroll;
 }
 
 .option {
-    background-color: var(--blue-300);
+    background-color: var(--blue-200);
     text-transform: capitalize;
     color: var(--blue-800);
 }

@@ -1,0 +1,237 @@
+ 1. return filtered list
+
+    int[] nums = {1, 2, 3, 4, 5, 6};
+    var oddNums = (from n in nums where (n % 2) == 0 select n);
+    return oddNums;
+
+2. return filtered list using context.Users
+
+    var users = _context.Users;
+    IEnumerable<User> usersShortName = (from us in users where us.Firstname.Length == 3 select us);
+    return usersShortName;
+
+3.  !!! query works only with IEnumerable<dt>, if List<dt>, need extension of Enumerable
+
+    List<int> Nums = new List<int> {1, 2, 3, 4, 5, 6, 7};
+    IEnumerable<int> EvenNums = Enumerable.Where(Nums, n => n % 2 == 0);
+    foreach (int n in EvenNums){
+        Console.WriteLine(n);
+    }    
+
+4. same as above but without extension, using original IEnumerabl
+
+    IEnumerable<int> Nums = new List<int> {1, 2, 3, 4, 5, 6, 7};
+    IEnumerable<int> EvenNums = Nums.Where( n => n % 2 == 0);
+    foreach (int n in EvenNums){
+        Console.WriteLine(n);
+    }   
+
+5. min
+        a. c#
+            int[] Nums = {1, 2, 3, 4, 5, 6};
+            int? res = null;
+            foreach (int n in Nums){
+                if(!res.HasValue || n < res){
+                    res = n;
+                }
+            }
+            Console.WriteLine(res);
+         
+            
+        b. LINQ
+            int[] Nums = {1, 2, 3, 4, 5, 6};
+            int res = Nums.Min();
+            
+        
+5. min even number LINQ
+
+    int[] Nums = {1, 2, 3, 4, 5, 6};
+    int MinEven = Nums.Where(n => n % 2 == 0).Min();
+    
+6. max LINQ   .Max()
+
+7. sum 
+    a. c#
+        int[] Nums = {1, 2, 3, 4, 5, 6};
+        int sum = 0;
+        foreach(int n in Nums){
+            sum += n;
+        }
+        return sum;
+    
+    b. LINQ
+        int[] Nums = {1, 2, 3, 4, 5, 6};
+        int res = Nums.Sum();
+        return res;
+    
+8. arr length
+    a. c#
+        int[] Nums = {1, 2, 3, 4, 5, 6};
+        int count = 0;
+        foreach(int n in Nums){
+            count += 1;
+        }
+        return count;
+        
+    b. LINQ
+        int[] Nums = {1, 2, 3, 4, 5, 6};
+        int count = Nums.Count();
+        return count;
+        
+9. average
+    a. c#
+        int[] Nums = {1, 2, 3, 4, 5, 6};
+        double? sum = 0;
+        int count = 0;
+        double? res = 0;
+        foreach(int n in Nums){
+            sum += n;
+            count += 1;
+        }
+        res = sum / count;
+        return res;
+    
+    b. LINQ
+        int[] Nums = {1, 2, 3, 4, 5, 6};
+        double res = Nums.Average();
+        return res;
+        
+10. from string array find shortest str and print number of chars in it and longest str and print number of chars in it
+    a. c#
+        string[] arr = {"Slavik", "Carlos", "Lena", "Adrian", "Willy", "John", "Vyacheslav", "TJ"};
+        int? res = null;
+        foreach(string s in arr){
+            if(!res.HasValue || s.Length < res){
+                res = s.Length;
+            }
+        }
+        Console.WriteLine("shortest name has {0} chars", res);
+        return res;
+        
+    b. LINQ
+        string[] arr = {"Slavik", "Carlos", "Lena", "Adrian", "Willy", "John", "Vyacheslav", "TJ"};
+        int minCount = arr.Min(x => x.Length);
+        int maxCount = arr.Max(x => x.Length);
+        
+11. convert string array into single string of items separated by comma, without comma after last item
+
+    a. c#
+        string[] arr = {"Slavik", "Carlos", "Lena", "Adrian", "Willy", "John", "Vyacheslav", "TJ"};
+        string res = string.Empty;
+        foreach(string s in arr){
+            res += s + ", ";
+        }
+        int lastIndes = res.LastIndexOf(",");
+        res = res.Remove(lastIndex);
+        return res;
+        
+    b. LINQ
+        string[] arr = {"Slavik", "Carlos", "Lena", "Adrian", "Willy", "John", "Vyacheslav", "TJ"};
+        string res = arr.Aggregate((a, b) => a + ", " + b);  1st and 2nd els -> 1st + 2nd and 3rd....
+        return res;
+
+12. multiply each number of array with LINQ
+
+    int[] Nums = {1, 2, 3, 4, 5, 6};
+    int res = Nums.Aggregate((a, b) => a * b);
+    return res;
+
+13. multiply each number of array starting with constant number 10
+
+    int[] Nums = {1, 2, 3, 4, 5, 6};
+    int res = Nums.Aggregate(10, (a, b) => a * b);
+    return res;
+
+14. from int array return even nums with LINQ
+
+    a. Where without Func
+        List<int> Nums = new List<int> {1, 2, 3, 4, 5, 6};
+        IEnumerable<int> evenNums =  Nums.Where(x => x % 2 == 0);
+        foreach(int n in evenNums){
+            Console.WriteLine(n);
+        }
+            
+    b. Where with Func
+        List<int> Nums = new List<int> {1, 2, 3, 4, 5, 6};
+        Func<int, bool> predicate = x => x % 2 == 0;
+        IEnumerable<int> evenNums =  Nums.Where(predicate);
+        foreach(int n in evenNums){
+        Console.WriteLine(n);
+        }
+                
+    c. Where with function
+        List<int> Nums = new List<int> {1, 2, 3, 4, 5, 6};
+        
+        IEnumerable<int> evenNums =  Nums.Where(n => isEven(n));
+        foreach(int n in evenNums){
+        Console.WriteLine(n);
+        }           
+        
+            (in separate function):
+                private static bool isEven(int num){
+                    if(num % 2 == 0){
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                } 
+                or return num % 2 == 0   
+        
+    d. using SQL syntax
+            List<int> Nums = new List<int> {1, 2, 3, 4, 5, 6};
+            IEnumerable<int> evenNums = from n in Nums where n % 2 == 0 select n;
+            return evenNums;
+    
+15. if need Where with index, use Select (from int array return el - index)
+    
+        List<int> Nums = new List<int> {1, 2, 3, 4, 5, 6};
+        var res = Nums.Select((n, i) => new { Number = n, Index = i});
+            for anonymous types use var, unknown dt
+        foreach(var el in res){
+            Console.WriteLine(el.Number + " - " + el.Index);
+        }
+        
+16. see #15, but even nums
+
+    List<int> Nums = new List<int> {1, 2, 3, 4, 5, 6};
+    var res = Nums.Select((n, i) => new { Number = n, Index = i}).Where(x => x.Number % 2 == 0);
+            for anonymous types use var, unknown dt
+    foreach(var el in res){
+            Console.WriteLine(el.Number + " - " + el.Index);
+    }
+       
+17. see #16 but return only indexes of all even numbers
+
+    List<int> Nums = new List<int> {1, 2, 3, 4, 5, 6};
+    var res = Nums.Select((n, i) => new { Number = n, Index = i}).Where(x => x.Number % 2 == 0).Select(x => x.Index);
+        for anonymous types use var, unknown dt
+    foreach(int el in res){
+        Console.WriteLine(el);
+    }    
+
+************************************************************************************************************
+*************************** PRACTICE ***********************************************************************
+1. with LINQ query from int[] return odd numbers
+2. with LINQ query from context.Users return users whose Name is 3 chars long
+3  with LINQ query from List<int> return odd numbers
+4. with LINQ query from IEnumerable<int> return odd numbers
+5. from int[] return min with (a) c#  (b) LINQ method
+6. from int[] return max with LINQ method
+7. from int[] return sum with (a) c#  (b) LINQ method
+8. from int[] return arr length with (a) c#  (b) LINQ method
+9. from int[] return average number (as double) with (a) c#  (b) LINQ method
+10. from string[] find shortest str and print number of chars in it and longest str and print number of chars in it
+        with (a) c#  (b) LINQ method
+11. convert string[] into single string of items separated by comma, without comma after last item
+        with (a) c#  (b) LINQ method
+12. multiply each number of int[] with LINQ method
+13. multiply each number of int[] starting with constant number 10, with LINQ method
+14. from int[] return even nums with LINQ
+    a. Where with simple lambda
+    b. Where with Func
+    c. Where with external function
+    d. with LINQ SQL syntax
+15. from int[] return el - index for each iteration, LINQ method
+16. from int[] return el - index for each iteration, where el is even number, LINQ method
+17. from int[] return indeces for even numbers

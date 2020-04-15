@@ -1,0 +1,45 @@
+1. Angular, Resolver:
+
+import { Resolve, Router, ActivatedRouteSnapshot } from '@angular/router';
+import { catchError } from 'rxjs/operators';
+
+    @Injectable()
+    export class MemberDetailResolver implements Resolve<User> {
+        constructor(
+            private userService: UserService,
+            private router: Router           
+        ) {}
+
+        resolve(route: ActivatedRouteSnapshot): Observable<User> {
+            
+            return this.userService.getUser(route.params[`id`]).pipe(
+            catchError(error => {
+
+                (show error, use alertify)
+                (do something, ex redirect)             // this.router.navigate(['/members']);
+
+                return of(null);
+               })
+            );
+        }
+    }
+2. Angular, Service: 
+
+    getUser(id: number): Observable<User> {
+        return this.http.get<User>(this.baseUrl + 'users/' + id);
+    }
+!!! app.module.ts  -  providers []  (Resolver, Service)
+
+
+3. routes: 
+    { path: 'members/:id', component: MemberDetailComponent, resolve: { user: MemberDetailResolver }
+
+
+4. Angular, Component (MemberDetailComponent):
+
+    ngOnInit() {
+        this.route.data.subscribe(d => {
+            console.log(d);
+            this.user = d.user;
+        });
+    !!!  inject private route: ActivatedRoute -> to use route

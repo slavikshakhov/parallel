@@ -1,9 +1,13 @@
+************************************************************************************************************
+**************************** REACTIVE FORM **************************************************************
+
 1. (app.module.ts, imports) ReactiveFormsModule  ... import { ReactiveFormsModule } from '@angular/forms';
 2. (comp):
 
         import { FormGroup, FormControl, Validators, FormBuilder} from '@angular/forms';
 
-        (comp's field): registerForm: FormGroup;
+        (comp's field)
+            registerForm: FormGroup;
 
         constructor(private fb: FormBuilder) {}
 
@@ -21,6 +25,7 @@
             { validator: this.passwordMatchValidator }
             );
         }
+        
         passwordMatchValidator(g: FormGroup) {
             return g.get('password').value === g.get('confirmPassword').value ? null : { mismatch: true };
         }
@@ -28,11 +33,22 @@
             if (this.registerForm.valid) {
             this.user = Object.assign({}, this.registerForm.value);
                     //use this.user to send to service for http post req
+                    //show result from service (http request) to UI (use alertify, see alertify.txt)
 
                     this.registerForm.reset();    //to empty form
                 }
             }
+
+    !!! if checkbox's at least one field required checked: 
+
+         this.searchUsers = this.fb.group({.....}, { validator: this.checkChk });
+         checkChk(group: FormGroup) {
+                return Object.keys(group.controls).some(x => group.controls[x].value === true) ? 
+                        null : { notValid: true }
+                }
+
 3. (html)
+
 <form [formGroup]="registerForm" (ngSubmit)="register()">
     ***
     <div>
