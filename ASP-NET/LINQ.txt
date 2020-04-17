@@ -209,9 +209,519 @@
     foreach(int el in res){
         Console.WriteLine(el);
     }    
+********* One To Many in Entity FW ***********
+********* Example 1 **************************
+
+    1. Models
+            One:     public ICollection<Order> Orders {get; set;}
+            Many:    public int CustomerId {get; set;}
+                     public Customer Customer {get; set;}
+    2. seed data (DataContext.cs)
+        public class DataContext : DbContext
+        {
+            public DataContext(DbContextOptions<DataContext> options) : base(options) { }
+
+            public DbSet<User> Users { get; set; }
+            public DbSet<Lg> Lgs { get; set; }        
+            public DbSet<A> As { get; set; }       
+            public DbSet<B> Bs { get; set; }       
+            
+            
+            
+            protected override void OnModelCreating(ModelBuilder modelBuilder)
+            {            
+                modelBuilder.Entity<UserLg>().HasKey(x => new { x.UserId, x.LgId }); 
+                modelBuilder.Entity<A>()   
+                .HasData(
+                    new A { Id = 1, AName = "A1", AFig = 10},    
+                    new A { Id = 2, AName = "A2", AFig = 20}                   
+                );
+                modelBuilder.Entity<B>()   
+                .HasData(
+                        new B { Id = 1, BName = "B1", BFig = 10, BGen = "M", AId = 1},    
+                        new B { Id = 2, BName = "B2", BFig = 20, BGen = "M", AId = 1},   
+                        new B { Id = 3, BName = "B3", BFig = 30, BGen = "M", AId = 1},   
+                        new B { Id = 4, BName = "B4", BFig = 40, BGen = "F", AId = 2},   
+                        new B { Id = 5, BName = "B5", BFig = 50, BGen = "F", AId = 2}  
+                        );                  
+            }
+        }
+    3. Configure DB (Startup.cs) in ConfigureSeervices
+        services.AddDbContext<DataContext>(x => {                 
+                 x.UseMySql("Server=localhost;Port=3306;Database=aaaa;User=root;Password=gerKanuk55");
+            }); 
+    4. >>dotnet ef migrations add newMigration
+       >>dotnet ef database update
+****************************************************     
+18. print b.BName from As with AName "A1" and "A2"  (A to B as One to Many)
+
+        var aa = _context.As;
+        IEnumerable<A> aaa = aa.Include(x => x.Bs).Where(x => x.AName == "A1" || x.AName == "A2");
+
+        foreach(A a in aaa){
+            IEnumerable<B> bb = a.Bs.Where(x => x.BGen == "M");
+            foreach(B b in bb){
+                Console.WriteLine("B Name = " + b.BName);                    
+            }
+        }
+19. Print ids of all bs  (extract one col)
+
+        IEnumerable<int> bs = _context.Bs.Select(x => x.Id);
+        foreach(int b in bs){
+            Console.WriteLine(b);
+        }
+20. Print: BName - BGen for all bs (extract > 1 col)
+
+        var bs = _context.Bs.Select(x => new {Name = x.BName, Gender = x.BGen});
+        foreach(var b in bs){
+            Console.WriteLine(b.Name + " - " + b.Gender);
+        }
+
+21. Print: BName - BFig - Bonus (only if BFig > 20, Bonus is 15% of BFig) !!! a * 0.15 (a must be double)
+
+     var bs = _context.Bs.Where(x => x.BFig > 20).Select(x => new {Name = x.BName, Salary = x.BFig, Bonus = x.BFig * .15});
+    foreach(var b in bs){
+        Console.WriteLine(b.Name + " - " + b.Salary + " - " + " - " + b.Bonus);
+    }
+
+!!! outerArr.SelectMany(x => x);   where x is inner arr or string -> returns els of x one by one
+                                   return all inner arrays els from all outer array flattened
+                                   inner array in x => x.Bs is x.Bs
+                                   all courses of student A + all courses of student B -> all courses
+
+22. Pring BName for all bs of all as  (as -> bs -> B.Name) 
+    a. LINQ method
+
+        var aa = _context.As;
+        IEnumerable<B> bs = aa.SelectMany(a => a.Bs);
+        foreach(B b in bs){
+            Console.WriteLine(b.BName);
+        }
+
+    b. LINQ SQL syntax
+
+        var aa = _context.As;
+        IEnumerable<B> bs = from a in aa from b in a.Bs select b;
+        foreach(B b in bs){
+            Console.WriteLine(b.BName);
+        }
+23. 2 strings -> break into chars, flatten into one chunk, print all char per line
+
+    a. LINQ method
+
+        string[] str = {"very", "good"};
+        IEnumerable<char> res = str.SelectMany(x => x);
+        foreach(char el in res){
+            Console.WriteLine(el);
+        }
+    b. LINQ SQL syntax
+
+        string[] str = {"very", "good"};
+        IEnumerable<char> res = from s in str from ch in s select ch;
+        foreach(char el in res){
+            Console.WriteLine(el);
+        }
+
+24. from bs print all distinct BFig
+
+        var bs = _context.Bs;
+        IEnumerable<double> res = from b in bs select b.BFig distinct;
+
+        foreach(double el in res){
+            Console.WriteLine(el);
+        }
+
+        !!! or  IEnumerable<double> res = (from b in bs select b.BFig).Distinct();
+
+25. print   A1 - B1    where A1 and B1 are AName and BName 
+            A1 - B2
+            A1 - B3
+            A2 - B4
+            A2 - B5
+            A2 - B6
+    !!!see #22 but here need access to outer array as well
+
+    a. LINQ method 
+        
+        var aa = _context.As;
+        var res = aa.SelectMany(a => a.Bs, (a, b) => new { AName = a.AName, BName = b.BName});
+        foreach(var r in res){
+            Console.WriteLine("{0} - {1}", r.AName, r.BName);
+        }
+    b. LINQ SQL syntax
+
+        var aa = _context.As;
+        var res = from a in aa from b in a.Bs select new {AName = a.AName, BName = b.BName};
+        foreach(var r in res){
+            Console.WriteLine("{0} - {1}", r.AName, r.BName);
+        }
+26. Select vs SelectMany: print BName for all Bs of all As
+
+    a. Select:
+
+        var aa = _context.As;
+        IEnumerable<ICollection<B>> bsChunks = aa.Select(a => a.Bs);
+        foreach(ICollection<B> bs in bsChunks){
+            foreach(B b in bs){
+                Console.WriteLine(b.BName);
+            }
+        }
+    b. SelectMany
+
+        var aa = _context.As;
+        IEnumerable<B> bs = aa.SelectMany(a => a.Bs);        
+        foreach(B b in bs){
+            Console.WriteLine(b.BName);
+        }
+
+27. ascending order of AName of all As
+    a. LINQ method
+
+        var aa = _context.As;
+        IEnumerable<A> res =  aa.OrderBy(a => a.AName);          
+        foreach(A a in res){
+            Console.WriteLine(a.AName);
+        }
+
+    b. LINQ SQL syntax
+
+        var aa = _context.As;
+            IEnumerable<A> res =  from a in aa orderby a.AName ascending select a;              
+            foreach(A a in res){
+                Console.WriteLine(a.AName);
+            }
+        !!! ascending optional here
+
+    !!! .OrderByDescending(a => a.AName)   .... descending
+
+28. print       10      P       1     where col1 is AFig, col2 is AName, col3 is Id
+                10      X       7
+                10      Y       5
+                20      J       2
+                20      Z       6
+                30      F       3
+                30      G       4
+
+        !!! order 1st by AFig, then within each new group order by AName (ascending)
+
+    a. LINQ method
+
+        var aa = _context.As;
+        IEnumerable<A> res =  aa.OrderBy(a => a.AFig).ThenBy(a => a.AName);        
+        
+        foreach(A a in res){
+            Console.WriteLine(a.AFig + "\t" + a.AName + "\t" + a.Id);
+        }      
+            
+    b. LINQ SQL syntax, first order by AFig, then by AName and then descending by Id
+        10      P       7
+        10      P       1
+        10      Y       5
+        20      J       2
+        20      X       6
+        30      F       3
+        30      G       4
+
+        var aa = _context.As;
+        IEnumerable<A> res =  from a in aa orderby a.AFig, a.AName, a.Id descending select a;          
+        foreach(A a in res){
+            Console.WriteLine(a.AFig + "\t" + a.AName + "\t" + a.Id);
+        }
+            
+    !!! .ThenByDescending(a => a.AName)
+
+29. print first 3 elements of string[]
+    
+    a. LINQ method
+
+        string[] arr = {"a", "bs", "abc", "d", "lala"};
+        IEnumerable<string> res = arr.Take(3);
+        foreach(string s in res){
+            Console.WriteLine(s);
+        }
+    b. LINQ SQL syntax
+
+        string[] arr = {"a", "bs", "abc", "d", "lala"};
+        IEnumerable<string> res = (from s in arr select s).Take(3);
+        foreach(string s in res){
+            Console.WriteLine(s);
+        }
+    !!! .Skip(3)  skips first 3 elements     
+
+30. print elements of string[] from beginning as long as el's length <= 3, stop if condition false
+
+    string[] arr = {"a", "bs", "abc", "d", "lala"};
+    IEnumerable<string> res = arr.TakeWhile(x => x.Length <= 3);
+    foreach(string s in res){
+        Console.WriteLine(s);
+    }
+    !!! .SkipWhile(3)  skip if condition true and print when condition false
+            
+31. paging 
+
+    IEnumerable<A> aa = _context.As;
+    Console.WriteLine("Enter Page Number = 1, 2, 3 or 4");
+    int pageNum = 0;
+    if(int.TryParse(Console.ReadLine(), out pageNum)){
+        if(pageNum >= 1 && pageNum <=4){
+            int pageSize = 3;
+            IEnumerable<A> res = aa.Skip((pageNum - 1) * pageSize).Take(pageSize);
+            Console.WriteLine("Displaying Page " + pageNum);
+            foreach(A a in res){
+                Console.WriteLine(a.Id + "\t" + a.AName + "\t" + a.AFig);
+
+            }
+        } else {
+            Console.WriteLine("Page number must be integer between 1 and 4");
+        }
+    } else {
+            Console.WriteLine("Page number must be integer between 1 and 4");
+    }
+
+32. print    1       P       10  where col1 is id, col2 is AName, col3 is AFig, only if AFig == 10
+             5       Y       10
+             7       P       10
+        !!! with LINQ SQL syntax
+     
+        IEnumerable<A> aa = _context.As;
+        IEnumerable<A> res = from a in aa where a.AFig == 10 select a;
+        foreach(A a in res){
+            Console.WriteLine(a.Id + "\t" + a.AName + "\t" + a.AFig);
+        }
+        !!! query executed in foreach loop, defered / lazy execution: Select, Where, Take, Skip...
+
+
+        var aa = _context.As;
+            var aaa = aa.ToList();
+            IEnumerable<A> res = from a in aaa where a.AFig == 10 select a;
+            aaa.Add( new A() {Id = 8, AName = "ZZ", AFig = 10});
+            foreach(A a in res){
+                Console.WriteLine(a.Id + "\t" + a.AName + "\t" + a.AFig);
+            }
+        !! ZZ included in list because execution defered
+        !!! if query -> ToList()  -> immediate execution:
+
+        var aa = _context.As;
+            var aaa = aa.ToList();
+            IEnumerable<A> res = (from a in aaa where a.AFig == 10 select a).Tolist();
+            aaa.Add( new A() {Id = 8, AName = "ZZ", AFig = 10});
+            foreach(A a in res){
+                Console.WriteLine(a.Id + "\t" + a.AName + "\t" + a.AFig);
+            }
+        !! ZZ not included
+
+    !!! immediate operators: Count, Average, Min, Max, ToList, ...
+        lazy operators: Select, Where, Take, Skip, ...
+
+33. from int[] print List<int>
+
+        [] arr = {1, 2, 3, 4};
+        List<int> res = arr.ToList();
+        foreach(int n in res){
+            Console.WriteLine(n);
+        }
+
+34. (LINQ SQL syntax) from List<int> in ascending order get IEnumerable<int> -> convert to int[]
+                print each el
+        List<int> list = new List<int> {1, 2, 20, 15, 21, 3};
+        int[] res = (from n in list orderby n ascending select n).ToArray();
+        foreach(int n in res){
+            Console.WriteLine(n);
+        }
+
+
+!!! Dictionary is alt in js: array of objects, each obj with one property only {Key, Value}
+            !!! Keys must be unique, if some objs have identical Keys, use Lookup
+
+35. from list  (set...) of objects -> Dictionary<int, string>
+    output: 1       P  where col1 is AId, col2 is AName, as Dictionary; col1 and col2 accessed as Key-Value
+            2       J
+            3       F
+            4       G
+        var aa = _context.As;
+        List<A> aaa = aa.ToList();
+        Dictionary<int, string> res =  aaa.ToDictionary(x => x.Id, x => x.AName);
+        foreach(KeyValuePair<int, string> kvp in res){
+            Console.WriteLine(kvp.Key + "\t" + kvp.Value);
+        }
+    !!! will also work with aa (DbSet<A>), without converting to aaa (List<A>)
+
+36. see #35, but print  1       P       10   where col3 is AFig,  col1 accessed as Key, col2 and col3 accessed via A
+                        2       J       20
+                        3       F       30
+                        4       G       30
+
+        var aa = _context.As;
+        List<A> aaa = aa.ToList();
+        Dictionary<int, A> res =  aaa.ToDictionary(x => x.Id);
+        foreach(KeyValuePair<int, A> kvp in res){
+            Console.WriteLine(kvp.Key + "\t" + kvp.Value.AName + "\t" + kvp.Value.AFig);
+        }
+
+37. print   10                        where col1 is AFig, col2 is AName, col3 is AFig
+                    P       10
+                    Y       10
+                    P       10
+            20
+                    J       20
+                    X       20
+            30
+                    F       30
+                    G       30
+        !!! group As based on AFig
+
+        var aa = _context.As;
+        var asByFig = aa.ToLookup(x => x.AFig);   //converts to Lookup (like Dictionary with not unique or unique Keys)        
+        foreach(var kvp in asByFig){
+            Console.WriteLine(kvp.Key);
+            foreach(var a in asByFig[kvp.Key]){
+                Console.WriteLine("\t" + a.AName + "\t" + a.AFig);
+            }
+        }
+38. convert ArrayList (add ints) into IEnumerable<int> and pring each el
+
+        ArrayList list = new ArrayList();
+        list.Add(1);
+        list.Add(2);
+        list.Add(3);
+
+        IEnumerable<int> res = list.Cast<int>();
+        foreach(int n in res){
+            Console.WriteLine(n);
+        }
+
+!!! with Cast<int>, if ArrayList contains non-int value, exception thrown
+
+39. see #38, but ArrayList contains int els and string el, print only ints
+
+        ArrayList list = new ArrayList();
+        list.Add(1);
+        list.Add(2);
+        list.Add(3);
+        list.Add("abc");
+
+        IEnumerable<int> res = list.OfType<int>();
+        foreach(int n in res){
+            Console.WriteLine(n);
+        }
+40. print   B3      30      M   where col1 is BName, col2 is BFig, col3 is BGen 
+            B2      20      M
+            B1      10      M
+        !!! only M (Males), in decending order based on BFig, only first 3 (top 3 male Bs by salary)
+
+        var bs = _context.Bs;
+        var res = bs.Where(x => x.BGen == "M").OrderByDescending(x => x.BFig).Take(3);
+        foreach(var b in res){
+            Console.WriteLine(b.BName + "\t" + b.BFig + "\t" + b.BGen);
+        }
+        !!! to convert DbSet<B> to IEnumerable<B>, use .AsEnumerable()
+
+        var bs = _context.Bs;
+        IEnumerable<B> res = bs.AsEnumerable().Where(x => x.BGen == "M").OrderByDescending(x => x.BFig).Take(3);
+        foreach(var b in res){
+            Console.WriteLine(b.BName + "\t" + b.BFig + "\t" + b.BGen);
+        }
+    !!! always use .AsEnumerable to query _context.Bs
+        query executed before .AsEnumerable (without it, it will execute all the way)
+        Linq-to-Sql then Linq-to-Objects, moves query processing to the client side
+
+41. print   P - 1  where col1 is AName, col2 is how many As with this AName
+            J - 1
+            F - 2
+            G - 3
+
+    a. LINQ method
+
+        var aa = _context.As;
+        var groups = aa.ToList().GroupBy(x => x.AName);
+        foreach(var group in groups){
+            Console.WriteLine("{0} - {1}", group.Key, group.Count());
+        }
+        ?.GroupBy
+    !!! to only include male (AGen) As:  .Count(x => x.AGen == "M")
+
+    b. LINQ SQL syntax
+
+        var aa = _context.As;
+        var aaa = aa.ToList();
+        var groups = from a in aaa group a by a.AName;
+        foreach(var group in groups){
+            Console.WriteLine("{0} - {1}", group.Key, group.Count());
+        }
+
+42. print   P - 1 - 10   where col1 is AName, col2 is # of As with this AName, col3 is maximum AFig within this group
+            J - 1 - 20
+            F - 2 - 30
+            G - 3 - 30
+
+        var aa = _context.As;
+        var aaa = aa.ToList();
+        var groups = from a in aaa group a by a.AName;
+        foreach(var group in groups){
+            Console.WriteLine("{0} - {1} - {2}", group.Key, group.Count(), group.Max(x => x.AFig));
+        }
+
+    !!! total amount of AFig for each group:  .group.Sum(x => x.AFig)
+
+43. print   IT - 3                   // IT is BDep, 3 is # of Bs in this BDep
+            -------------------
+            B1      10               // B1 is BName, 10 is BFig        
+            B4      40
+            B5      50
+
+
+            HR - 2
+            -------------------
+            B2      20
+            B3      30
+
+
+    var bs = _context.Bs;
+    var bb = bs.ToList();
+    var groups = from b in bb group b by b.BDep ;
+    foreach(var group in groups){
+        Console.WriteLine("{0} - {1}", group.Key, group.Count());   
+        Console.WriteLine("-------------------");             
+        foreach(var b in group){
+            Console.WriteLine(b.BName + "\t" + b.BFig);
+        }
+        Console.WriteLine(); Console.WriteLine();
+    }
+
+44. see #43, but order alphabetically by BDep, and within each group by BName
+
+    print   HR - 3
+            -------------------
+            D       20                // D is BName
+            E       30
+            H       30
+
+
+            IT - 3
+            -------------------
+            C       10
+            F       40
+            G       50
+
+    var bs = _context.Bs;
+    var bb = bs.ToList();
+    var groups = from b in bb group b by b.BDep into eGroup orderby eGroup.Key select new {Key = eGroup.Key, Bs = eGroup.OrderBy(x => x.BName)};
+    foreach(var group in groups){
+        Console.WriteLine("{0} - {1}", group.Key, group.Bs.Count());   
+        Console.WriteLine("-------------------");             
+        foreach(var b in group.Bs){
+            Console.WriteLine(b.BName + "\t" + b.BFig);
+        }
+        Console.WriteLine(); Console.WriteLine();
+    }
+
+45. 
 
 ************************************************************************************************************
 *************************** PRACTICE ***********************************************************************
+    1 - 20 methods used:
+        x.HasValue; arr.LastIndexOf("la");  Remove(i); 
+
 1. with LINQ query from int[] return odd numbers
 2. with LINQ query from context.Users return users whose Name is 3 chars long
 3  with LINQ query from List<int> return odd numbers

@@ -1,6 +1,9 @@
 >>dotnet new webapi -n Myapp.API
 >>dotnet watch run
 
+!!! to just use console with C#:  MyPoj>> dotnet new console
+                                       >> dotnet watch run
+
 1. VSC extensions:
         C# for VS Code
         C# extensions
