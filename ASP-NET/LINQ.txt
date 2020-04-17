@@ -745,3 +745,140 @@
 15. from int[] return el - index for each iteration, LINQ method
 16. from int[] return el - index for each iteration, where el is even number, LINQ method
 17. from int[] return indeces for even numbers
+************
+
+    configure db, models, A (one) B (many)
+
+************
+18. print b.BName from As with AName "A1" and "A2"  (A to B as One to Many)
+19. Print ids of all bs  (extract one col)
+20. Print: BName - BGen for all bs (extract > 1 col)
+21. Print: BName - BFig - Bonus (only if BFig > 20, Bonus is 15% of BFig) !!! a * 0.15 (a must be double)
+22. Pring BName for all bs of all as  (as -> bs -> B.Name) ----LINQ, SQL
+23. 2 strings -> break into chars, flatten into one chunk, print all char per line ---LINQ, SQL
+24. from bs print all distinct BFig
+
+25. print   A1 - B1    where A1 and B1 are AName and BName 
+            A1 - B2
+            A1 - B3
+            A2 - B4
+            A2 - B5
+            A2 - B6
+
+    !!!see #22 but here need access to outer array as well ------ LINQ, SQL
+
+26. Select vs SelectMany: print BName for all Bs of all As ----- Select vs SelectMany
+27. ascending order of AName of all As --- LINQ, SQL
+
+28. print       10      P       1     where col1 is AFig, col2 is AName, col3 is Id
+                10      X       7
+                10      Y       5
+                20      J       2
+                20      Z       6
+                30      F       3
+                30      G       4
+
+        !!! order 1st by AFig, then within each new group order by AName (ascending)
+    a. LINQ
+    b. LINQ SQL syntax, first order by AFig, then by AName and then descending by Id
+
+        10      P       7
+        10      P       1
+        10      Y       5
+        20      J       2
+        20      X       6
+        30      F       3
+        30      G       4
+
+29. print first 3 elements of string[]  ---- LINQ, SQL;  Take vs Skip
+30. print elements of string[] from beginning as long as el's length <= 3, stop if condition false
+            TakeWhile vs SkipWhile
+31. paging ???
+
+32. print    1       P       10  where col1 is id, col2 is AName, col3 is AFig, only if AFig == 10
+             5       Y       10
+             7       P       10
+             
+        !!! with LINQ SQL syntax;  where executed? 
+
+33. from int[] print List<int>
+34. (LINQ SQL syntax) from List<int> in ascending order get IEnumerable<int> -> convert to int[]
+                print each el
+35. from list  (set...) of objects -> Dictionary<int, string>
+
+    output: 1       P  where col1 is AId, col2 is AName, as Dictionary; col1 and col2 accessed as Key-Value
+            2       J
+            3       F
+            4       G
+
+36. see #35, but print  1       P       10   where col3 is AFig,  col1 accessed as Key, col2 and col3 accessed via A
+                        2       J       20
+                        3       F       30
+                        4       G       30
+
+37. print   10                        where col1 is AFig, col2 is AName, col3 is AFig
+                    P       10
+                    Y       10
+                    P       10
+            20
+                    J       20
+                    X       20
+            30
+                    F       30
+                    G       30
+
+        !!! group As based on AFig
+
+38. convert ArrayList (add ints) into IEnumerable<int> and pring each el
+39. see #38, but ArrayList contains int els and string el, print only ints
+
+40. print   B3      30      M   where col1 is BName, col2 is BFig, col3 is BGen 
+            B2      20      M
+            B1      10      M
+
+        !!! only M (Males), in decending order based on BFig, only first 3 (top 3 male Bs by salary)
+
+41. print   P - 1  where col1 is AName, col2 is how many As with this AName
+            J - 1
+            F - 2
+            G - 3
+
+     --- LINQ, SQL;  modify to only include males (BGen == "M") use Bs 
+
+42. print   P - 1 - 10   where col1 is AName, col2 is # of As with this AName, col3 is maximum AFig within this group
+            J - 1 - 20
+            F - 2 - 30
+            G - 3 - 30
+
+    --- modify: total amount of AFig for each group
+
+43. print   IT - 3                   // IT is BDep, 3 is # of Bs in this BDep
+            -------------------
+            B1      10               // B1 is BName, 10 is BFig        
+            B4      40
+            B5      50
+
+
+            HR - 2
+            -------------------
+            B2      20
+            B3      30
+44. see #43, but order alphabetically by BDep, and within each group by BName
+
+    print   HR - 3
+            -------------------
+            D       20                // D is BName
+            E       30
+            H       30
+
+
+            IT - 3
+            -------------------
+            C       10
+            F       40
+            G       50
+
+
+
+
+
