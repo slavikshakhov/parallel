@@ -253,7 +253,7 @@
     4. >>dotnet ef migrations add newMigration
        >>dotnet ef database update
 ****************************************************     
-18. print b.BName from As with AName "A1" and "A2"  (A to B as One to Many)
+18. print b.BName of males (BGem == "M") from As with AName "A1" and "A2"  (A to B as One to Many)
 
         var aa = _context.As;
         IEnumerable<A> aaa = aa.Include(x => x.Bs).Where(x => x.AName == "A1" || x.AName == "A2");
@@ -705,7 +705,12 @@
 
     var bs = _context.Bs;
     var bb = bs.ToList();
-    var groups = from b in bb group b by b.BDep into eGroup orderby eGroup.Key select new {Key = eGroup.Key, Bs = eGroup.OrderBy(x => x.BName)};
+    var groups = bb.GroupBy(x => x.BDep).OrderBy(g => g.Key).Select(g => new {Key = g.Key, Bs = g.OrderBy(x => x.BName)});
+    /* (LINQ SQL syntax)
+        var groups = from b in bb group b by b.BDep into eGroup orderby eGroup.Key 
+                    select new {Key = eGroup.Key, Bs = eGroup.OrderBy(x => x.BName)};
+    */
+    
     foreach(var group in groups){
         Console.WriteLine("{0} - {1}", group.Key, group.Bs.Count());   
         Console.WriteLine("-------------------");             
@@ -715,12 +720,262 @@
         Console.WriteLine(); Console.WriteLine();
     }
 
-45. 
+45. Group list by > 1 col value (same val for > 1 row of these cols) using GroupBy
+    !!! first group by BDep (outer group) then by BGen (inner group); 
+        order by BDep within outer group, by BName within inner group
+
+    Department: HR, Gender: Fs, number: 1
+    ----------------------
+    Name: H, Gender: F, Department: HR
+
+
+    Department: HR, Gender: Ms, number: 2
+    ----------------------
+    Name: D, Gender: M, Department: HR
+
+
+    Name: E, Gender: M, Department: HR
+
+
+    Department: IT, Gender: Fs, number: 2
+    ----------------------
+    Name: F, Gender: F, Department: IT
+
+
+    Name: G, Gender: F, Department: IT
+
+
+    Department: IT, Gender: Ms, number: 1
+    ----------------------
+    Name: C, Gender: M, Department: IT
+
+
+    var bb = _context.Bs;
+    var bs = bb.ToList();
+    var newList = bs.GroupBy(x => new {x.BDep, x.BGen})
+                    .OrderBy(g => g.Key.BDep).ThenBy(g => g.Key.BGen)
+                    .Select(g => new {DepName = g.Key.BDep, Gen = g.Key.BGen, Bs = g.OrderBy(x => x.BName)});
+    foreach(var gr in newList){
+        Console.WriteLine("Department: {0}, Gender: {1}s, number: {2}", gr.DepName, gr.Gen, gr.Bs.Count());
+        Console.WriteLine("----------------------");
+        foreach(var b in gr.Bs){
+            Console.WriteLine("Name: {0}, Gender: {1}, Department: {2}", b.BName, b.BGen, b.BDep);
+            Console.WriteLine(); Console.WriteLine();
+        }
+    }
+!!! without ordering: (see Bs = g, where g is all props of grouped obj, including g.Key)
+    but better always order
+    
+
+    var bb = _context.Bs;
+    var bs = bb.ToList();
+    var newList = bs.GroupBy(x => new {x.BDep, x.BGen})                            
+                    .Select(g => new {DepName = g.Key.BDep, Gen = g.Key.BGen, Bs = g});
+    foreach(var gr in newList){
+        Console.WriteLine("Department: {0}, Gender: {1}s, number: {2}", gr.DepName, gr.Gen, gr.Bs.Count());
+        Console.WriteLine("----------------------");
+        foreach(var b in gr.Bs){
+            Console.WriteLine("Name: {0}, Gender: {1}, Department: {2}", b.BName, b.BGen, b.BDep);
+            Console.WriteLine(); Console.WriteLine();
+        }
+    }
+46. print   HR             // where HR is A.ADep, C is B.BName    ----- Hierarchical representation
+                C
+                D
+                E
+
+            IT
+                F
+                G
+                H
+            IT
+
+            HR
+
+            IT
+
+    !!! using GroupJoin    
+
+    a.  LINQ 
+        var aa = _context.As.ToList();
+        var bs = _context.Bs.ToList();    
+        var bsByA = aa.GroupJoin(bs, a => a.Id, b => b.AId,  (a, bs) => new {A = a, Bs = bs});
+        foreach(var a in bsByA){
+            Console.WriteLine(a.A.ADep);
+            foreach(var b in a.Bs){
+                Console.WriteLine(" " + b.BName);
+            }
+            Console.WriteLine();
+        }
+
+    b. LINQ SQL: 
+        var bsByA = from a in aa join b in bs on a.Id equals b.AId into g select new {A = a, Bs = g};
+    !!! all a.A.ADep linked to B and not linked to B included (to include only matching els use inner join)
+
+47. print   HR      C  where col1 is ADep, col2 is BName (B associated with this A) ---flat representation
+            HR      D
+            HR      E
+            IT      F
+            IT      G
+            IT      H
+    !!! use Join, inner join (sql)
+    a. LINQ method
+
+        var aa = _context.As.ToList();
+        var bs = _context.Bs.ToList();    
+        var bsByA = aa.Join(bs, a => a.Id, b => b.AId,  (a, b) => new {A = a, B = b});           
+        foreach(var el in bsByA){
+            Console.WriteLine(el.A.ADep + "\t" + el.B.BName);                
+        }        
+
+    b. LINQ SQL syntax
+        
+        var aa = _context.As.ToList();
+        var bs = _context.Bs.ToList();    
+        var bsByA = from a in aa join b in bs on a.Id equals b.AId select new {A = a, B = b};        
+        foreach(var el in bsByA){
+            Console.WriteLine(el.A.ADep + "\t" + el.B.BName);                
+        }           
+            
+!!! GroupJoin vs Join (inner join): 
+    1. GroupJoin -> hierarchical representation, Join -> flat representation
+    2. GroupJoin -> returns also As that do not have any Bs, Join only returns associated As to Bs
+    3. GroupJoin res requires 2 loops: 1st loop for To What (aa, or result of joining) is group-joined, 2nd for What (bs) is joined
+            Join requires one loop for To What is group-joined (aa, or result of joining)
+
+48. list.First()
+    list.First(predicate)  -> exc if list was empty
+    list.FirstOrDefault(predicate)  -> no exc if list was empty
+            !!! default is el's default, if int -> 0, bool -> false, rest -> null
+    list.Last()
+    list.LastOrDefault()
+
+    list.ElementAt(5) ->  exc if no element at index 5
+    list.ElementAtDefault(5) -> default value if no element at index 5
+
+    list.Single(predicate) -> if > 1 match -> error
+    list.SingleOrDefault(predicate)  -> returns default if no match but if > 1 match -> error
+
+    list.DefaultEmpty() -> returns IEnumerable<int> res with all vals or if no vals -> def val (0 for int)
+    list.DefaultEmpty(100) -> if no vals -> returns 100
+
+    ar1.Union(ar2) -> ar1 + ar2 distinct
+    ar1.Concat(ar2) -> ar1 + ar2 (also if same vals)
+
+    ar.Any()  -> true if at least 1 with val
+    ar.Any(predicate) -> true if at least 1 el satisfies predicate
+
+    ar.Contains(3) -> true if at least 1 el has val 3
+    ar.Contains("la", StringCompararer.OriginalIgnoreCase) -> ignores Case
+
+    ar.SequenceEqual(ar2) -> true if same # of els, same order, same vals
+    ar.SequenceEqual(ar2, StringCompararer.OriginalIgnoreCase);
+
+     
+
+
+***********************************************************************************************************
+***************************** SUMMERY *********************************************************************
+Abbrev: IEnumerable<A> as IE<X>
+ 
+1. filter IE -> filtered list of elements
+
+    xx.Where( n => n % 2 == 0)  
+    from x in xx where x.Name.Length == 3 select x
+
+2. access 1 col ---> new list of objs, access vals and indexes
+
+    xx.Select((n, i) => new { Number = n, Index = i});   
+    from x in xx select new {....}
+
+3. Select - Where  or Where - Select  in any order ok
+
+4. to get get chunks of bs (of each of aa) -> flatten to one list
+
+     aa.SelectMany(x => x.Bs)  
+     from a in aa from b in a.Bs select b;
+
+5. to access > 1 cols -> new list of objects: 
+
+     bs.Select(x => new {Name = x.BName, Gender = x.BGen});
+
+6. to create new temporary col (here Bonus)
+
+    bs.Select(x => new {Name = x.BName, Bonus = x.BFig * .15});
+
+7. to access and return cols from aa and bs at the same time
+
+    aa.SelectMany(a => a.Bs, (a, b) => new { AName = a.AName, BName = b.BName});
+    from a in aa from b in a.Bs select new {AName = a.AName, BName = b.BName};
+
+8. list -> same list but reordered
+
+    aa.OrderBy(a => a.AName);                          //.OrderByDescending(a => a.AName);
+    from a in aa orderby a.AName ascending select a; 
+
+    aa.OrderBy(a => a.AFig).ThenBy(a => a.AName); 
+    from a in aa orderby a.AFig, a.AName, a.Id ascending select a;  
+
+9. use of dictionary?????
+
+    Dictionary<int, string> res =  aa.ToDictionary(x => x.Id, x => x.AName);
+        foreach(KeyValuePair<int, string> kvp in res){
+            .... kvp.Key .... kvp.Value  .....
+        }
+        aa.ToDictionary(x => x.Id, x => x.AName)  
+                -> each iter is KeyValuePair<int, string>, where int is kpv.Key (x.Id)
+                                                                 string is kpv.Value (x.AName)
+        aa.ToDictionary(x => x.Id) 
+                -> each iter is KeyValuePair<int, A> kvp, where int is kpv.Key (x.Id)
+                                                                A is kpv.Value -> kpv.Value.AName
+
+10. Group by col's val (same for > 1 row) using ToLoopup
+
+    aa.ToLookup(x => x.AFig)  ->  list of objects with Key is x.AFig, Value is grouped list (chunk)
+                                          each object -> obj.Key is x.AFig
+                                                         list[object.Key] -> chunk
+
+       foreach(var kvp in asByFig){
+            Console.WriteLine(kvp.Key);
+            foreach(var a in asByFig[kvp.Key]){
+                Console.WriteLine("\t" + a.AName + "\t" + a.AFig);
+
+
+11. Group list by 1 col's value (same val for > 1 row) using GroupBy
+
+        aa.ToList().GroupBy(x => x.AName)  -> list of chunks, each chunk: chunk.Key is x.AName
+                                                                          chunk.Prop  -> any prop of grouped els
+                                                                          chunk.Max()
+                                                                          chunk.Count()
+                   ex. el of chunk:  {Key: x.AName, AName: "Slavik", AFig: 40}                             
+        from a in aa group a by a.AName;
+
+        !!! expression on right side of x=>  is g.Key
+
+12. Group list, then order chunk.Key and elements within chunk (LINQ SQL)
+
+            a. group by some col -> list of chunks    (name this group, ex into eGroup)
+            b. order by chunk's Key (by which was grouped)
+            c. create new object with one prop (PropBs) as grouped chunk (by some col) -> list of objects
+            d. iterate list of objects -> each object: access to grouped chunk via obj's prop
+                                                                ex. chunk.PropBs.Count();
+            e. iterate each chunk.PropBs -> each (now ordered) chunk: chunk.ColName 
+13. group by 2 cols
+
+    1) bs.GroupBy(x => new {x.BDep, x.BGen})  ->
+        returns list of objects, each object has Key prop (here BDep) 
+            and rest of Props  (here for B)
+    2) .Select(g => new {DepName = g.Key.BDep, Gen = g.Key.BGen, Bs = g}) -> 
+            collect rest of Props into Bs of new object, later can itarate to print or first order
+          !!! Bs = g.OrderBy(x => x.BName)   -> orders rest of props
 
 ************************************************************************************************************
 *************************** PRACTICE ***********************************************************************
     1 - 20 methods used:
         x.HasValue; arr.LastIndexOf("la");  Remove(i); 
+        Func<int, bool> predicate = x => x % 2 == 0;
+        Nums.Aggregate(10, (a, b) => a * b);
+        Nums.Select((n, i) => new { Number = n, Index = i});
 
 1. with LINQ query from int[] return odd numbers
 2. with LINQ query from context.Users return users whose Name is 3 chars long
@@ -750,7 +1005,7 @@
     configure db, models, A (one) B (many)
 
 ************
-18. print b.BName from As with AName "A1" and "A2"  (A to B as One to Many)
+18. print b.BName of males (BGem == "M") from As with AName "A1" and "A2"  (A to B as One to Many)
 19. Print ids of all bs  (extract one col)
 20. Print: BName - BGen for all bs (extract > 1 col)
 21. Print: BName - BFig - Bonus (only if BFig > 20, Bonus is 15% of BFig) !!! a * 0.15 (a must be double)
@@ -798,7 +1053,7 @@
 32. print    1       P       10  where col1 is id, col2 is AName, col3 is AFig, only if AFig == 10
              5       Y       10
              7       P       10
-             
+
         !!! with LINQ SQL syntax;  where executed? 
 
 33. from int[] print List<int>
@@ -863,6 +1118,9 @@
             -------------------
             B2      20
             B3      30
+
+!!!!!!!!!
+
 44. see #43, but order alphabetically by BDep, and within each group by BName
 
     print   HR - 3
@@ -878,6 +1136,37 @@
             F       40
             G       50
 
+!!!!!!!!!
+
+45. Group list by > 1 col value (same val for > 1 row of these cols) using GroupBy
+    !!! first group by BDep (outer group) then by BGen (inner group); 
+        order by BDep within outer group, by BName within inner group
+
+    Department: HR, Gender: Fs, number: 1
+    ----------------------
+    Name: H, Gender: F, Department: HR
+
+
+    Department: HR, Gender: Ms, number: 2
+    ----------------------
+    Name: D, Gender: M, Department: HR
+
+
+    Name: E, Gender: M, Department: HR
+
+
+    Department: IT, Gender: Fs, number: 2
+    ----------------------
+    Name: F, Gender: F, Department: IT
+
+
+    Name: G, Gender: F, Department: IT
+
+
+    Department: IT, Gender: Ms, number: 1
+    ----------------------
+    Name: C, Gender: M, Department: IT
+ 
 
 
 

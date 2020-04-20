@@ -1,0 +1,113 @@
+***************************************************************************************************************
+**************************** SETUP **************************************************************************
+
+1. C: new F:  mongodb/data/db
+                     /log
+2. download mongodb community, custom -> in C:\mongodb
+      
+3. cmd admin --- C:\mongodb\bin >> mongod --dbpath C:\mongodb\data\db --logpath C:\mongodb\log\mongo.log
+                                          --logappend --install
+4. cmd admin1 --- C:\mongodb\bin >> mongod    (starts at port...)
+5. cmd admin2 --- C:\mongodb\bin >> mongo     (starts shell)
+    !!! all commands here are from shell, port in another cmd must run
+
+*************************** BEFORE WORKING WITH COLLECTIONS *************************************************
+
+
+2. create new db, or switch to existing db:
+    use myDB
+
+3. in which db I am now?
+    db
+
+4. create user for db:
+    g --- mongodb add users --- copy object
+    >> db.createUser({ user: "slavik", pwd: "gerKanuk55", roles: ["readWrite", "dbAdmin"] });
+
+5. use this db or create new (before any collection in db can be accessed)
+         use myDB
+
+
+
+******************************************  SHOW ***********************************************************
+
+show databases: 
+        show dbs
+
+show all rows all cols in table
+        db.bs.find();
+        db.bs.find().pretty();
+
+show all rows 1 col only
+        db.bs.find( {gender: "M" } );
+
+show all rows > 1 but not all cols
+        db.bs.find( { $or: [ {name: "la"}, {name: "ta"} ] } );
+
+show only rows with condition, for 1 col
+        db.bs.find( { age: {$gt: 40} } );        // gt, lt, gte, lte
+
+if col is address: { street: "Lala", city: "Tata" } -> find all rows with city: "Boston"
+        db.bs.find( { "address.city": "Boston" } );
+
+if col is lgs: ["french", "english", "spanish"]  -> find all rows with "french"
+        db.bs.find( { lgs: "french"} )
+
+whow first 4 rows
+        db.bs.find().limit(4);
+
+
+************************************** SORT *****************************************************************
+
+sort all rows by col (name) in ascending order
+        db.bs.find().sort({name: 1});       // -1  for descending order
+
+sort only rows with condition, by col (name)
+        db.bs.find({gender: "M"}).sort({name: 1});
+
+sort first 4 rows by col (name)
+        db.bs.limit(4).sort({name: 1});
+
+************************************* METHODS ***************************************************************
+
+count rows with condition, for 1 collection
+        db.bs.find({gender: "M"}).count();
+
+
+
+******************************************* CREATE / ADD *********************************************************
+
+create table (collection)
+        db.createCollection("bs");
+
+
+add new row (existing cols or new if not previously)
+        db.bs.insert({name: "Z"});
+        db.bs.insert( [ {name: "Y"}, {name: "F"} ] );
+        db.bs.insert([{name: "G"}, {name: "X", gen: "M"}]);
+
+***************************************** UPDATE ***********************************************************
+for this row update gen "M" -> "F"
+        db.bs.update({name: "H"}, {$set:{gen: "F"}});
+        
+for this row change col's name
+        db.bs.update({name: "H"}, {$rename: {"gen": "sex"}});
+
+
+****************************************** DELETE **********************************************************
+
+for this row delete 1 col (gen)
+        db.bs.update({name: "H"}, {$unset: {gen: 1}});
+
+for this row, delete whole row
+        db.bs.remove({name: "Z"});
+
+
+
+
+
+
+
+
+
+
