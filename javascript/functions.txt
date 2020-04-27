@@ -1,0 +1,15 @@
+group obj's props by one key:
+        [
+            {id: 1, name: 'la', age: 20},
+            {id: 1, name: 'ta', age: 30},
+            {id: 3, name: 'da', age: 40}
+        ]
+        ->  
+        {
+            1: [{id: 1, name: 'la', age: 20}, {id: 1, name: 'ta', age: 30}] ,
+            2: [{id: 3, name: 'da', age: 40}]
+        }
+        npm i --save lodash
+        var _ = require('lodash');
+        const grouped = _.groupBy(arr, el => el.id);   
+

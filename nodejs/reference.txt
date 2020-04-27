@@ -1,0 +1,16 @@
+1. Express server: setup
+                   status codes                         this/server-base.txt
+
+2. password hash + register example (hash)
+                   login example (unhash, compare)      this/hash-check-pw.js
+
+3. MongoDB: setup
+            with Express, Models
+            queries                                      MongoDB.txt
+
+4. Validation of data from front                         this/data-from-front.txt
+
+5. MySql: setup
+          queries in cmd
+          + Express setup
+          + Express queries                               MySql.txt

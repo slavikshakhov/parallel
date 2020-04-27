@@ -3,13 +3,98 @@
 
 1. C: new F:  mongodb/data/db
                      /log
-2. download mongodb community, custom -> in C:\mongodb
+2. download mongodb community
+   copy content of F (4.2, containing bin and other Fs) place in C:\
+                                                        rename to mongodb
+                                                        create log F in 4.2
       
-3. cmd admin --- C:\mongodb\bin >> mongod --dbpath C:\mongodb\data\db --logpath C:\mongodb\log\mongo.log
+3.??? cmd admin --- C:\mongodb\bin >> mongod --dbpath C:\mongodb\data\db --logpath C:\mongodb\log\mongo.log
                                           --logappend --install
 4. cmd admin1 --- C:\mongodb\bin >> mongod    (starts at port...)
 5. cmd admin2 --- C:\mongodb\bin >> mongo     (starts shell)
     !!! all commands here are from shell, port in another cmd must run
+
+****************************** SETUP MONGODB WITH EXPRESS ***************************************************
+!!! pkg: mongoose, dotenv (to get .env)
+    .env is in root F
+    .gitignore in root F: 
+        .env
+        node_modules
+        
+1. setup express server 
+    see nodejs/server-base.txt
+        nodejs/data-from-front.txt  (validation)
+
+
+2. connect to db                                  //mongod (cmd1) must run 
+        const mongoose = require('mongoose');
+        require('dotenv').config();
+
+        mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true });           //see below .env....here require
+        let db = mongoose.connection;
+
+        // Check connection
+        db.once('open', function(){
+        console.log('Connected to MongoDB');
+        });
+
+        // Check for DB errors
+        db.on('error', function(err){
+        console.log(err);
+        });
+    //to access Article table in db:
+
+    Article.find({}, function(err, articles){
+        if(err){ ... err .... }
+        else {  ..... articles .... }
+    });
+
+    !!! Article.findById(req.params.id, function(err, article){ ... }
+
+    !!! .env (in root directory)
+
+        DATABASE_URL=mongodb://localhost:27017/tandem       
+            // here tandem is my db name
+
+3. Models  (in models/subscriber.js)
+
+    let mongoose = require('mongoose');
+
+    // User Schema
+    let articleSchema = mongoose.Schema({
+        title:{
+            type: String,
+            required: true
+        },
+        author:{
+            type: String,
+            required: true
+        },
+        body:{
+            type: String,
+            required: true
+        }
+    });
+    const User = module.exports = mongoose.model('User', UserSchema);
+
+    !!! or just  title: String;
+    // in corresponding router:  let Article = require('../models/article');
+
+
+    !!! default value for col: 
+         date: {
+             type: Date,
+             required: true,
+             default: Date.now
+         }
+
+    let User = module.exports = mongoose.model('User', articleSchema);
+
+***************************** MONGOOSE RELATIONSHIPS ********************************************************
+
+
+
+*************************** CMD MONGODB *********************************************************************
 
 *************************** BEFORE WORKING WITH COLLECTIONS *************************************************
 
@@ -19,12 +104,14 @@
 
 3. in which db I am now?
     db
-
-4. create user for db:
+4. show all dbs:  
+    show dbs
+        !!! if new db has not collections yet, will not show in the list
+5. create user for db:
     g --- mongodb add users --- copy object
     >> db.createUser({ user: "slavik", pwd: "gerKanuk55", roles: ["readWrite", "dbAdmin"] });
 
-5. use this db or create new (before any collection in db can be accessed)
+6. use this db or create new (before any collection in db can be accessed)
          use myDB
 
 
@@ -55,6 +142,11 @@ if col is lgs: ["french", "english", "spanish"]  -> find all rows with "french"
 
 whow first 4 rows
         db.bs.find().limit(4);
+
+if model's prop is 
+    tags: [{ text: String, ... }]       
+var tagTexts = ['tall', 'small', 'green', 'blue'];
+User.find({'tags.text': {$in: tagTexts}}, function(err, users) {...});
 
 
 ************************************** SORT *****************************************************************

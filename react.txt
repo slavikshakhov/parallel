@@ -1,0 +1,368 @@
+SETUP
+JSX
+LINKS
+REDIRECT
+STYLING
+EVENTS
+REACT FORM
+CUSTOM INPUT
+REDUX HOOKS
+ROUTING
+FETCH
+                           
+                                
+                                SETUP
+
+>>npx create-react-app tandem-react   //no Capital letters
+
+1. Folder structure:
+        src/assets
+        src/components
+        src/containers
+
+2. VS Code extensions
+        a. javascript code snippets  //see code-extensions.txt
+        b. ES7 React/Redux/Graph ...
+
+
+
+
+
+*************************************************************************************************************
+                                JSX
+                            
+{bool && <p> ..... </p>}
+
+*************************************************************************************************************
+                                LINKS (to use need to be in App.js routes)
+
+
+
+(jsx)
+    <Link to="/users">Users</Link>    
+    <Link to="/users">
+    <Link to='/register'>
+        <button ...>Register</button>                                   
+    </Link>
+
+
+
+************************************************************************************************************
+                                    REDIRECT
+
+import { useHistory } from "react-router-dom";
+let history = useHistory();
+
+(js)
+     history.push('home');                           !!! 'home' is route in App.js
+
+(jsx)
+    <button onClick={() => history.goBack()}>Back</button>
+    <button onClick={() => history.push("/")}>Home</button>            
+
+************************************************************************************************************
+                                 STYLING
+
+<div  className={`burger ${regMode ? 'remove-burger' : ''}`}> ... </div>
+
+************************************************************************************************************
+                                    EVENTS
+(js) 
+    function handleClick(e) { e.preventDefault();   .... }
+(jsx)
+    <button onClick={handleClick}> ... </button>
+    <button onClick={() => handleClick()}>
+
+-------------------------------------------------------------------
+(js) 
+    function funName(n) { ... n ....}
+(jsx)
+    <button onClick={() => funName(name)}>
+
+-------------------------------------------------------------------
+
+(js) 
+    function funName(e, d) { e.preventDefault() ... e.target.value ... d ....}
+(jsx)
+    <button onClick={(e) => funName(e, data)}>
+
+--------------------------------------------------------------------
+(js)
+    const [count, setCount] = useState(0);
+(jsx)
+    <button onClick={() => setCount(1)}> ... </button>
+
+------------------------------------------------------------------
+   
+
+<button onClick={() => dispatch({type: 'SET_REGISTER_MODE', payload: true}) } >Register</button>
+
+************************************************************************************************************
+                                REACT FORM
+
+import { useForm } from 'react-hook-form';
+----
+(js)
+    const {register, handleSubmit, errors, watch} = useForm();
+    const submitForm = (e) => { 
+        e.preventDefault();
+        ... name ....
+        ... password ...
+        ... errors.name ...
+    }
+    !!! ex.  const user = {name, password};
+         
+(jsx) 
+    <form onSubmit={handleSubmit(submitForm)}>
+        <input ... name="name" ref={register({required: true, minLength: 8})} />  
+        .....         
+        <input type="submit" value="submit" />
+    </form>
+
+ref={register({a, b})} where a or b:    (if not satisfied -> errors.name, errors.name.type, ...)
+
+    required: 'mes'
+    min: {value: 3, message: 'mes'}
+    minLength: 3
+    pattern: {value: /...regexpr.../i, message: 'mes'}
+    validate: (val) => val === watch('password') || 'mes'     !!! ref from one input to another (by 'name')
+
+js in jsx: 
+
+    errors.name.type === 'required'
+    errors.name.message
+    errors.email    -> true/false
+
+---------------------------------------------------------------------
+                                    ON INPUT onChange
+(js)
+    const [search, setSearch] = useState('');
+    useEffect(() => {... search ...});
+(jsx)
+    <input ... value={search} onChange={(e) => setSearch(e.target.value)} />
+
+----------------------------------------------------------------------
+                                        RESET
+e.target.reset();    // to reset input
+
+************************************************************************************************************
+                                    CUSTOM INPUT
+
+import {useState} from "react";
+
+
+const Input = (validationRules) => {
+    const [value, setValue] = useState('');
+    const [touched, setTouched] = useState(false);
+
+    let initialErrors = {...validationRules};
+
+    for(var key in initialErrors){ initialErrors[key] = false; }
+
+    const [errors, setErrors] = useState(initialErrors);
+
+    const validateOnChange = (e) => {
+        let errs = {};
+        if(Object.keys(validationRules).includes('required')){
+            errs.required = e.target.value.length === 0 ? true : false;
+        }
+        if(Object.keys(validationRules).includes('minLength')){
+            errs.minLength = e.target.value.length < validationRules.minLength ? true : false;
+        }
+        if(Object.keys(validationRules).includes('maxLength')){
+            errs.maxLength = e.target.value.length > validationRules.maxLength ? true : false;
+        }
+        if(Object.keys(validationRules).includes('pattern')){            
+            const re = new RegExp(validationRules.pattern);
+            console.log(re.test(e.target.value));
+            errs.pattern = !re.test(e.target.value);
+        }
+        setErrors(errs);
+   }
+    const validateOnBlur = (e) => {
+        let errs = {};
+        if(Object.keys(validationRules).includes('required')){
+            errs.required = e.target.value.length === 0 ? true : false;
+        }
+        if(Object.keys(validationRules).includes('minLength')){
+            errs.minLength = e.target.value.length < validationRules.minLength ? true : false;
+        }
+        if(Object.keys(validationRules).includes('maxLength')){
+            errs.maxLength = e.target.value.length > validationRules.maxLength ? true : false;
+        }
+        setErrors(errs);
+   }
+
+    return {
+      touched,
+      errors,
+      value,
+      setValue,
+      reset: () => {
+          setValue('');
+          setTouched(false);
+      },
+      bind: {
+        value,
+        onChange: e => {
+          setValue(e.target.value);
+          if(Object.keys(validationRules).length > 0){
+              validateOnChange(e)
+          }
+        },
+        onBlur: e => {
+            setTouched(true);
+            if(Object.keys(validationRules).length > 0){
+                validateOnBlur(e)
+            }
+        }
+      }
+    };
+  };
+  export default Input;
+-------------------------------------------------------
+import Input from '../../helpers/Input';
+let PasswordValidationRules = { required: false, minLength: 3, maxLength: 10 }
+const { value:password, bind:bindPassword, reset:resetPassword, touched:passwordTouched, errors:passwordErrors } = Input(PasswordValidationRules);
+
+const invalidPasswordInputRequired = passwordErrors?.required && passwordErrors?.minLength && !passwordErrors?.maxLength;
+const invalidPasswordInputShort = (passwordTouched && passwordErrors?.minLength) && !passwordErrors?.required;
+const invalidPasswordInputLong = passwordErrors?.maxLength;
+
+(jsx)
+     <input type='password' name="password" className='input' autoComplete="off" {...bindPassword} />
+        {
+            invalidPasswordInputRequired ?
+                <div className='invalid-feedback'>
+                        Password is required
+                </div>
+                :
+            null
+        }
+            {
+            invalidPasswordInputShort ?
+                <div className='invalid-feedback'>
+                        Password too short
+                </div>
+                :
+            null
+        }
+            {
+            invalidPasswordInputLong ?
+                <div className='invalid-feedback'>
+                        Password too long
+                </div>
+                :
+            null
+        }
+
+(css)    
+    .invalid-feedback {
+        color: var(--red-400);
+    }
+
+************************************************************************************************************
+                                    REDUX HOOKS
+(js)
+    import {useSelector, useDispatch} from 'react-redux';
+    -------
+    const dispatch = useDispatch();
+    const regMode = useSelector(state => state.userStatus.regMode);
+
+(jsx)
+     { regMode ? <div> ... </div> }
+     <button onClick={() => dispatch({type: 'SET_REGISTER_MODE', payload: true}) } >Register</button>
+
+(reducers/rootReducer.js)
+    import {combineReducers} from 'redux';
+    import userStatus from './userStatus';
+
+    const rootReducer = combineReducers({
+        userStatus
+    });
+    export default rootReducer
+
+(reducers/userStatus.js)   
+
+    const defaultState = { regMode: false }
+    const userStatus = (state = defaultState, action) => {        
+        switch(action.type){
+            case "SET_REGISTER_MODE":
+                return {...state, regMode: action.payload }            
+            ...
+            default: return state
+        }
+    }
+    export default userStatus;
+
+(index.js)
+   
+    import {createStore} from 'redux';
+    import rootReducer from './reducers/rootReducer';
+    import {Provider} from 'react-redux';    
+
+    const store = createStore(
+        rootReducer,
+        window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+    );
+
+    ReactDOM.render(<Provider store={store}><App /></Provider>, document.getElementById('root'));    
+    serviceWorker.unregister();
+
+
+
+
+
+*************************************************************************************************************
+                                        ROUTING
+
+(App component)
+    import {BrowserRouter as Router, Switch, Route, Link} from "react-router-dom";
+
+    export default function App() {
+    return (
+        <Router>   
+            <Nav /> 
+            <div className='container'>
+                <Switch> 
+                    <Route exact path='/register'>
+                        <Register />
+                    </Route> 
+                    <Route exact path='/home'>
+                        <Home />
+                    </Route>
+                    <Route path='**'>
+                        <Home />
+                    </Route> 
+                </Switch>
+            </div>                             
+        </Router>     
+    );
+
+    !!! path="/"   last!
+    !!! Nav always displayed;
+        container always displayed, will contain all routes
+
+**********************************************************************************************************
+                                            FETCH
+
+const handleSubmit = (e) => {
+        e.preventDefault();
+        const user = {name, password};        
+
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+        };        
+   
+        fetch('http://localhost:4000/auth/login', requestOptions)
+            .then(resp => resp.json())
+            .then(data => {
+                ... dispatch, redirect, etc ... 
+                }                               
+        });
+}
+
+*************************************************************************************************************
+                        

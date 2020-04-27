@@ -1,0 +1,525 @@
+<<<<<<<  GENERATE JSON DATA >>>>>   generatedata.com
+
+
+
+1. install MySql with installer, full (gerK...55    localhost:3306)
+2. in MySql command line client >>
+    CREATE USER 'slavik'@'localhost' IDENTIFIED BY 'great';          //creates new user
+    SELECT user, host FROM mysql.user;                                //shows all users
+    GRANT ALL PRIVILEGES ON *.* 'slavik'@'localhost';                 //give user admin privileges
+    FLUSH PRIVILEGES;
+    SHOW GRANTS FOR 'slavik'@'localhost';                             //show user's privileges
+    REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'someuser'@'localhost';
+    DROP USER 'someuser'@'localhost';
+    exit;                           //to start with my privileges: >>mysgl -u slavik -p
+
+
+
+
+**************************************************************************************************************
+                                    CONNECT TO EXPRESS
+                                    
+
+!!! see databases/mysql.txt
+    in most cases ORM (object relational mapper), like sequelize is used
+            //(see github, see express example, getting started ->  Synchronizing the model with the database
+    put db configuration in separate file
+
+<<<<<<<<< REF >>>>>>>>>>>   g -> mysql npm (see example)
+
+
+const express = require('express');
+const mysql = require('mysql2');
+
+// Create connection 
+ !!! in mysql.txt
+
+const db = mysql.createConnection({
+    host     : 'localhost',
+    user     : 'root',
+    password : '123456',
+    database : 'myDB'
+});
+
+// Connect
+db.connect((err) => {
+    if(err){
+        throw err;
+    }
+    console.log('MySql Connected...');
+});
+
+const app = express();
+
+// Create DB
+app.get('/createdb', (req, res) => {
+    let sql = 'CREATE DATABASE myDB';
+    db.query(sql, (err, result) => {
+        if(err) throw err;
+        console.log(result);
+        res.send('Database created...');
+    });
+});
+
+app.listen('3000', () => {
+    console.log('Server started on port 3000');
+});
+
+*************************************************************************************************************
+                                MySql QUERIES FROM EXPRESS
+
+
+    const db = require('../mysql);
+
+    let sql = 'CREATE TABLE posts(id int AUTO_INCREMENT, title VARCHAR(255), body VARCHAR(255), PRIMARY KEY(id))';
+    db.query(sql, (err, result) => {}
+
+
+
+    let sql = 'INSERT INTO posts SET ?';
+    let query = db.query(sql, post, (err, result) => {}
+
+
+
+    let post = {title:'Post Two', body:'This is post number two'};
+    let sql = 'INSERT INTO posts SET ?';
+    let query = db.query(sql, post, (err, result) => {}
+
+
+
+    let sql = 'SELECT * FROM posts';
+    let query = db.query(sql, (err, results) => {}
+
+
+    let sql = `SELECT * FROM posts WHERE id = ${req.params.id}`;
+    let query = db.query(sql, (err, result) => {}
+
+    !!! let sql = `SELECT * FROM posts WHERE id = ?`;
+        let query = db.query(sql, [inputId], (err, result) => {}
+
+    let sql = 'SELECT * FROM posts WHERE id = ?';
+    let query = db.query(sql, 2, (err, result) => {})
+
+    let newTitle = 'Updated Title';
+    let sql = `UPDATE posts SET title = '${newTitle}' WHERE id = ${req.params.id}`;
+    let query = db.query(sql, (err, result) => {}
+
+
+    let newTitle = 'Updated Title';
+    let sql = `DELETE FROM posts WHERE id = ${req.params.id}`;
+    let query = db.query(sql, (err, result) => {}
+
+
+**************************************************************************************************************
+
+                                MySql + SEQUALIZE
+
+(npm): sequalize, mysql2
+
+1. connect to MySql with sequelize  (in sequelize.js)
+
+    const Sequelize = require('sequelize');
+
+    const sequelize = new Sequelize('test', 'root', 'gerKanuk55', {
+        host: 'localhost',
+        dialect: 'mysql'
+    });
+
+    sequelize
+        .authenticate()
+        .then(() => {
+            console.log('Connection has been established successfully.');
+        })
+        .catch(err => {  
+            console.error('Unable to connect to the database:', err);
+        });
+
+    module.exports = sequelize;
+
+
+
+2. MODELS
+-------------------------------------------------------------------
+    const Sequelize = require('sequelize');
+    const sequelize = require('../sequelize');
+
+    const User = sequelize.define('user', {
+        firstName: {
+        type: Sequelize.STRING,
+        allowNull: false
+        },
+        lastName: {
+        type: Sequelize.STRING      
+        }
+    }, {    
+    });
+
+module.exports = User;
+
+    // !!! Sequelize.STRING, .UUID, .TEXT
+    // !!! will automatically add cols: createdAt, updatedAt
+
+-------------------------------------------------------------------
+
+    const Sequelize = require('sequelize');
+    const sequelize = require('../sequelize');
+
+    const Post = sequelize.define('post', {    
+    title: {
+      type: Sequelize.STRING,
+      allowNull: false
+        }    
+    });
+    module.exports = Post;
+
+
+
+3. require Models from corresponding files (sequelize should be connected, pass after connection as arg)    
+
+    const User = require('./models/User');
+    const Post = require('./models/Post');
+
+4. define relationships
+
+    User.hasOne(Post);    // -> creates FK in posts:  userId
+    
+4. models (definded, relationships) -> db
+    !!! to also seed data, use .then(), to randamly generate json data:   <<<<< REF >>>>>>  generatedata.com
+    !!! withoud .bulkCreate or .create -> just creates empty tables
+
+
+    sequelize.sync({force: true})
+        .then(() => {
+            User.bulkCreate(data);            
+        })
+        .catch(err => console.log(err))
+        .then(() => {
+            Post.create({
+                title: "Post1", 
+                userId: 1
+        })
+        .catch(err => console.log(err));
+    });
+
+    !!! `force: true` will drop the table if it already exists
+
+*****************************************************************************************************************************************
+                                                QUERIES
+
+User.create({name, password: hash, city, country});                         add new record
+
+***********************************
+RELATIONSHIPS
+
+ONE TO ONE
+
+    Author.belongsTo(Task);   // source model has FK
+    Task.hasOne(Author);       // target model has FK
+    
+    methods: 
+        task.getAuthor();
+        task.setAuthor(author1);
+       
+    !!! Model to itself (Person to Person)
+        Person.hasOne(Person, {as: 'Father'})
+
+        person.getFather()...
+
+
+ONE TO MANY  (source has multiple targets, target connected to one source)
+
+    // Project.hasMany(User, {as: 'Workers'})     // 2nd arg optional
+     
+    Project.hasMany(Task)
+    Task.belongsTo(Project)
+
+    methods:
+        
+
+            GETTERS
+            -----------------------------------------------------------
+            project.getTasks().then(associatedTasks => {
+                ...associatedTasks ...
+            }) 
+    (or)   await project.getTasks();
+            *************************************************
+
+            await project.getTasks({ where: 'id > 10' });            
+            await project.getTasks({attributes: ['title']});
+
+            REMOVE 
+            ----------------------------------------------------------
+
+            await project.removeTask(task1);
+            await project.setTasks([]);
+            await task2.setProject(null);
+
+            ADD 
+            ----------------------------------------------------------
+            await project.addTask(task1);
+
+
+
+MANY TO MANY
+
+    Project.belongsToMany(User, {through: 'UserProject'});
+    User.belongsToMany(Project, {through: 'UserProject'});
+
+    methods: 
+        (Project) getUsers, setUsers, addUser, addUsers
+        (User) getProjects, setProjects, addProject, addProjects
+
+*****************************************************************************
+
+                            QUERY WITH Sequelize
+
+
+                            User(M) - Language(M)
+
+
+var users = await User.findAll();                                                               all users without related languages
+------------------------------------------------------------------------------------------------
+var users = await User.findAll({include: Language});                                            all users with related languages
+-------------------------------------------------------------------------------------------------
+var user = await User.findOne({where: {id: 1}});                                                one user without related languages
+-----------------------------------------------------------------------------------------------                                           
+var user = await User.findOne({where: {id: 1}, include: Language});                             one user with related languages
+------------------------------------------------------------------------------------------------
+var user = await User.findOne({
+        where: {id: 1},
+        attributes: ['name', 'city', 'country'], 
+        include: Language});                                                                    select some cols in one User
+------------------------------------------------------------------------------------------------
+var user = await User.findOne({
+        where: {id: 1},
+        attributes: ['name', 'city', 'country'],
+        include: [{model: Language, attributes: ['name']}]
+    });                                                                                         some cols one User, some cols in related Languages
+-----------------------------------------------------------------------------------------------
+var lgs = await Language.findAll({where: {id: { [Op.or]: [1, 2]} }});                           all lgs with id 1 and 2
+------------------------------------------------------------------------------------------------
+var user = await User.findOne({where: {id: 1}, include: Language});
+var lgs = await Language.findAll({where: {name: { [Op.or]: ['german', 'italian']} }});
+user.addLanguages(lgs);                                                                         add existing lgs to one user
+------------------------------------------------------------------------------------------------
+var users = await User.findAll({
+        include: [{model: Language, where: {name: { [Op.or]: ['german', 'french']}}}]
+    });                                                                                         filter users with related lgs 'german' or 'french'
+----------------------------------------------------------------------------------------------- 
+var user = await User.findOne({where: {id: 1}, include: Language});
+var lgs = await Language.findAll({where: {name: { [Op.or]: ['spanish', 'chinese']} }});
+user.setLanguages(lgs);                                                                         update lgs in one user (overrites)
+-----------------------------------------------------------------------------------------------
+var user = await User.findOne({where: {id: 1}, include: Language});
+var lg = await Language.findOne({where: {id: 3}});
+user.removeLanguage(lg);                                                                        remove one lg from one user
+----------------------------------------------------------------------------------------------
+var user = await User.findOne({where: {id: 2}, include: Language});
+var lgs = await Language.findAll({where: { name:{ [Op.or]: ['spanish','french']} } });
+user.removeLanguages(lgs);                                                                      remove some lgs from one user
+---------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+******************************* SQL SYNTAX *****************************************************************
+____________________________________________________________________________________________________________
+                                   SHOW
+
+    databases:
+        SHOW DATABASES;
+    tables:
+        SHOW TABLES;
+    all rows all cols
+        SELECT * FROM users;
+    all rows some cols
+        SELECT name, age FROM users;
+
+        
+
+    some rows matching one col's value
+       SELECT * FROM users WHERE name='Slavik';
+
+       SELECT * FROM users WHERE age BETWEEN 20 AND 25; 
+
+       SELECT * FROM users WHERE dept LIKE 'd%';      // 'dev%';   '%t';  %lala%;
+
+       SELECT * FROM users WHERE dept NOT LIKE 'd%'; 
+
+    some rows matching one col's > 1 value
+        SELECT * FROM users WHERE dept IN ('design', 'sales');
+
+    
+    some rows matching > 1 cols values
+        SELECT * FROM users WHERE age = 25 AND dept='sales';   // age > 18 
+    
+    
+    
+
+                                                    CREATE
+
+    database:
+         CREATE DATABASE myDB;
+
+    table:  
+    !!! USE myDB;
+
+        CREATE TABLE users(
+        id INT AUTO_INCREMENT,      
+        PRIMARY KEY(id)
+        name VARCHAR(100)
+        );
+
+        INSERT INTO users (name) values ('Slavik');
+
+    foreign table: 
+
+        CREATE TABLE posts(                                    
+        id INT AUTO_INCREMENT,
+        PRIMARY KEY(id),
+        user_id INT,
+        FOREIGN KEY (user_id) REFERENCES users(id),        //can be > 1 foreign key
+        title VARCHAR(100)       
+        );
+
+        INSERT INTO posts(user_id, title)                     
+             VALUES (1, 'Post One'),
+                    (3, 'Post Two');
+
+    !!! ... ,user_id INT, FOREIGN KEY (user_id) REFERENCES users(id) on DELETE CASCADE, ...
+    !!! to add on delete cascade to existing foreign key: 
+        1. SHOW CREATE TABLE userlanguage;    ->  copy constraint string of foreign key
+        2. Alter table userlanguage drop foreign key FK4C5B93445F11A0B7
+        3. alter table userlanguage add foreign key (user_id) references users(id) on delete cascade;    
+
+                                            CHANGE EXISTING COL
+
+    insert col in table:
+        ALTER TABLE users ADD name VARCHAR(255); 
+    change col's dt
+        ALTER TABLE users MODIFY COLUMN age INT(3)  
+    change col's name
+        ALTER TABLE users Change name first_name ["Data Type"];
+
+                                                UPDATE VALUE
+    one row one col
+        UPDATE users SET age = 26 WHERE id = 2;
+
+                                                DELETE
+    database:
+        DROP DATABASE myDB;
+
+    table:
+     !!! USE myDB;
+        DROP TABLE myDB
+
+    all rows in table:
+        DELETE FROM users WHERE id > 0;  
+
+    one row 
+        DELETE FROM users WHERE id = 6; 
+
+    one col
+        ALTER TABLE users DROP age;
+
+                                                 ORDERING
+
+    SELECT * FROM users ORDER BY last_name ASC;                
+    SELECT * FROM users ORDER BY last_name DESC;
+
+    
+                                                JOIN TABLES
+
+1. join two tables into one M-M ref table
+    SELECT userlanguage.id, languages.language, users.name
+       FROM userlanguage
+       INNER JOIN languages ON userlanguage.language_id = languages.id
+       INNER JOIN users ON userlanguage.user_id = users.id;
+
+    !!! here userlanguage is ref table holding user_id, language_id            
+
+
+2. ref table1 -> ref table 2 -> two tables
+
+
+    SELECT meetings.time, users.name, languages.language
+         FROM meetings 
+         INNER JOIN userlanguage ON meetings.userlanguage_id = userlanguage.id  
+         INNER JOIN languages ON userlanguage.language_id = languages.id  
+         INNER JOIN users ON userlanguage.user_id = users.id 
+         ORDER BY languages.language;
+   
+    
+
+                                                   
+
+                                                        OTHER
+
+    SELECT CONCAT(first_name, ' ', last_name) AS 'Name', dept FROM users;     //make one col from two
+
+    SELECT DISTINCT location FROM users;    
+
+    CREATE INDEX LIndex On users(location);          //ex. all users in New York
+    DROP INDEX LIndex ON users;    
+    
+    SELECT COUNT(id) FROM users;                     //count number of rows with distinct id
+    SELECT MAX(age) FROM users;                      //returns maximum value of this col, from all rows
+    SELECT MIN(age) FROM users;
+    SELECT SUM(age) FROM users;                      //returns sum of all values of this col, from all rows
+    SELECT UCASE(first_name), LCASE(last_name) FROM users;     //John brown (all rows in this format)
+
+    SELECT location, COUNT(location) FROM users GROUP BY location;          New York  2, Berlin 3 (all rows in this format)
+    SELECT age, COUNT(age) FROM users WHERE age > 20 GROUP BY age;          //filtering by value, then grouping
+    SELECT age, COUNT(age) FROM users GROUP BY age HAVING count(age) >=2;    
+
+    
+
+*********************************************************************************************************************
+********************************** DATATIPES ************************************************************************
+(time)
+    date DATETIME DEFAULT CURRENT_TIMESTAMP    //value - now()
+    date TIMESTAMP
+
+(number)
+    age INT
+(word) 
+    name VARCHAR(255)
+(text)
+    body TEXT
+(byte[])
+   passwordHash VARBINARY(255)
+(boolean) 
+    completed BOOLEAN
+
+!!! required:  name VARCHAR(255) NOT NULL
+*****************************************************************************************************************
+**************************  RELATIONSHIPS ********************************************************************
+
+ 
+
+                     
+************************************************************************************************************
+
+3. in MySql workbench
+    schema -> click on myDB - set as default schema
+    (now queries can be written in workbench, in query);  to run: ctrl + enter
+
+
+*************************************************************************************************************
+*********************************** ENTITY FW MySql ***************************************************************
