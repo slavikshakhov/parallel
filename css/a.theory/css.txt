@@ -1,0 +1,168 @@
+*************************************************************************************************************
+                                    EXTERNAL FILES
+utilities/variables.css
+        :root {    
+            --blue-800: #2c5282;
+            --gray-200: #edf2f7;
+        }
+
+@import "../utilities/variables.css";
+
+        el { background-color: var(--gray-200); }
+
+------------------------------------------------------------
+                    GLOBAL SETUP
+
+utilities/global.css
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: inherit;
+}
+
+html {
+    box-sizing: border-box;
+    /*font-size: 62.5%;     10px/16px = 62.5% -> 1rem = 10px */
+}
+
+body {
+    font-family: var(--font-josefin);
+    color: var(--brown-700);
+    line-height: 1.6;
+}
+
+************************************************************************************************************
+ 
+ 
+                                        LAYOUT
+FLEXBOX
+
+1. Equal widths of children, stretched to p's width
+
+    p:  display: flex;        //fixed width
+    ch: width: 100%;        //margin: 5px;
+
+    !!! ch: flex: auto;
+    !!! ch: flex: 1 1 auto;
+    !!! ch: flex-grow: 1;
+
+2. 2/3 + 1/3 responsive cols     !!! for responsiveness, p's width in % or vw
+
+    p:  display: flex;
+    ch1: flex: 0 70%;
+    ch2: flex: 0 30%;
+
+    !!! ch1: flex: 2;
+        ch2: flex: 1;
+
+GRID
+
+https://css-tricks.com/snippets/css/complete-guide-grid/
+
+.container-section {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 50% 50%;
+    grid-gap: 10px;
+}
+.top-left {
+    grid-column: 1/3;
+    grid-row: 1/2;
+    background-color: green;
+}
+.top-right {
+    grid-column: 3/4;
+    grid-row: 1/2;
+    background-color: red;
+}
+.bottom {
+    grid-column: 1/4;
+    grid-row: 2/3;
+    background-color: blue;
+}
+!!! grid-gap  ===  column-gap vs row-gap
+!!! repeat(3, fr)  ===  1fr 1fr 1fr
+!!! grid-template-rows: 50% 50%;
+                        25% auto;
+                        
+********************************************************************************************************************
+                                    CENTERING
+
+margin: 0 auto;
+
+*******************************************************************************************************************
+                                    PUSH TO BOTTOM OF PAGE
+
+par -> ch1
+    -> ch2
+
+    (push ch2 to bottom of page)
+
+    par: display: flex / flex-direction: column / min-height: 100vh
+    ch1: flex-grow: 1
+    
+
+*****************************************************************************************************************
+                                COLORS
+
+black: 000000
+grey (lighter to darker):  999999 -> 666666 -> 333333    (link -> hovere -> active)
+***********************************************************************************************************
+                                    ATTRIBUTES
+
+border:none;
+outline: none;
+letter-spacing: 0.025em;
+text-transform: capitalize;
+cursor: pointer;
+pointer-events: none;
+border-top-left-radius: 5px;
+border-bottom-left-radius: 5px;
+overflow: hidden;
+
+
+                                    SELECTORS
+
+.input:focus ~ .label {}
+.input:valid ~ .label {}
+
+
+
+************************************************************************************************************
+                                ANIMATIONS
+el {transition: all 0.3s;}
+el:hover {}  .... el:active {}
+
+SIZE
+    transform: scale(1.05);
+        
+MOVE-UP
+    transform: translateY(-2px);
+    !!! transform: translateY(-1px) scale(1.05);
+
+*********************************************************************************************************
+                                SHADOW
+
+ box-shadow: 0 0.5rem 1rem rgba(0, 0, 0,.2);
+
+**********************************************************************************************************
+                                BUTTON
+
+.btn-raise {
+    padding: 0.5rem 1.4rem;
+    border-radius: 0.3rem;
+    border: none;
+    outline: none;
+    font-size: 1.2rem;
+    font-weight: 400;
+    background-color: #ff6600;
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+**********************************************************************************************************
+                          

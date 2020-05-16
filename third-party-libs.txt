@@ -7,3 +7,14 @@
 2. countries flags icons: (npm)  flag-icon-css     
                           (styles.css)  @import '../node_modules/flag-icon-css/css/flag-icon.min.css';
                           (html)  class="flag-icon flag-icon-it"
+
+3. formspree.io    (registered, v.shakhov@yahoo.ca.... gerK....55)
+        when submitting form -> vals sent to my email
+        see docs to customize
+
+4. snipcart.com   (E COMMERCE)   (registered, v.shakhov@yahoo.ca.... gerK....55)
+    free for development, not for production
+    see gatsby.project.txt
+
+    
+

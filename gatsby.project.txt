@@ -1,0 +1,204 @@
+                                    SETUP
+
+1. VS Code (see VisualStudioCode.txt -> extensions, settings)
+2. Create project
+
+    >> npm install -g gatsby-cli    (if not installed on comp)
+    >> gatsby new furniture
+    F >> gatsby develop
+3. install (if not) git
+                    github
+                    netlify
+        !!! git
+            git init (if not)   !!! included by def     (to stage files)
+            (.gitignore)        !!! included by def
+            git add .
+            git commit -m "..."
+            git remote (url)
+            git push -u origin master
+--------------------------------
+3. Background images
+
+    (src/images)  background.jpg
+                  def-background.jpg
+                  logo.svg
+
+4. cleanup folders/files
+
+    1) remove components/header.js     
+                     /image.js
+                     /page-2.tsx
+
+                     !!! check components/layout.js, pages/index.js 
+
+    in components/layout.js  ---- remove <StaticQuery>
+    in pages/index.js   ---- remove <Image>, <Link>
+
+    components/layout.js (jsx)
+
+        return <div>{children}</div>
+    --------------------------------------
+    
+5. main logo  <<<<<<<<<<<<<<< REF   freelogodesign.org   (in .svg)
+    !!! see css.images.txt
+
+    remove images/gatsby-astronaut.png
+                    /gatsby-icon.png
+      !!! will show error if restart (because in gatsby-config.js)
+          (gatsby-config.js) 
+                replace path to deleted img with logo.svg
+    logo for basket <<<<<<<<<< REF  react-icons   (install, import in index.js, test in jsx)
+
+6. title
+
+    (gatsby-config.js)
+        siteMetadata -> title ....
+
+7. styling --- bootstrap
+
+    download -> move bootstrap.css to src/components
+                import in src/components/layout.js   ----   import "./bootstrap.css"
+
+    global css styles in layout.css
+
+    !!! use sass and modules, see gatsby.theory.txt   (styling)
+
+8 git -> github -> netlify
+                   deploy...settings -> change name 
+
+    !!! when pushed to github, netlify rebuilds 
+
+
+
+*************************************************************************************************************
+
+                                        COMPONENTS RELATIONSHIPS
+
+IndexPage -> Layout -> SEO (by def)
+                    -> BackgroundSection     // will wrap overlaying content
+                    -> Story 
+
+Layout  -> div -> Navbar 
+               -> {children}
+               -> Footer
+
+!!! IndexPage is in pages/index.js
+
+
+************************************************************************************************************
+
+                                        NAVBAR
+
+UI: 
+    left: icon           center (links): Home      About    basketIcon
+
+-------------------------------
+
+components/Globals/Navbar.js   (to be importet in layout.js, in jsx on top)
+    ..... see css.bootstrap.txt
+
+***********************************************************************************************************************
+                                    BACKGROUND PIC
+
+.... see gastby.theory.txt ---- background img
+     see css.images.txt ------- background
+
+************************************************************************************************************
+                                    STORY 
+
+text (centered, as col)
+button -> about
+
+***********************************************************************************************************
+                                    FOOTER
+
+text (centered, as col..., yellow, all rights reserved &copy; year  (use js, see javascript.txt DATE)
+
+**********************************************************************************************************
+                                    ABOUT (page)
+
+navbar 
+------
+about us                             // on about bg image
+lalallalalla (paragraph)             //
+------
+footer
+
+
+**************************************************************************************************************
+                                        CONTACT FORM 
+
+see third-party-libs.txt   --------- formspree.io   
+
+****************************************************************************************************************
+                                        E COMMERCE 
+1. register in app.snipcart.com 
+2. gatsby-plugin-snipcart     (npm, add to plugins)
+        !!! apiKey: ... , autopop: true    
+                            !!! to popup after any change
+
+        !!! apiKey see snipcart RT -> down
+        !!! store apiKey in env.development  (see gastby.theory.txt  ----- ENV VARS)
+        !!! snipcart docs:  RT (book symbol)
+
+3. add this key-val to netlify (build/deploy - env vars)
+
+*********************************************************************************************************
+                                    DB 
+
+CONTENTFUL -> create:  item (title, pic, price, description, category)
+connect proj to contentful (see gatsby.theory.txt -> CONTENTFUL)
+
+connect contentful to netlify
+
+    Netlify -> settings -> build/deploy -> continuous deploy -> build env vars (key - val)
+        !!! see .env.development (CONTENTFUL_SPACE_ID, CONTENTFUL_ACCESS_TOKEN)
+                                  vals taken from contentful site
+    !!! now access to allContentfulItem   (where Item is my model's name)
+-----------------------------
+get db's data into proj
+
+    1. IDE
+        { menu: allContentfulItem -> edges -> node -> id        
+                                                      title
+                                                      description -> description
+                                                      price
+                                                      category
+                                                      pic -> fixed(width: 50, height: 50) -> ...
+                                                      // pic -> fluid -> ...
+
+        !!! shift + space (show all obj's props)
+            node is one item (see contentful)
+            description here is text long (object)   vs title (text short)
+            pic can be fluid or fixed 
+            to get pic's src.....pic.fixed
+            to use <img src={} />    
+                use instead <Img fluid={node.pic.fluid} />     
+                                 fixed={nod.pic.fixed}
+
+                !!! import Img from 'gatsby-image'
+
+                !!! in .js to query,    ... pic -> fixed (width: 50, height: 50) -> ...GatsbyContentfulFixed_tracedSVG
+                                        ... pic -> fluid -> ...GatsbyContentfulFluid_tracedSVG
+                                !!! see class names in gatsby docs, plugins - gatsby-image
+                
+    2. in proj (contentful data -> pages/index.js -> components/menu.js)
+
+        !!! page query (from pages) vs static query (not from pages, no filtering possible)
+            if need filter, get data in pages/index.js -> pass to other non-page components
+
+            (in pages/index.js)
+
+                import { Link, graphql } from "gatsby";
+                -----------------
+                export const query = graphql`{ .... (query here) ... }`
+
+                    !!! replace src with entire destructured object: 
+                                ...GatsbyImageSharpFixed_tracedSVG      (see gatsby-image plugin)
+
+                    !!! query becomes props.data    (ex: props.data.menu.edges)
+                    !!! use page query (if need to filter later) in index.js -> pass as props to Menu comp 
+                            where it will be used, 
+                                ex: props.data.menu
+    show row 1:  buttons for categories and items corresponding to selected category
+         row 2:  all items 

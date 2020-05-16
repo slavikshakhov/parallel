@@ -1,0 +1,12 @@
+                                CALCULATOR 
+
+23.45   only one . 
+        . only after numeric
+
+    --------------------------
+    lastNum --- false
+    lastDot --- false 
+
+        change when entering num and when entering . 
+        when entering . -> only append to display text if lastNum true, lastDot false
+        

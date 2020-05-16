@@ -275,7 +275,9 @@ MANY TO MANY
 
 
                             User(M) - Language(M)
-
+!!! Op.or
+        const seq = require('sequelize');
+        const Op = seq.Op;
 
 var users = await User.findAll();                                                               all users without related languages
 ------------------------------------------------------------------------------------------------
@@ -300,7 +302,9 @@ var lgs = await Language.findAll({where: {id: { [Op.or]: [1, 2]} }});           
 ------------------------------------------------------------------------------------------------
 var user = await User.findOne({where: {id: 1}, include: Language});
 var lgs = await Language.findAll({where: {name: { [Op.or]: ['german', 'italian']} }});
-user.addLanguages(lgs);                                                                         add existing lgs to one user
+user.addLanguages(lgs);         
+
+!!! if addOfferedLgs -> addOfferedlgs  (no capital letters)                                     add existing lgs to one user
 ------------------------------------------------------------------------------------------------
 var users = await User.findAll({
         include: [{model: Language, where: {name: { [Op.or]: ['german', 'french']}}}]

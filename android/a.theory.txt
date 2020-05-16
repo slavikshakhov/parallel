@@ -1,0 +1,140 @@
+                        SETUP
+                        IDE
+
+install android studio (IDE)
+start new project -> phone and tablet -> empty activity  .....
+
+                        SETUP 
+                        AVD (emulator)
+
+(in IDE, tools -> AVD Manager)
+    create virtual device ->  phone, pixel 3 (must have play store!)
+                              Q or ...?
+                              add to name version (Q...)
+                                advanced: enable device frame
+                                                 keyboard input
+                        SETUP 
+                        phone
+
+settings -> about device -> software info -> build number (switches to developer mode)
+         -> developer options (on ?)
+                                -> USB debug (on)
+
+!!! to write code independantly from android:
+        file -> create new -> kotlin file 
+
+            fun main() { ... }
+
+****************************************************************************************************
+                            FOLDERS
+
+app ->  java -> com.example.myproj  -> MainActivity.kt          //starting code
+    ->  res  -> layout  ->  activity_main.xml                   //visually 
+
+***************************************************************************************************
+                                IDE 
+
+1.  activity_main.xml  .... highlight text,  RT declared attributes -> text
+                                             RB commot attributes -> textAppearance -> textSize - 21sp
+
+***************************************************************************************************
+                                REF TO el 
+
+val myBtn = findViewById(R.id.buttonId) as Button            // import ...
+val myTxt =                   textId       TextView          // import
+
+    !!! myBtn.setOnClickListener {it: View!    }
+    !!! myTxt.text = "lala"
+
+!!! by importing Button can ref to it directly by id name:
+    !!! buttonId.setOnClickListener { }
+***************************************************************************************************
+                                EVENTS
+
+btnRef.setOnClickListener {it: View!   }
+
+-----------------------------------------------------------------------------
+(MainActivity .... onCreate)
+
+    btnId.setOnClickListener { view ->
+            clickDatePicker(view)
+        }
+ fun clickDatePicker(view: View) { ..... }  
+                                    !!!  any dialogue (ex. Toast, DatePickerDialog ...) --- .show()  uses view:View
+
+!!! el.setOnClickListener only if el in xml doesn't have onClick="myFun"
+
+
+----------------------------------------------------------------------------------------
+GET ATTRS OF EL FROM el that is source of event  (ex. inside event listener fun, where view is passed)
+
+    (view as Button).text               --- Button inherits from view
+
+GET ATTRS OF EL (not source of event)
+
+    elId.text
+
+-----------------------------------------------------------------------------
+ADD TEXT DYNAMICALLY
+
+    <TextView ...id="@+id/someId"   />
+        !!! no text attr 
+    .kt  ---  someId.setText(str)
+
+-----------------------   
+
+!!! all non-event funs private
+**************************************************************************************************
+                                MESSAGES (ALERTS...)
+
+Toast.makeText(this@MainActivity, "lalala", Toast.LENGTH_SHORT).show()
+
+***************************************************************************************************
+                                DATE
+
+DATE NOW
+
+        val myCalendar = Calendar.getInstance()
+
+        val year = myCalendar.get(Calendar.YEAR)
+        val month = myCalendar.get(Calendar.MONTH)
+        val day = myCalendar.get(Calendar.DAY_OF_MONTH)
+
+DATE obj (1970 till specified date)
+
+     val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)   
+     sdf.parse(selectedDate)                     
+     
+     !!! selectedDate is "" of dd/MM/yyyy format
+        
+DATE obj (1970 till now)
+
+     val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH) 
+     sdf.parse(sdf.format(System.currentTimeMillis()))
+
+TIME DURATION IN MS
+
+    d!!.time                 ---- where d is Date obj
+
+
+
+DATEPICKER        
+        
+        DatePickerDialog(this, DatePickerDialog.OnDateSetListener {
+                view, year, month, dayOfMonth ->
+                     ....code after date picked and Ok clicked ....
+        }, year, month, day).show()
+    }
+}
+
+    !!! year, month, day  ----- now
+
+   ------------------------------------------------------
+   calendare inactive in future
+
+        dpd.datePicker.setMaxDate(Date().time - 86400000)
+        dpd.show()
+
+        !!! whre dpd is result of DatePickerDialog(...)
+
+*********************************************************************************************************************

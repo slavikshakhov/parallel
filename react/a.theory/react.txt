@@ -32,6 +32,33 @@ FETCH
                                 JSX
                             
 {bool && <p> ..... </p>}
+-----------------------------------------
+{els.map(el, i) => {
+    return (<li key={i} ..... </li>);
+}}
+----------------------------------------
+els.slice(0, 5)     -> first 5 els
+
+-----------------------------------------------------------------------------------------------------------
+                                CHILDREN
+
+A comp  ------ B  ->  C
+                  ->  D
+
+B comp  ----- div -> E
+                  -> {props.children}        // C, D
+
+D comp  ----- div -> F
+                  
+D's props come directly from A, no need to pass to B first
+
+
+***********************************************************************************************************
+                                PROPS
+
+in CompA (has props), after Comp:
+
+        CompA.defaultProps = { prop1: "lalala" }
 
 *************************************************************************************************************
                                 LINKS (to use need to be in App.js routes)
@@ -64,6 +91,7 @@ let history = useHistory();
                                  STYLING
 
 <div  className={`burger ${regMode ? 'remove-burger' : ''}`}> ... </div>
+ <h1 style={{color: "red"}}> ... </h1>
 
 ************************************************************************************************************
                                     EVENTS
@@ -97,6 +125,20 @@ let history = useHistory();
 
 <button onClick={() => dispatch({type: 'SET_REGISTER_MODE', payload: true}) } >Register</button>
 
+************************************************************************************************************
+                                HOOKS
+                                ComponentDidMount()
+import React, { useState, useEffect } from 'react';
+---------
+const [isOnline, setIsOnline] = useState(false);
+useEffect(() => ...cb..., []);   
+    
+    !!! 2nd arg: 
+            no 2nd arg -> after mounting and every update calls cb
+            []  -> only after mounting calls cb
+            [isOnline] -> if val changes -> calls cb
+
+    !!! to change state (update): cb is:  setIsOnline(true)
 ************************************************************************************************************
                                 REACT FORM
 
@@ -136,6 +178,8 @@ js in jsx:
 ---------------------------------------------------------------------
                                     ON INPUT onChange
 (js)
+    import React, { useState } from 'react';
+
     const [search, setSearch] = useState('');
     useEffect(() => {... search ...});
 (jsx)
@@ -262,6 +306,23 @@ const invalidPasswordInputLong = passwordErrors?.maxLength;
     }
 
 ************************************************************************************************************
+                                EVENT CH -> PAR
+
+const Par = () => {
+  const runEvent = () => { ... };
+  return (
+           <Ch changeFunc={runEvent} />        
+  );
+};
+const Ch = props => {
+  const handleSubmit = (event) => {    
+    props.changeFn();   
+  }
+  return (    
+      <button onClick={handleSubmit}></button>    
+  )
+
+************************************************************************************************************
                                     REDUX HOOKS
 (js)
     import {useSelector, useDispatch} from 'react-redux';
@@ -363,6 +424,16 @@ const handleSubmit = (e) => {
                 }                               
         });
 }
+
+!!! to get data on ComponentDidMount:
+    import React, { useState, useEffect } from 'react';
+    ----------------------
+     const [offeredLgs, setOfferedLgs] = useState(null);
+     useEffect(() => { ... fetching here ... setOfferedLgs(data)}, [1]);
+
+     !!! without [1]   -> infinite loop
+            !!! any data that will not change: 1, etc
+
 
 *************************************************************************************************************
                         

@@ -1,0 +1,249 @@
+                                SETUP
+
+C:\Hugo\bin  <-  extract hugo executable file after installing  (g - releases hugo)
+path var set to C:\Hugo\bin
+F >> hugo version 
+
+***********************************************************************************************************
+                             NEW PROJECT
+F >> hugo new site my-proj
+choose theme, clone into themes F
+my-proj >> hugo server
+
+**********************************************************************************************************
+
+                            THEMES
+
+download -> (GitHub...read info) clone into themes F
+for practice: https://github.com/giraffeacademy/ga-hugo-theme
+
+(config.toml)
+    baseURL = "http://example.org/"
+    languageCode = "en-us"
+    title = "My New Hugo Site"
+    theme = "theme-name"
+
+***********************************************************************************************************
+                            FRONT MATTER
+
+lgs used:
+    YAML (def)  ---
+    TOML        +++
+    JSON
+
+author: "Slavik"     ->  not in list, but in detail of this .md
+
+**********************************************************************************************************
+                                ARCHETYPES
+
+archetypes -> default.md
+           -> F4.md       
+
+> hugo new F8/lala.md      ->  will use default.md archetype
+> hugo new F4/tata.md      ->  will use F4.md archetype
+
+*********************************************************************************************************
+                                SHORTCODE
+
+YOUTUBE VIDEO (in .md)
+    {{< youtube gsqAmuL8uek >}}         !!! youtube id is v=.......   
+
+***********************************************************************************************************
+                                TAXONIMIES
+
+TAGS
+    (config.toml)
+
+        [taxonomies]
+            tag: "tags"
+            category: "categories"
+            mood: "moods"
+
+    !!! tag, category by default;  
+        mood is custom tag
+
+    (a.md) 
+        ---
+        tags: ['tag1', 'tag2']
+        categories: ['cat1]
+        mood: ['great', 'good']
+
+    !!! by clicking in list on el's tag1 ->  1313/tags/tag1   (list of comps with this tag)
+
+***********************************************************************************************************
+                            CONTENT
+
+NEW PAGE -- ROUTE
+
+        > hugo new a.md      //front-matter between --- ; content 
+        > hugo new b.md
+> hugo server -D             //-D to include new files (for now they are 'draft')
+
+!!! hugo new a.md //  new myFolder/a.md  ....
+
+--------------------------------------------------------------------------------------
+
+LIST VS DETAIL PAGES
+____________________
+
+content ->  a.md
+        ->  F1 ->  b.md
+               ->  c.md
+               ->  F2    -> d.md
+        ->  F3 ->  e.md
+               ->  f.md
+1313/  ->        a, b, c, e, f
+1313/F1  ->      b, c 
+1313/F3  ->      e, f 
+1313/F1/F2  ->  !!! must be at root dir (only F1, F3, not F2)
+                    to include d.md:  > hugo new F1/F2/_index.md
+
+---------------------------------------------------------------------------------------
+
+CONTENT IN LIST, NOT INCLUDING ELS 
+
+> hugo new F1/_index.md     
+                 +  some content under front-matter  -> 
+                         1313/F1  _index.md's content + list d, c 
+
+*********************************************************************************************************
+                            TEMPLATES
+                            1. FOR ALL DIRS
+
+CUSTOM TEMPLATES
+
+1. LIST
+    (layouts/_default/list.html)
+
+        (html, body)    {{.Content}}           -> content of _index.md of this level .md
+
+                        {{range .Pages}}
+                            {{.Title}} <br>
+                            {{.URL}}
+                        {{end}}
+
+            !!! ul -> li -> a href="{{.URL}}" -> {{.Title}}
+
+2. DETAIL
+    (layouts/_default/single.html)
+
+        (html, body)     {{.Content}}
+                         {{.Title}}
+                         {{.Date}}
+
+!!! root layouts overrides themes layouts
+
+--------------------------------------------------------------------------------------
+
+                       SECTION TEMPLATES
+                        FOR THIS DIR 
+
+content -> dir1 -> a.md
+                -> b.md
+laouts -> dir1 -> list.html
+               -> single.html 
+
+-------------------------------------------------------------------------------------
+                        BASE TEMPLATE  (for entire site, wraps other templates)
+
+layouts -> _default/baseof.html
+
+    (html, body)  
+                  lalala
+                  {{ block "main" . }}
+
+                  {{ end }}
+                  tatata
+
+layouts -> _default/list.html
+
+    (html, body)
+
+            {{ define "main" }}
+                This is list template for all .md(s)
+            {{ end }}
+
+layouts -> _default/single.html
+
+    (html, body)
+
+            {{ define "main" }}
+                This is single template for all .md(s)
+            {{ end }}
+
+output -> any sg pate:   lalala
+                         This is single template for all .md(s)
+                         tata
+
+!!! add other blocks:
+layouts -> _default/baseof.html
+
+        {{ block "footer" }}
+            <br>
+            this is default footer
+        {{ end }}
+
+layouts -> _default/single.html (or list)
+only define "main", still will show other blocks
+
+output -> 
+            lalala
+            this is single template for all .md(s)
+            this is default footer
+            tata
+        
+                {{ define "footer" }}
+                    here is specific footer
+                {{ end }}    
+    !!! will override "footer" of baseof.html
+
+output -> 
+            lalala
+            this is single template for all .md(s)
+            here is specific footer
+            tata
+
+*********************************************************************************************************
+                            VARS accessible only from layout's .html
+
+>>>>>>>>> REF       https://gohugo.io/variables
+
+ACCESS VARS ABOUT PAGES (from .html)
+    {{ .Title }}
+    also  .Date   .URL    
+
+!!! custom vars from .md to .html
+    in .md's front matter ----  myVar: "lalala"
+    in .html              ----  {{ .Params.myVar}}
+
+!!! custom vars in .html (declared / assigned / used)     
+    in .html              ----  {{ $x := "tatata" }}     //  or    {{ $x := 3 }} 
+                                {{ $x }}
+
+ex: color:
+
+    in a.md's front matter  ---- color: "red"
+       a.md's front matter  ---- color: "green" 
+
+    in .html               ---- <h1 style="color: {{ .Params.color }};">lalala</h1>
+
+************************************************************************************************************
+                            FUNCTIONS only from layout's .html
+
+>>>>>>>> REF        https://gohugo.io/functions
+
+{{ truncate 3 "This is a long string" }}   -> Thi...
+{{ add 1 5 }}                              -> 6
+{{ sub 1 5 }}                              -> -4
+{{ singularize "dogs" }}                   -> dog
+
+--------------------------
+{{ range .Pages  }}  
+    {{ .Title }}
+{{ end }}
+
+!!! .Pages is list of pages (.md) in current section
+    inside range -> access to vars in .md
+---------------------------
+
+

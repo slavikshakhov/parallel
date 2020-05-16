@@ -1,0 +1,3 @@
+                                            DELETE
+
+dir if not empty:          >> rmdir F /s

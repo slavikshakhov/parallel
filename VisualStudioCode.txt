@@ -1,0 +1,27 @@
+                        EXTENSIONS
+
+Bracket Pair Colorizer
+ES7/React/Redux/GraphQL/React-native snippets
+Hightlight Matching Tag
+Indent Rainbow
+Live Server
+vscode-styled-components
+Prettier-Code-Formatter
+
+                            SETTINGS 
+
+FORMAT ON PASTE  
+WORD WRAP
+
+!!! for React, Gatsby....
+
+    EMMET - INCLUDE LANGUAGES -> 
+
+        "emmet.includeLanguages": {
+        
+            "javascript": "javascriptreact"
+        },
+        "emmet.syntaxProfiles": {
+            "javascript": "jsx",
+            "javascript": "html"
+        }

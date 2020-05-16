@@ -1,0 +1,11 @@
+                            Enable VT-x in BIOS
+
+cmd > systeminfo.exe ..... Hyper-V Requirenments -> Virtualization Disabled
+    (if disabled)
+
+    windows -> settings -> update/security -> recovery -> advanced startup -> restart now
+
+        troubleshoot -> advanced options -> UEFI Firmware Settings -> restart
+
+            system configuration -> virtualization technology ... enable   ... save, exit
+

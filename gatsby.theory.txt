@@ -1,0 +1,508 @@
+                                    BUGS
+CMD ERR, CONTENTFUL... 
+
+    There was an error in your GraphQL query:
+        Unknown type "ContentfulSizes"
+
+SOLUTION
+
+    go to "node_modules/gatsby-source-contentful/src/fragments.js" and comment all the code, then save
+
+site broken, after installing pks ->
+SOLUTION
+
+    delete node_modules
+           package.log.json
+    npm install
+
+ 
+ 
+                                SETUP
+
+>> npm install -g gatsby-cli
+>> gatsby new myProj      // gatsby new myProj https://github.com/gatsbyjs/gatsby-starter-hello-world
+F >> gatsby develop
+
+
+*******************************************************************************************************************
+                                    ENV VARS
+
+(npm) cross-env
+
+(.env.development)
+    MY_VAR=lalala
+
+(gatsby-config.js)   // or any other node.js file   >>>>>>>> REF    gatsby docs, environment vars
+    
+    require('dotenv').config({
+        path: `.env.${process.env.NODE_ENV}`,
+    })
+    ------
+    process.env.MY_VAR
+
+*************************************************************************************************************
+                                ROUTING
+
+
+
+********************************************************************************************************************
+                                LINKS
+
+import {Link} from 'gatsby';
+------
+(jsx)  
+    <Link to='/blog'>Home</Link>       
+
+!!! blog is route (src/pages/blog.js)
+
+    !!! copy pages/index.js -> use code in other pages
+            changes: 
+            1. rename comp
+
+
+!!! (styling when active link): <a activeClassName={headerStyles.activeItem}></a>
+
+********************************************************************************************************************
+                                LAYOUT
+
+(src/components/layout.js) jsx
+   
+    <Header />
+        {props.children}
+    <Footer />
+
+(src/pages/index.js)  jsx
+
+    <Layout>
+        (unique content here, components)
+    </Layout>
+
+!!! shared content - <Layout>
+
+*******************************************************************************************************************
+                                STYLING
+
+GLOBAL
+
+    (src/styles/index.css)  to be inportet into Comp: import '../styles/index.css'
+
+SASS 
+    plugin: gatsby-plugin-sass  (see docs to install, configure)
+
+        (npm) node-sass, gatsby-plugin-sass
+
+        (gatsby-config.js)  
+
+            module.exports = {                
+                plugins: [`gatsby-plugin-sass`],
+            }        
+        
+        (src/styles/index.scss)   !!! rename css -> scss
+
+!!! global styles, put in src/styles/index.scss:   https://gist.github.com/andrewjmead
+
+MODULES
+
+    (src/components/header.module.scss)  
+
+        .myClass { ... }
+
+    (src/components/header.js)  
+    
+        import headerStyles from './header.module.scss'
+        ----------
+        (jsx)  <p className={headerStyles.myClass}></p>
+
+*****************************************************************************************************************
+                                BACKGROUND IMG
+
+query -> img: file(relativePath -> eq: "default-background.jpeg") 
+        -> childImageSharp -> fluid -> ...GatsbyImageSharpFluid_tracedSVG
+
+(in pages/index.js)
+    import { Link, graphql } from "gatsby";
+    -----------------
+    export const query = graphql` .... (query here) ... `
+
+!!! to use query in comp, under comp: 
+            export const query = graphql` ..... `
+    in layout: 
+        <BackgroundSection
+            fluid={data.img.childImageSharp.fluid}     
+            title="regular joe's"
+            styleClass="default-background"
+        />
+
+!!!  (index.js)
+
+        Layout  -> SEO
+                -> BackgroundImageSection ...(attrs here)
+
+      (layout.js)
+
+        div     -> Navbar
+                -> {props.children}        ... (SEO, ...)
+                -> Footer
+
+      (backgroundSection.js)
+
+        BackgroundImage ...(accept attr-s)  -> h1 -> 
+                                            -> {props.children}     ....(SEO, ...) 
+
+                                            !!! children of Layout
+                            !!! attrs needed: fluid, +- className={props.styleClass}
+                            !!! h1 is on top layer of bg
+        !!! style, see css.images.txt --- background
+        !!! can define defaultProps for props here, see react.txt  --- props
+
+
+*****************************************************************************************************************
+                                DATA
+
+                                IDE (to see data structures, to query)
+
+IDE (like postman)
+
+    (gatsby-config.js)
+
+        module.exports = {
+            siteMetadata: {
+                title: 'My project',
+                author: 'Slavik'
+            }            
+         }
+
+    (b): 8000/___graphql 
+        Docs -> Query -> Site -> Node -> siteMetadata 
+
+        (query, on L side):   query {site {siteMetadata {title}}}  
+
+IDE (alt, better): graphql playground   
+
+    (.env.development)
+
+        GATSBY_GRAPHQL_IDE=playground       
+
+
+!!! to query from Comp:
+
+    import {graphql, useStaticQuery} from 'gatsby';
+    -------
+    const data = useStaticQuery(graphql`
+        query {site {siteMetadata {title}}} 
+    `)
+    (jsx) 
+        {data.site.siteMetadata.title}
+
+___________________________________________________________________
+
+                                        MARKDOWN FILES 
+
+(src/posts/post1.md)
+
+    ---
+    title: "Post 1"
+    data: "4.05.2020"
+    ---
+    This is my site
+    ## Includes:
+    1. Lala
+    2. Tata
+
+(src/components/posts/post2.md) ...
+-----------------------------------------
+1. !!!  to get data from files -> graphql
+
+    plugin:  gatsby-source-filesystem (npm)
+
+    (gatsby-config.js)
+
+        module.exports = {
+            plugins: [                
+                {resolve: 'gatsby-source-filesystem', options: {name: 'src', path: `${__dirname}/src/`}}
+            ]
+        }
+    !!! now IDE has access to files in src dir  (vie query -> allFile)
+        allFile -> FileConnection -> edges -> node: File! 
+
+        (query):  
+
+            query {
+                allFile {
+                    edges {
+                        node {
+                            name
+                            extension
+                            dir
+                            }
+                        }
+                  }
+                }
+--------------------------------------------
+2. !!! data from graphql -> html   (use remark, js library to parse .md files) via query -> allMarkdownRemark
+    plugin: gatsby-transformer-remark
+
+    (gatsby-config.js)
+
+        module.exports = {
+            plugins: ['gatsby-transformer-remark']               
+        }
+3. !!! use only .md files from graphql in Comp
+
+    (src/pages/blog.js)
+
+    import {graphql, useStaticQuery} from 'gatsby';
+    -------------------------    
+    const data = useStaticQuery(graphql`
+        query {
+            allMarkdownRemark {
+                edges {
+                    node {
+                        frontmatter {
+                            title
+                            date
+                        }
+                        excerpt
+                        }}}}            
+    `)
+    return (
+        <div>
+            <ul>
+                {data.allMarkdownRemark.edges.map((edge) => {
+                    return (
+                        <li>
+                            <h2>{ edge.node.frontmatter.title }</h2>
+                        </li>
+                    )
+                })}
+
+            </ul>
+        </div>
+    )
+}
+export default Blog
+
+!!! excerpt is content (under last ---)
+    edges is list of blogs, node is one blog
+_________________________________________________________________________
+
+                                    GENERATE NEW PAGE FOR EACH project
+
+!!! generate slug for each -> generate page template for each -> new page for each
+-----------------------------------------------------
+
+1)  GENERATE SLUG FOR EACH Post
+
+(gatsby-node.js)
+
+    const path = require('path');
+
+    module.exports.onCreateNode = ({ node, actions }) => {
+        const { createNode, createNodeField } = actions;    
+        if(node.internal.type === 'MarkdownRemark'){            
+            const slug = path.basename(node.fileAbsolutePath, '.md');
+            createNodeField({node, name: 'slug', value: slug});
+        }
+    }
+  
+
+!!! node -> internal -> type ('MarkdownRemark' or 'SitePage')   !!! .md files vs other files in src/.../...
+         -> fileAbsolutePath
+    actions -> createNodeField (has 3 args: node, name, value) ...
+                                     here name --- 'slug'
+                                          value ---  'post1' or path.basename(fileAbsolutePath, '.md')
+
+    query -> allMarkdownRemark -> edges -> node -> fields -> slug   (after createNodeField executed
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+2) GENERATE BLOG POST PAGE template
+
+(src/templates/blog.js)  !!! will also work without population, but empty or static
+                             to populate dynamically template with this .md:
+
+    
+    import  {graphql} from 'gatsby';
+
+    export const query = graphql`
+            query ($slug: String) {                                
+                markdownRemark (fields: {slug: { eq: $slug}}) {
+                    frontmatter {
+                        title
+                        date
+                    }
+                    html
+                }
+            }
+        `
+    const blog = ({data}) => {
+        
+        return (
+            <div>
+                <p>{data.markdownRemark.frontmatter.title }</p>
+                <p>{data.markdownRemark.frontmatter.date}</p>
+                <div dangerouslySetInnerHTML={{__html: data.markdownRemark.html}}>
+                </div>
+            </div>
+        )
+    }
+
+    export default blog
+
+    !!! $slug  <-  content (see #3 below)
+        query -> markdownRemark -> frontmatter -> title      // markdownRemark is node for this post
+                                               -> date
+                                -> html
+                                -> fields -> slug 
+
+        result of query becomes props.data 
+        access html in .md: <div dangerouslySetInnerHTML={{__html: data.markdownRemark.html}}></div>
+
+
+-----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+3) CREATE PAGE FROM SLUG + template     (will be used as detail page vs when refer from list to .md)
+     see gatsby docs:  Node APIs - createPages
+
+     (gatsby-node.js)
+
+        module.exports.createPages = async ({ graphql, actions }) => {
+            const { createPage } = actions;
+            const blogTemplate = path.resolve(`./src/templates/blog.js`);
+            const res = await graphql(`
+                query {
+                    allMarkdownRemark {
+                        edges {
+                            node {
+                                fields {
+                                    slug
+                                }
+                            }
+                        }
+                    }
+                }
+            `);
+            res.data.allMarkdownRemark.edges.forEach((edge) => {
+                createPage({
+                    component: blogTemplate,
+                    path: `/blog/${edge.node.fields.slug}`,
+                    content: {slug: edge.node.fields.slug}
+                })
+            })
+        }
+        !!! component --- C:\......  or path.resolve(dir from this location to template file)                                                    
+            path --- /blog/post1   or   /blog/ + edge.node.fields.slug  (after iter egdes -> edge)
+            content --- {slug: 'post1'}   or  {slug: edge.node.fields.slug}
+
+        !!! here graphql is not same as imported, returns Promise as data obj
+            
+        (b:)/8000/blog/post1    or /8000/blog/post1
+
+4) LINK TO CREATED PAGE FROM STATIC PAGE
+
+    (src/pages/blog.js)  in query add fields to node
+
+        
+        import {graphql, useStaticQuery, Link} from 'gatsby';
+        -----------------        
+        const data = useStaticQuery(graphql`
+            query {
+                allMarkdownRemark {
+                    edges {
+                        node {
+                            frontmatter {
+                                title
+                                date
+                            }
+                            fields {
+                                slug
+                            }               
+                        }
+                    }
+                }
+            }
+        `)
+        return (
+            <div>
+                <ul>
+                    {data.allMarkdownRemark.edges.map((edge) => {
+                        return (
+                            <li>
+                                <Link to={`/blog/${edge.node.fields.slug}`}>
+                                    <h2>{ edge.node.frontmatter.title }</h2>
+                                    <h2>{ edge.node.frontmatter.date }</h2>
+                                </Link>                            
+                            </li>
+                        )
+                    })}
+
+                </ul>
+            </div>
+        )
+    }
+    export default Blog
+
+    !!! click on Link of one of posts (edges) -> show jsx of src/templates/blog.js (see #2)
+
+*******************************************************************************************************************
+                                    IMAGE IN .md
+
+1. gatsby docs -> gatsby-remark-images   (install, copy/paste plugins: [...])
+2. in .md   
+
+    ---
+    title: "Post 1"
+    date: "4.05.2020"
+    ---
+
+    ![dogs](./dogs.jpg)           
+
+    This is my post
+    ## It includes: 
+    1. La
+    2. Ta
+
+*********************************************************************************************************************
+                                         CMS (CONTENTFUL)
+
+contentful.com
+    create space (1st time) -> create empty space
+        content model  (add content type)
+        content    ->   add field ...
+            save
+                publish
+
+gatsby docs, plugins: gtsby-source-contentful  (npm, configure in gatsby-config.js)
+    !!! to use process.env, see ENV VARS here
+    !!! to get CONTENTFUL_SPACE_ID, CONTENTFUL_ACCESS_TOKEN :  
+         contentful site, settings -> API keys -> add key
+
+.env.development  
+    !!! .gitignore   ....   .env.development
+    
+
+------------------------------------------
+IDE 
+    query -> allContentfulBlogPost -> edges -> node -> title
+                                                    -> slug
+                                                    -> plublishedDate
+
+
+    query {
+        allContentfulBlogPost(sort: {
+            fields: publishedDate, order: DESC
+        }){
+            edges {
+                node {
+                    title
+                    slug
+                    publishedDate (fromNow: true)
+                }
+            }
+        }
+    }
+    !!! in IDE see for each: type and arguments
+        publishedDate (formatString: "YYYY MM D")       // see momentsjs.com/docs
+

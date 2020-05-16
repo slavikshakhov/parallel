@@ -1,0 +1,474 @@
+*************************************************************************************************
+                                TEXT FORMAT 
+
+print('lala ' + x)
+      'lala $x'
+      'lala ${ 5 > 3 }'
+      'lala ${ x++ }'      -> will execute but seen next line
+      'lala ${ ++x }'      -> will execute and seen in this line
+      '$x\'s name'            
+
+
+**************************************************************************************************
+                                OOP 
+
+class A (x: String) {
+    init { .... x ...}                     | runs when a created from main     
+}
+main() { A ("la") }
+
+    !!! alt:  class A constructor (x: String) { ... }
+    !!! def vals:  class A (x: String = 'tata') { ... } 
+                   main () { A() }      
+                             A("zzzz") 
+---------------------------------
+
+class A (x: String = 'lala') {
+    var z: Int = 5                         | or nullable    var z: Int? = null
+    init { ... z ... }
+    fun fff() { ... z ... }
+}
+fun main () {
+    var a = A ('tata')
+    a.fff()
+}
+
+    !!! b.fff()   -> same res --- 5
+        in main --- a.z = 4
+                    a.fff ()    --- 4    (only for a, not b, ...)
+-----------------------------------
+
+class A (x: String = 'lala') {
+    var z: Int = null
+    init { ... x ...z ...}
+    constructor (x: String, z: Int): this(x, z) {
+        this.z = z
+    }    
+}
+main () {
+    var a = A (x: 'tata', z: 20)
+    a.z = 30
+    println(... x .... z ...)
+}
+    !!! this.z = z    can be inside init of first K or inside 2nd K's body
+    !!! order inside class: 
+                member vars -> init -> constructor -> member funs
+
+    !!! member fun's body sees member vars directly
+    !!! 1st run init, then 2nd K
+
+------------------------------------
+ASSIGN MEMBER VAR LATER
+
+    class A () {
+        lateinit var x: String
+        init {
+            this.x = 'lala'
+        }
+    }
+    !!! must be assigned within the class before used from main
+
+-------------------------------------
+GETTERS 
+
+    class A () {
+        var y: String = 'LalA'
+        get () { 
+            return field.toLowerCase()
+        }
+    }
+    fun main () {
+        var a = A()
+        ...a.y ...          -> lala
+    }
+
+--------------------------------------
+SETTERS 
+
+    class A () {
+        val x: Int = 20
+        set (value) {
+            field = if (value > 0) value else throw illegalArgumentException ("must be > 0")
+        }
+    }
+    fun main () {
+        var a = A()
+        a.x = -5                        -> exc
+    }
+------------
+PRIVATE SETTERS 
+
+    class A () {
+        var x: String = 'lala'
+        private set
+        init {this.x = 'ggg'}
+    }
+    fun main () {
+        var a = A()
+        a.x = 'dada'                -> error  !!! only settable from class A (from init)
+        ...a.x  ...                 -> ggg    (getter not private, so ok to access from outside)
+    }
+
+----------------------------------------------
+DATA CLASS 
+
+    data class A (val id: Long, var n: String)
+    fun main () {
+        var a = A (id: 1, n: 'lala')
+        ... a.n ...
+        a.n = 'tata'
+    }
+----------------------------------------------
+COMPARE OBJS:  (if same fields and values)
+
+    a.equals(b) 
+    a == b 
+
+----------------------------------------------
+COPY OBJS 
+
+    var aCopy = a.copy()
+                a.copy(n = 'ddddd')       -> copies with dif n 
+
+---------------------------------------------
+DECONSTRUCTION 
+
+    val (id, n) = a
+    ... id ... n ...
+
+---------------------------------------------------------------------------------------------
+INHERITANCE, POLYMORPHISM
+
+    open class A (val n: String){
+        open var r: Double = 0.0
+        open fun fff () { ... }
+    }
+    class B (n: String, x: Double): A(n) {
+        override var r: Double = 20
+        override fun fff () { ... }
+    }
+    !!! open if will be overriden
+    !!! all classes inherit from Any class (has methods: .hashCode, .toString, .equals)
+
+-------------------------------------------------------------------------------
+INTERFACES
+
+    interface Drivable {
+        val x: Double
+        fun fff (): String
+        fun ttt () { ... }
+    }
+    class A (override val x: Double): Drivable {
+        override fun fff (): String { 
+            return "lalala"
+        }
+    }
+
+    !!! all unimplemented props and methods must be implemented in A 
+    !!! shortcut:  overried fun fff (): String = "lalala"
+
+-------------------------------------------------------------------------------
+ABSTRACT CLASSES
+
+    abstract class A (private val n: String) {
+        abstract var x: Double
+        abstract fun fff()
+        fun ddd() { ... }
+    }
+    class B (n: String, override var x: Double): A (n) {
+        override fun fff() { ... }
+    }
+
+INTERFACE vs ABSTRACT CLASS
+
+    !!! can extend > 1 interface but only 1 abstract class
+        interface has no K, no fields, abstract class has K, can have fields
+
+*************************************************************************************************
+                                VARS ... NULLABLES
+
+NULLABLES 
+
+    var x: String = 'la'
+    x = null                 -> error 
+    ------------------------------------
+    var y: String? = 'la'
+    y = null                  -> ok
+    y.length                  -> error
+    y?.length                 -> ok
+    y?.toLowerCase()          -> error
+
+    y?.let { println(it.length) }           -> only executes if not null
+
+    -------------------------------------
+    var y: String? = 'la'
+    var x = y ?:  'da'                  Elvis operator ... if y not null -> x = 'la', else 'da'
+
+    ------------------------------------
+    y!!.toLowerCase()               -> if y null -> NullPoinerException
+
+    -----------------------------------
+    val z: String? = user?.wife?.age  ?:  0       -> check if user not null, wife not null ->
+                                                        wife's age, if not -> 0
+    
+
+*************************************************************************************************
+                        DATATYPES
+val a: Byte = 13 
+val f: Float = 13.23F
+val b: Boolean = true 
+var c: Char = 'a'
+var s: String 
+ 
+    !!! Byte      8 bit 
+        Short     16
+        Int       32
+        Long      64
+
+        !!! Int, Long  .... 12_456_658
+
+val a = 13            type inference
+
+-------------------------------------------------------
+NUMBERS (iterate)
+
+    for (num in 1..10) { ... num ... }
+    for (i in 1 until 10) { ... i ... }
+    for (i in 10 downTo 1) { ... i ... }
+    fir (i in 10 downTo step 2) { ... i ... }   -> 10  8  6  4  2 ...
+    for (i in 10.downTo(1).step(2)) { ... i ... }
+
+---------------------------------------------------
+
+ARRAYS 
+
+    var ar: List<String> = listOf('aaa', 'bbb')
+                <Any>           (5, 'lala')
+
+    for(v in ar) {
+        if(v is Int) { ... }
+    }
+
+    !!! if(v !is String) { ... }
+
+-----------------------------------------------------
+DYNAMIC ARRAYS
+
+    var ar: ArrayList<String> = ArrayList<String>(5)   // max 5 els, if empty -> any #
+    ar.add('la')
+    ar.addAll(ar2)
+    ar.size
+    ar.get(1)       ... js  ar[1]
+
+    ITERATION 
+
+        var itr = ar.iterator()
+        while (itr.hasNext()) {
+             ... itr.next() .... 
+        }
+        !!! itr.next()  is el 
+         
+        -------------------------
+        for (i in ar) { ... i ... } 
+        !!! i is el 
+
+
+**************************************************************************************************
+                            SCOPE
+
+PARENT - CHILD
+_______________
+
+open class A () {
+    var a = 1
+    private var b = 2
+    protected open val c = 3
+    internal val d = 4
+    protected fun e () { ... }
+}
+class B: A () {
+    // a, c,  d, e()     visible
+    // b                not visible
+}
+fun main (ar: Array<String>) {
+    val a = A()                   // a.a   a.d         visible
+                                  // a.b, a.c, a.e()   not visible
+    val b = B()                   // b.c               not visible   
+}
+!!! private         only within this class
+    protected       only for A and B 
+    internal        only for this module
+    open            can be overriden in child class
+
+------------------------------------------------------
+NESTED CLASS
+
+    class A { 
+        private var n: String = 'la' 
+        class B {
+            var d: String = 'da'
+            private var x: Int = 5
+            fun e () { ... n ... x ... }        // n -> error
+        }
+    }
+    fun main (arr: Array<String>) {
+        ... A.B().d ...
+        var b = A.B()
+        b.e()
+    }
+
+------------------------------------------------------
+INNER CLASS 
+
+    class A { 
+        private var n: String = 'la' 
+        inner class B {
+            var d: String = 'da'
+            private var x: Int = 5
+            fun e () { ... n ... x ... }        // n -> no error 
+        }
+    }
+    fun main (arr: Array<String>) {
+        ... A.B().d ...
+        var b = A.B()
+        b.e()
+    }
+    
+    !!! B cannot be inside Interface,
+                           nested class
+        B can be inside class   
+                        inner nested class 
+    !!! nested class: B can access members of A (even private)
+        inner class:        cannot 
+
+       
+
+***************************************************************************************************
+
+                        BUILT IN METHODS 
+
+floor(20.4)            -> 20 
+str[0]                 -> first letter
+str[str.length - 1]    -> last letter
+str.append('a')    
+str.startsWith('a')    vs   str.endsWith('a')
+str.contains('a')    
+str.lastIndexOf('a') 
+str.isEmpty()      vs   str.isNotEmpty()
+
+CHECK IF STR.LENGTH > 0 
+    str.isNotEmpty()
+
+**************************************************************************************************
+                            OPERATORS 
+
+==     !=
+var x = 5 == 3
+
+***************************************************************************************************
+                            CONDITIONALS
+
+(like in js: if, else if else)
+
+SWITCH 
+
+    var x = 3
+    when (x) {
+        1 ->  .....
+        2 ->  .....
+        3 ->  .....
+        else -> ....
+    }
+    
+    !!!  in 3..5 -> ....
+         in 6..8 -> ....
+         in 9..11 -> ....
+         in 12 downTo 2 -> ...     // 12, 1, 2 -> ....
+         else -> .....
+
+    ----------------------------------------------
+    var x: Any = 13.37
+    when (x) {
+        is Int ->  ......
+        is Double -> .....
+        is String -> .....
+        else -> .....
+    }
+-----------------------------------------------------
+do { .... }
+while (x <= 10)
+-----------------------------------------------------
+var x = 'a'
+var t = 10
+while (x == 'a'){
+    t++
+    if(t >= 20) { .... }
+}
+
+****************************************************************************************************
+                            FUNCTIONS 
+
+LAMBDA 
+
+    var sum: (Int, Int) -> Int = {a: Int, b: Int -> a + b}
+    println(sum(10, 5))
+
+    ---------------
+    var sum = { a: Int, b: Int -> println (a + b)}
+
+-----------------------------------------------------------------------
+fun la (a: Int, b: Int): Int { .... }
+la(a:5, b: 3)                            // call from main 
+
+----------------------------------------------------------------
+
+***************************************************************************************************
+                                EXCEPTIONS 
+
+fun main () {
+    try {
+        fal a = IntArray(5)
+        a[5] = 10/5
+    }
+    catch (e.ArithmeticException) { .... }
+    catch (e.ArrayIndesOutOfBoundsException) { .... }
+    catch (e.Exception) { ..... }
+    finally { println('will be printed in any case')}
+}
+
+!!! to check which error, println(e)
+    generic exception (e.Exception) as last
+
+    code err -> unchecked excs (RuntimeException class)
+                    ArithmeticException,
+                    ArrayIndesOutOfBoundsException,
+                    SecurityException,
+                    NullPointerException
+
+    no code err, but external factors -> checked excs (Throwable class)
+                    IOException,
+                    SQLException
+----------------------------------------------------------
+THROW a custom exception
+
+    fun e (age: Int) {
+        if(age < 18)
+            throw ArithmeticException('under age)
+        else 
+            println ('eligible to drive')
+    }
+
+----------------------------------------------------------
+
+try { .... }
+catch (e: ArithmeticException) {
+    e.printStackTrace()
+}
+
+*************************************************************************************************
+                                REGEX
+
+var regex = """......."""
+val matched = regex.matches(input="lala")
+
+!!! regex see regex.html

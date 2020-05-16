@@ -1,0 +1,55 @@
+
+!!! dp for layout, sp for text
+--------------------------------------------------------------------------------------------------
+
+                            LAYOUT
+<LinearLayout .... -> <TextView ..../>    
+        !!! remove constraints to use LinearLayout
+
+gravity                 "center"                 -> vertical + hirozontal
+                        "center_horizontal"
+                        "center_vertical"
+
+    !!! on parent
+
+orientation             "vertical"
+
+container -> row -> col
+                 -> col
+          -> row -> col
+                 -> col
+
+    <LinearLayout   ..orientation="vertical"                       | container
+                    ..width="match_parent"
+                    ..height="match_parent"                      
+
+        -> <LinearLayout    ..orientation="horizontal"             | row 
+                            ..width="match_parent"
+                            ..height="wrap_content"                             
+                            ..layout-weight="1"
+
+            -> <ButtonView      ..width="wrap_content"                          | col
+                                ..height="match_parent
+                                ..layout-weight="1"
+
+    !!! orientation on parent for children
+    !!! whatever (width vs heitht) is adjusted by layout-weitht has "wrap_content"
+ 
+
+****************************************************************************************************                   
+                            BOX
+
+width // height           "wrap_content"      -> = content width
+                          "match_parent"     -> = parent's width
+background                "@color/....."
+marginTop                 "15dp"
+
+
+******************************************************************************************************
+                            TEXT 
+
+text                      "lala"
+textColor                 "@color/....."
+textSize                  "25sp"
+textStyle                 "bold"
+
