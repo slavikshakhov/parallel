@@ -1,12 +1,200 @@
-                                CALCULATOR 
+                    EVENT ON LIST EL 
+*********************
+top part of UI el with all details (set in onCreate, based on arList[elInd])
+bottom part of UI clickable options (set in onClick, reset depending on which op clicked)
+*********************
+1. NOT DETAILED 
+    A. 
+        1st El displayed 
+        each option same default css 
+        btn on botton with text "Submit" 
+    
+    B.  click on one of options -> this option's css is not selected css 
+    C.  
+        click btn 1st time -> selected option's css changes to green bg (correct option)
+                                                               or red bg (wrong option)
+                              btn's text changes from "Submit" to "Go to next El"
+                                                                  or "Finish" if no Els left 
 
-23.45   only one . 
-        . only after numeric
+    D. 
+        click btn 2nd time -> 2nd El displayed 
+                              each option same default css 
+                              btn on bottom with text "Submit" 
 
-    --------------------------
-    lastNum --- false
-    lastDot --- false 
+---------------------------------------------------------------------------------------------------------------
+2. DETAILED 
 
-        change when entering num and when entering . 
-        when entering . -> only append to display text if lastNum true, lastDot false
-        
+    A.
+        1.
+
+        create model for El 
+        _____________________
+
+            (f) data class El (val x: Int, val y: String, img: Int)
+            (f) object Constants { 
+                    fun getEls(): ArrayList<El> {
+                        var els = ArrayList<El>()
+
+                        var el1 = El(1, "lala", R.drawable.img1)        !!! in res - drawable - img1.jpg
+                        els.add(el1)
+
+                        var el2 = El(2, "tata", R.drawable.img2)
+                        els.add(el2)
+
+                        return els
+
+                    }
+                }
+
+        2.
+
+        in .kt's onCreate, get data and store in field
+        _____________________
+
+                field ------ private var els: ArrayList<El>? = null
+                onCreate --- els = Constants.getEls()
+
+        3. 
+
+        in .kt from onCreate delegate to fun, get El of elInd and set El's ui
+        __________________________________________________
+               field ------ elInd: Int = 0
+               fun  -------
+                            val el = els!!.get(elInd)
+
+                            x-ui.text = el.x
+                            y-ui.text = el.y
+                            img-ui.setImageResource(el.img) 
+
+        4.                    
+
+        in .kt from onCreate delegate to fun, set default css to all options in this El 
+        ________________________________________________________________________________
+               
+                fun  ------
+                            val ops = ArrayList<TextView>()
+
+                            ops.add(0, op1-ui)
+                            ops.add(1, op2-ui)
+
+                            for (op in ops) {                            
+                                op.setTextColor(Color.parseColor("#7A8089"))
+                                op.typeface = Typeface.DEFAULT
+                                op.background = ContextCompat.getDrawable(
+                                        this@ThisActivityName,
+                                        R.drawable.default_op_bg
+                                    )
+
+                !!! default_op_bg is custom css class: 
+                        in xml 
+
+                            <El ...background="@drawable/default_opt_border_bg"   
+
+                            !!! hover -> create -> 
+
+                                    <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+                                        <stroke android:width="1dp" android:color="@color/lightGray" />
+                                        <solid android:color="@android:color/white" />
+                                        <corners android:radius="5dp" />
+                                    </shape>
+
+                                        !!! stroke --- css border 
+                                            solid  --- css background-color 
+                                            corners -- css border-radius 
+
+        5. 
+
+        in kt. from onCreate, delegate to fun  --- set btn-ui's text to "finish" or "go to next El"
+        ________________________________________________________________________________
+            field ------ var elInd: Int = 0
+                         private var els: ArrayList<El>? = null
+            onCreate --- els = Constants.getEls()
+
+
+                if (elInd == els!!.size -1) {
+                    btn_submit.text = "FINISH"
+                } else {
+                    btn_submit.text = "SUBMIT"
+                }
+
+        6.
+
+        in kt. from onCreate set event listeners on each option and on btn on bottom
+        ________________________________________________________
+
+                op1-ui.setOnClickListener(this)
+                op2-ui.setOnClickListener(this)
+
+                btn-ui.setOnClickListener(this)
+
+                !!! to use this, class ....  : View.OnClickListener { ... }
+
+    ++++++++++++++++++++++++++++++++++++++++++++++
+    B.
+        in kt. from onClick set style of clicked option to selected css 
+        ________________________________________________________________________________
+
+                when (viwe?.id) {
+                    R.id.op1-id -> {
+                        selectedOptionView(op1-id, 1)
+                    }
+                    R.id.op2-id -> {
+                        selectedOptionView(op2-id, 2)
+                    }
+            -------------------------------------------------------------------------
+            field  ---- var opNum: Int = 0
+
+            private fun selectedOptionView(tv: TextView, selectedOptionNum: Int) {
+                defaultOptionsView()    ------ see above (set default css to each option)
+
+                opNum = selectedOptionNum
+
+                tv.setTextColor(Color.parseColor("#363A43"))
+                tv.setTypeface(tv.typeface, Typeface.BOLD)
+                tv.background = ContextCompat.getDrawable(
+                        this@QuizQuestionsActivity,
+                        R.drawable.selected_op_bg
+                )
+            }
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    C.  in kt. same onClick fun as in B 
+
+            field ---- var opNum: Int = 0      // was reset in B, when option was clicked, if never clicked, then is 0
+
+            when (view?.id) {
+                .....
+                R.id.btn-id -> {                    
+                    if(opNum > 0){                                           !!! opNum > 0 if one op was selected, this is 1st btn click
+                            val el = els?.get(elInd)
+                    
+                            if (el!!.correctAnswer != opNum) {               !!! opNum was set when op clicked
+                                answerView(opNum, R.drawable.wrong_bg)       !!! as red bg, no border... see custom CSS
+                            }
+                            else { 
+                                answerView(opNum, R.drawable.correct_bg)     !!! as green bg, no border ... see custom CSS
+                            }
+                            if (elInd == els!!.size -1) {
+                                btn-ui.text = "FINISH"
+                            } else {
+                                btn-ui.text = "GO TO NEXT QUESTION"
+                            }
+                            opNum = 0                                         !!! opNum = 0 by default, if op selected, is > 0
+                        }
+                    else {                                                    !!! opNum = 0, was set in perv. block this is 2nd btn click
+                            elInd++
+                            when {
+                                elInd < els!!.size -> {
+                                    setQuestion()              ------         !!! A.3
+                                }
+                                else -> {
+                                    Toast.makeText(this@QuizQuestionsActivity, "You have successfully completed the quiz.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+
+                        }
+                    }
+*********************************************************************************************************************************************
+
+
+

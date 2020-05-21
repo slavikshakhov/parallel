@@ -25,6 +25,49 @@ settings -> about device -> software info -> build number (switches to developer
 
             fun main() { ... }
 
+-------------------------------------------------------------------------------------------------
+                                    DEVICE ORIENTATION 
+
+manifests -> <activity ... android:screenOrientation="portrait"
+
+--------------------------------------------------------------------------------------------------
+                                        THEME
+
+REMOVE TOP BAR 
+
+    (manifests)   <activity ... android:theme="@style/NoTopBarTheme"      //custom theme
+
+
+-------------------------------------------------------------------------------------------------
+                                REMOVE STATUS BAR ON TOP 
+(main...onCreate)
+
+    window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
+
+-------------------------------------------------------------------------------------------------
+                                KEYBOARD APPEAR -> UI ADJUSTS 
+
+(manifests) 
+
+     <activity ... android:windowSoftInputMode="adjustResize" 
+
+(res/values/styles) --- add new style, copy same items (default here)
+
+    <style name="NoTopBarTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    !!! NoTopBarTheme is custom theme... parent="" (see docs)
+----------------------------------------------------------------------------------------------
+                                    MATERIAL DESIGN 
+
+(gradle/build.gradle)
+
+    dependencies { ... implementation 'com.google.android.material:material:1.0.0' }
+            !!! sync
+
 ****************************************************************************************************
                             FOLDERS
 
@@ -48,21 +91,66 @@ val myTxt =                   textId       TextView          // import
 
 !!! by importing Button can ref to it directly by id name:
     !!! buttonId.setOnClickListener { }
+
+ACCESS ID 
+
+    R.id.lala
+
+    view.?id    -> returns id                           !!! view: TextView as arg of this fun
+                                                            view: View?  as arg in setOnClickListener fun 
+
+SET CSS 
+
+    el-ui.textColor = .....
+
+    view.setTextColor(Color.parseColor("#363A43"))      !!! view: TextView  as arg of this fun 
+
+    view.setTypeface(view.typeface, Typeface.BOLD)
+
+            !!! Typeface.DEFAULT
+
+    view.background = ContextCompat.getDrawable(
+            this@QuizQuestionsActivity,
+            R.drawable.selected_option_border_bg
+        )
+        !!! res-drawable - selected_option_border_bg   (custom box) see styling.txt - CSS CLASS
+    !!! view same as el-ui but view is participant of event
+    
+ACCESS IMG AND SET IMG 
+
+    imgId.setImageResource(el.image)
+
+    !!! el.image <- image: R.drawable.lala  (as part of ElModel)   --- lala.jpg
+
+ACCESS EL IN ArrayList
+
+     arr!!.get(i)
+
+
 ***************************************************************************************************
                                 EVENTS
 
 btnRef.setOnClickListener {it: View!   }
 
+el-ui.setOnClickListener(this)
+
+    !!! inside of class QuizQuestionsActivity : AppCompatActivity(), View.OnClickListener { ... }
+
 -----------------------------------------------------------------------------
 (MainActivity .... onCreate)
 
-    btnId.setOnClickListener { view ->
+    el-ui.setOnClickListener { view ->
             clickDatePicker(view)
         }
  fun clickDatePicker(view: View) { ..... }  
                                     !!!  any dialogue (ex. Toast, DatePickerDialog ...) --- .show()  uses view:View
 
-!!! el.setOnClickListener only if el in xml doesn't have onClick="myFun"
+-------------------------------------------------------------------------------
+override fun onCreate(...) { el-ui + EL }
+override fun onClick(v: View?) {  .... }         !!! View is passed when el-ui clicked
+    
+    
+
 
 
 ----------------------------------------------------------------------------------------
@@ -138,3 +226,77 @@ DATEPICKER
         !!! whre dpd is result of DatePickerDialog(...)
 
 *********************************************************************************************************************
+                                NEW SCREEN (ACTIVITY)   ---- js routing 
+
+(manifests) new - Activity - Empty 
+
+(manifests) 
+    
+    <activity
+            android:name=".QuizQuestionsActivity"
+            android:screenOrientation="portrait"
+            >
+    </activity>
+
+    !!! can also add custom theme, see SETUP --- THEME
+
+_________________________________________________________________________
+
+BTN CLICK ->  (validation) -> NEW WINDOW 
+
+    (.kt) 
+        el-ui.setOnClickListener { 
+            if(inputTxt.text.toString().isEmpty()){
+                Toast.makeText(this, "Please enter your name", Toast.LENGTH_SHORT).show()
+            } else {
+                val intent = Intent(this, QuizQuestionsActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
+        }
+
+    !!! input -> toString
+        go to page:         startActivity(intent)
+        close this page:    finish()
+
+*******************************************************************************************************************
+                                    MODEL 
+
+new class --- Question 
+        
+        data class Question (
+            val id: Int,
+            val question: String,
+            ....            
+        )
+
+        !!! val image: Int    
+
+---------------------------------------------
+new file  ---- Constants                // also can use XML, json 
+
+    object Constants {
+        fun getQuestions(): ArrayList<Question> {
+            val questionList = ArrayList<Question>()
+            val questionOne = Question(
+                id = 1,
+                question = "What country is this?",                
+                .....
+            )
+            questionList.add(questionOne)
+            .....
+            return questionList
+        }
+    }
+
+    !!! image: R.drawable.lala            // res - drawable - lala.jpg 
+
+------------------------------------------
+Test: 
+    in this activity: 
+         val questionList = Constants.getQuestions()
+         Log.i("Question Size:", "${questionList.size}")
+
+    !!! start app, get to this page.... to see log: LB Logcat ---- Verbose --- search Question (Model name)
+
+

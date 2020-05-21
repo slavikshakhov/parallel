@@ -1,40 +1,63 @@
 
 !!! dp for layout, sp for text
 --------------------------------------------------------------------------------------------------
+                                = CSS CLASS 
+
+1. CONTAINER (BOX)   ex. create custom button from TextView 
+
+    <El ...background="@drawable/default_opt_border_bg"   
+
+    !!! hover -> create -> 
+
+            <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+                <stroke android:width="1dp" android:color="@color/lightGray" />
+                <solid android:color="@android:color/white" />
+                <corners android:radius="5dp" />
+            </shape>
+
+    !!! stroke --- css border 
+        solid  --- css background-color 
+        corners -- css border-radius 
+
+*****************************************************************************************************
 
                             LAYOUT
+
 <LinearLayout .... -> <TextView ..../>    
         !!! remove constraints to use LinearLayout
 
-gravity                 "center"                 -> vertical + hirozontal
+___________________________
+
+<ScrollView .... fillViewport="true"  -> <LinearLayout ..../>
+
+___________________________
+
+CENTER 
+    on parent: 
+
+            gravity     "center"                 -> vertical + hirozontal
                         "center_horizontal"
                         "center_vertical"
 
-    !!! on parent
+    on child (self-senter)
 
+            layout-gravity  "center"
+                            "center_horizontal"
+                            "center_vertical"
+
+
+
+------------------------------------------------------
 orientation             "vertical"
+                        "horizontal"
 
-container -> row -> col
-                 -> col
-          -> row -> col
-                 -> col
+------------------------------------------------------
+el1 el2   (el2 pushed to R)
 
-    <LinearLayout   ..orientation="vertical"                       | container
-                    ..width="match_parent"
-                    ..height="match_parent"                      
+    par   ... orientation="horizontal"
+        el1  ... layout-weight="1"
+        el2  ... (defined width or padding)
 
-        -> <LinearLayout    ..orientation="horizontal"             | row 
-                            ..width="match_parent"
-                            ..height="wrap_content"                             
-                            ..layout-weight="1"
-
-            -> <ButtonView      ..width="wrap_content"                          | col
-                                ..height="match_parent
-                                ..layout-weight="1"
-
-    !!! orientation on parent for children
-    !!! whatever (width vs heitht) is adjusted by layout-weitht has "wrap_content"
- 
 
 ****************************************************************************************************                   
                             BOX
@@ -44,6 +67,7 @@ width // height           "wrap_content"      -> = content width
 background                "@color/....."
 marginTop                 "15dp"
 
+(see CARD)
 
 ******************************************************************************************************
                             TEXT 
@@ -53,3 +77,80 @@ textColor                 "@color/....."
 textSize                  "25sp"
 textStyle                 "bold"
 
+************************************************************************************************************
+                                INPUT
+
+!!! dependencies --- material design, see theory-setup
+
+    TextInputLayout -> AppCompatEditText
+
+    !!! placeholder --------------  hint
+        placeholder's color ------  textColorHint
+        input's color ------------  textColor
+    __________________    ______________    __________________
+
+<com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    ......
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" 
+                    >
+                        <androidx.appcompat.widget.AppCompatEditText
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        .....
+                                        android:hint="Name"
+                                        android:textColor="#363A43"
+                                        android:textColorHint="#4A8089" 
+                                        />
+</com.google.android.material.textfield.TextInputLayout>
+
+*************************************************************************************************************
+                            CARD 
+
+CardView -> LinearLayout -> 
+______________     _______________    _______________
+
+<androidx.cardview.widget.CardView ..... -> <LinearLayout ..... 
+
+BOX-SHADOW
+
+        cardElevation="5dp"
+
+BORDER-RADIOUS
+
+        cardCornerRadius="10dp"
+
+ ***********************************************************************************************************
+                            BACKGROUND 
+
+background=@drawable/lala      
+
+    !!! in res -> drawable -> lala.jpg
+
+***********************************************************************************************************
+                                COLOR 
+                                
+<El ... color="@android:color/white"       !!! custom (res-values-colors.xml)
+
+<El ... color="@color/lightGray"           !!! built-in 
+
+************************************************************************************************************
+                                IMG
+
+<ImageView .... src="@drawable/germany" />
+
+***********************************************************************************************************
+                                PROGRESS BAR 
+<ProgressBar ...android:max="10"
+                android:minHeight="50dp"
+                android:progress="0"
+                android:indeterminate="false"
+                style="?android:progressBarStyleHorizontal"
+
+______________________________
+BAR TEXT (push text to R)
+
+<LinearLayout horizontal center_vertical
+    <ProgressBar layout-weight="1" 
+    <TextView 
