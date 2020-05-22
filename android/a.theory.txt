@@ -115,7 +115,7 @@ SET CSS
         )
         !!! res-drawable - selected_option_border_bg   (custom box) see styling.txt - CSS CLASS
     !!! view same as el-ui but view is participant of event
-    
+
 ACCESS IMG AND SET IMG 
 
     imgId.setImageResource(el.image)
@@ -298,5 +298,26 @@ Test:
          Log.i("Question Size:", "${questionList.size}")
 
     !!! start app, get to this page.... to see log: LB Logcat ---- Verbose --- search Question (Model name)
+
+**************************************************************************************************************
+                               PROGRESS BAR 
+<ProgressBar ...android:max="10"
+                android:minHeight="50dp"
+                android:progress="0"
+                android:indeterminate="false"
+                style="?android:progressBarStyleHorizontal"
+
+______________________________
+BAR TEXT (push text to R)
+
+<LinearLayout horizontal center_vertical
+    <ProgressBar layout-weight="1" 
+    <TextView .... 
+------------------------------
+kt.
+    progr_bar.progress    -> 0
+    progr_bar.getMax      -> 10
+
+***************************************************************************************************************
 
 

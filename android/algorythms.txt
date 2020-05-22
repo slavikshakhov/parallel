@@ -1,7 +1,5 @@
-                    EVENT ON LIST EL 
-*********************
-top part of UI el with all details (set in onCreate, based on arList[elInd])
-bottom part of UI clickable options (set in onClick, reset depending on which op clicked)
+                 
+
 *********************
 1. NOT DETAILED 
     A. 
@@ -30,7 +28,7 @@ bottom part of UI clickable options (set in onClick, reset depending on which op
         create model for El 
         _____________________
 
-            (f) data class El (val x: Int, val y: String, img: Int)
+            (f) data class El (val x: Int, val y: String, var img: Int)
             (f) object Constants { 
                     fun getEls(): ArrayList<El> {
                         var els = ArrayList<El>()
@@ -60,7 +58,8 @@ bottom part of UI clickable options (set in onClick, reset depending on which op
         __________________________________________________
                field ------ elInd: Int = 0
                fun  -------
-                            val el = els!!.get(elInd)
+                            val el = arr!![questionInd]         !!! also ---- els!!.get(elInd)
+                            
 
                             x-ui.text = el.x
                             y-ui.text = el.y
@@ -162,39 +161,88 @@ bottom part of UI clickable options (set in onClick, reset depending on which op
 
             field ---- var opNum: Int = 0      // was reset in B, when option was clicked, if never clicked, then is 0
 
-            when (view?.id) {
-                .....
-                R.id.btn-id -> {                    
-                    if(opNum > 0){                                           !!! opNum > 0 if one op was selected, this is 1st btn click
-                            val el = els?.get(elInd)
-                    
-                            if (el!!.correctAnswer != opNum) {               !!! opNum was set when op clicked
-                                answerView(opNum, R.drawable.wrong_bg)       !!! as red bg, no border... see custom CSS
-                            }
-                            else { 
-                                answerView(opNum, R.drawable.correct_bg)     !!! as green bg, no border ... see custom CSS
-                            }
-                            if (elInd == els!!.size -1) {
-                                btn-ui.text = "FINISH"
-                            } else {
-                                btn-ui.text = "GO TO NEXT QUESTION"
-                            }
-                            opNum = 0                                         !!! opNum = 0 by default, if op selected, is > 0
-                        }
-                    else {                                                    !!! opNum = 0, was set in perv. block this is 2nd btn click
-                            elInd++
-                            when {
-                                elInd < els!!.size -> {
-                                    setQuestion()              ------         !!! A.3
+            override fun onClick(v: View?) {
+                    when (view?.id) {
+                        .....
+                        R.id.btn-id -> {                    
+                            if(opNum > 0){                                           !!! opNum > 0 if one op was selected, this is 1st btn click
+                                    val el = els?.get(elInd)
+                            
+                                    if (el!!.correctAnswer != opNum) {               !!! opNum was set when op clicked
+                                        answerView(opNum, R.drawable.wrong_bg)       !!! as red bg, no border... see custom CSS
+                                    }
+                                    else { 
+                                        answerView(opNum, R.drawable.correct_bg)     !!! as green bg, no border ... see custom CSS
+                                    }
+                                    if (elInd == els!!.size -1) {
+                                        btn-ui.text = "FINISH"
+                                    } else {
+                                        btn-ui.text = "GO TO NEXT QUESTION"
+                                    }
+                                    opNum = 0                                         !!! opNum = 0 by default, if op selected, is > 0
                                 }
-                                else -> {
-                                    Toast.makeText(this@QuizQuestionsActivity, "You have successfully completed the quiz.", Toast.LENGTH_SHORT).show()
+                            else {                                                    !!! opNum = 0, was set in perv. block this is 2nd btn click
+                                    elInd++
+                                    when {
+                                        elInd < els!!.size -> {
+                                            setQuestion()              ------         !!! A.3
+                                        }
+                                        else -> {
+                                            Toast.makeText(this@QuizQuestionsActivity, "You have successfully completed the quiz.", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+
                                 }
                             }
 
-                        }
-                    }
-*********************************************************************************************************************************************
+            --------------
+        private fun answerView (ans: Int, drawableView: Int){
+            when (ans) {
+                1 -> {
+                    op1-ui.background = ContextCompat.getDrawable(
+                            this@QuizQuestionsActivity,
+                            drawableView                                     // ex. 20
+                    )
+                    .... (other ops) ....
+                }
+        }
+*************************************************************************************************************************
+passing el's id as arg -> treated as View for this el if from event (ex. TextView)
+        op1-id   ---->   v: TextView 
 
+passing drawable as arg -> treated as Int 
+        R.drawable.correct_bg  -> drawableView: Int 
 
+--------------------
 
+<El ...  android:background="@drawable/default_option_border_bg"        !!! get val in xml
+                                                                        !!! as separate file in drawable
+
+kt.
+    get css from Int (drawable)
+            op1-ui.background = ContextCompat.getDrawable(              !!! get val in kt.
+                    this@QuizQuestionsActivity,
+                    drawableView                                                // ex. 20
+            )
+
+----------------------------
+GET REF FROM DRAWABLE  
+
+    <El ... background="@drawable/lala"         !!! get val in xml
+    .kt
+        get img 
+            R.drawable/lala                     !!! get val in kt.
+                                                !!! res-drawable-lala.jpg
+                                                is Int
+        img to ui:  
+            img-ui.setImageResource(el.img)     set drawable val
+                                                !!! where el.img is R.drawable/lala 
+
+----------------------------
+GET VAL vs REFER TO VAL (id)
+
+        R.id.btn-id vs  view?.id  as ref 
+        R.id.btn-id  -> returns id val 
+        view?.id      -> refers to id val directly
+
+        view?.id    ------  R.id.btn-id

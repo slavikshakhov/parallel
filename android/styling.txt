@@ -130,7 +130,7 @@ background=@drawable/lala
 
 ***********************************************************************************************************
                                 COLOR 
-                                
+
 <El ... color="@android:color/white"       !!! custom (res-values-colors.xml)
 
 <El ... color="@color/lightGray"           !!! built-in 
@@ -141,16 +141,4 @@ background=@drawable/lala
 <ImageView .... src="@drawable/germany" />
 
 ***********************************************************************************************************
-                                PROGRESS BAR 
-<ProgressBar ...android:max="10"
-                android:minHeight="50dp"
-                android:progress="0"
-                android:indeterminate="false"
-                style="?android:progressBarStyleHorizontal"
-
-______________________________
-BAR TEXT (push text to R)
-
-<LinearLayout horizontal center_vertical
-    <ProgressBar layout-weight="1" 
-    <TextView 
+ 
