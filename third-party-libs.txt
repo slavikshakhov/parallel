@@ -16,5 +16,8 @@
     free for development, not for production
     see gatsby.project.txt
 
-    
+*********************************************************************************************************************
+                                    APIs 
+
+get req -> recepes                  https://developer.edamam.com/
 

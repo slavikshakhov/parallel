@@ -1,0 +1,52 @@
+g -> dartpad  (environment to write dart)
+
+*********************************************************************************************************************
+                                    GENERAL SYNTAX 
+
+int x = 5; 
+x = 6;
+x = 'la'   -> error 
+
+----------------------------
+dynamic y = 5;
+y = 'la'    -> ok
+
+----------------------------
+List xs = ['la', 'ta'];
+xs.add('da');
+xs.remove('la');
+
+List<String> ys = ['la', 'ta']
+
+!!! xs ok to add different dt-s, but not ys
+
+----------------------------
+String, int, bool 
+ 
+---------------------------
+String ff() { return 'lala'; }             !!! String ff() => 'lala'
+
+-------------------------------
+class A {
+    String n;
+    int a;
+    A(String n, int a){
+        this.n = n;
+        this.a = a;
+    }
+    void ff() { print('xxx') }
+}
+class B extends A {
+    B(String n, int a): super(n, a);
+    void zz() { print('bbb') }
+}
+
+(main)
+     
+     A a1 = A('tata', 20);
+     B b1 = B('nana', 40);
+
+     b1.ff() 
+     b1.zz()
+
+----------------------------------------------------------------------------------------------------------------

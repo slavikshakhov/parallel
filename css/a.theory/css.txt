@@ -57,6 +57,11 @@ FLEXBOX
     !!! ch1: flex: 2;
         ch2: flex: 1;
 
+3. els in one row, then wrapping to next line without space: !!! p --- fixed width, ch-n --- fixed width
+    p: display: flex;
+       flex-wrap: wrap;
+       align-content: flex-start; 
+
 GRID
 
 https://css-tricks.com/snippets/css/complete-guide-grid/

@@ -17,56 +17,263 @@
 
 
 **************************************************************************************************************
-                                    CONNECT TO EXPRESS
-                                    
+                                   EXPRESS + SEQUELIZE + MySql
+>> npm install --save express body-parser cors sequelize sequelize-cli mysql2 
 
-!!! see databases/mysql.txt
-    in most cases ORM (object relational mapper), like sequelize is used
-            //(see github, see express example, getting started ->  Synchronizing the model with the database
-    put db configuration in separate file
+!!! nodemon installed globally 
 
-<<<<<<<<< REF >>>>>>>>>>>   g -> mysql npm (see example)
+--------------------------------------------------------------------------------
 
+proj >> npx sequelize-cli init        
+    -> creates  config/config.json
+       !!! configure, change:  "operatorsAliases": 0
+    !!! also creates models F
+---------------------------------------------------------------------------------
+SERVER  (server.js)
 
-const express = require('express');
-const mysql = require('mysql2');
+    const express = require("express");
+    const app = express();
+    const bodyParser = require("body-parser");
+    const db = require("./models");
+    const PORT = 4500;
+    var cors = require("cors");
 
-// Create connection 
- !!! in mysql.txt
+    app.use(bodyParser.urlencoded({ extended: false }));
+    app.use(bodyParser.json());
 
-const db = mysql.createConnection({
-    host     : 'localhost',
-    user     : 'root',
-    password : '123456',
-    database : 'myDB'
-});
+    app.use(cors());
 
-// Connect
-db.connect((err) => {
-    if(err){
-        throw err;
-    }
-    console.log('MySql Connected...');
-});
+    
 
-const app = express();
-
-// Create DB
-app.get('/createdb', (req, res) => {
-    let sql = 'CREATE DATABASE myDB';
-    db.query(sql, (err, result) => {
-        if(err) throw err;
-        console.log(result);
-        res.send('Database created...');
+    db.sequelize.sync().then(() => {
+        app.listen(PORT, () => {
+            console.log(`listening on: http://localhost:${PORT}`);
+        });
     });
-});
 
-app.listen('3000', () => {
-    console.log('Server started on port 3000');
-});
+    !!! run (with nodemon) -> 
+
+--------------------------------------------------------------------------------------------------
+MODELS (in models F)  !!! before adding User.associate, first create accociated models
+                      !!! here: User (1) - Profile (1), User (1) - Post (many)
+
+(models/user.js)
+
+    module.exports = (sequelize, DataTypes) => {
+        const User = sequelize.define("User", {
+            username: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
+        });
+        User.associate = (models) => {
+                User.hasMany(models.Post, {
+                onDelete: "cascade",
+            }),
+            User.hasOne(models.Profile, {
+                onDelete: "cascade",
+            });
+        };
+        return User;
+    };
+
+(models/profile.js)
+
+    module.exports = (sequelize, DataTypes) => {
+        const Profile = sequelize.define("Profile", {
+            name: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
+        });
+        Profile.associate = (models) => {
+                Profile.belongsTo(models.User, {
+                    foreignKey: {
+                        allowNull: false,
+                },
+            });
+        };
+        return Profile;
+    };
+
+(models/post.js)
+
+    module.exports = (sequelize, DataTypes) => {
+        const Post = sequelize.define("Post", {
+            name: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
+        });
+        Post.associate = (models) => {
+                Post.belongsTo(models.User, {
+                    foreignKey: {
+                        allowNull: false,
+                },
+            });
+        };
+
+        return Post;
+    };
+
+
+!!! run -> creates tables in MySql
+----------------------------------------------------------------------------------------------------
+ROUTES 
+
+(server.js)  !!! after middlewares 
+
+    
+    let postRoutes = require("./routes/postRoutes");
+    let profileRoutes = require("./routes/profileRoutes");
+    let userRoutes = require("./routes/userRoutes");
+    
+    app.use("/posts", postRoutes);
+    app.use("/profiles", profileRoutes);
+    app.use("/users", userRoutes);
+
+(routes/userRoutes.js)
+
+    const express = require("express");
+    const router = express.Router();
+    const db = require("../models");
+
+    // post new user,  '/users/new'
+    router.post("/new", (req, res) => {
+        db.User.create({
+            username: req.body.username,
+        }).then((newUser) => res.send(newUser));
+    });
+
+    // get all users
+    router.get("/all", (req, res) => {
+        db.User.findAll({
+            include: [db.Profile, db.Post]
+        }).then((allUsers) => res.send(allUsers));
+    });
+
+    module.exports = router;
+
+    // include: [db.Profile, db.Post]
+    // include: [{model: db.Profile, where: { name: "profile4" }}]
+
+(routes/profileRoutes.js)             !!! similar for routes/postRoutes.js               
+
+    const express = require("express");
+    const router = express.Router();
+    const db = require("../models");
+
+    // create new profile
+    router.post("/new", (req, res) => {
+        db.Profile.create({
+            name: req.body.name,
+            UserId: req.body.UserId,
+        }).then((newProfile) => res.send(newProfile));
+    });
+
+    // get profiles belonging to this user (UserId)
+    router.get("/:id", (req, res) => {
+        db.Profile.findAll({
+            where: {
+                UserId: req.params.id,
+            },
+            include: [db.User],
+        }).then((profile) => res.send(profile));
+    });
+    module.exports = router;
+
+----------------------------------------------------------------------------------------------
+                                    SEQUELIZE CRUD
+
+!!! to first check if 'where .... ' of associated model exists:
+
+    db.Balance.count({
+        where: {
+            UserId: UserId,
+        },
+    }).then(...)
+
+***********************************************************************************************************
+                                SEEDING DATA (EXPRESS + SEQUELIZE)
+
+4. models (definded, relationships) -> db
+    !!! to also seed data, use .then(), to randamly generate json data:   <<<<< REF >>>>>>  generatedata.com
+    !!! withoud .bulkCreate or .create -> just creates empty tables
+
+
+    sequelize.sync({force: true})
+        .then(() => {
+            User.bulkCreate(data);            
+        })
+        .catch(err => console.log(err))
+        .then(() => {
+            Post.create({
+                title: "Post1", 
+                userId: 1
+        })
+        .catch(err => console.log(err));
+    });
+
+    !!! `force: true` will drop the table if it already exists
+
+**********************************************************************************************************
+
+                            QUERIES WITH Sequelize
+
+
+                            User(M) - Language(M)
+!!! Op.or
+        const seq = require('sequelize');
+        const Op = seq.Op;
+
+var users = await User.findAll();                                                               all users without related languages
+------------------------------------------------------------------------------------------------
+var users = await User.findAll({include: Language});                                            all users with related languages
+-------------------------------------------------------------------------------------------------
+var user = await User.findOne({where: {id: 1}});                                                one user without related languages
+-----------------------------------------------------------------------------------------------                                           
+var user = await User.findOne({where: {id: 1}, include: Language});                             one user with related languages
+------------------------------------------------------------------------------------------------
+var user = await User.findOne({
+        where: {id: 1},
+        attributes: ['name', 'city', 'country'], 
+        include: Language});                                                                    select some cols in one User
+------------------------------------------------------------------------------------------------
+var user = await User.findOne({
+        where: {id: 1},
+        attributes: ['name', 'city', 'country'],
+        include: [{model: Language, attributes: ['name']}]
+    });                                                                                         some cols one User, some cols in related Languages
+-----------------------------------------------------------------------------------------------
+var lgs = await Language.findAll({where: {id: { [Op.or]: [1, 2]} }});                           all lgs with id 1 and 2
+------------------------------------------------------------------------------------------------
+var user = await User.findOne({where: {id: 1}, include: Language});
+var lgs = await Language.findAll({where: {name: { [Op.or]: ['german', 'italian']} }});
+user.addLanguages(lgs);         
+
+!!! if addOfferedLgs -> addOfferedlgs  (no capital letters)                                     add existing lgs to one user
+------------------------------------------------------------------------------------------------
+var users = await User.findAll({
+        include: [{model: Language, where: {name: { [Op.or]: ['german', 'french']}}}]
+    });                                                                                         filter users with related lgs 'german' or 'french'
+----------------------------------------------------------------------------------------------- 
+var user = await User.findOne({where: {id: 1}, include: Language});
+var lgs = await Language.findAll({where: {name: { [Op.or]: ['spanish', 'chinese']} }});
+user.setLanguages(lgs);                                                                         update lgs in one user (overrites)
+-----------------------------------------------------------------------------------------------
+var user = await User.findOne({where: {id: 1}, include: Language});
+var lg = await Language.findOne({where: {id: 3}});
+user.removeLanguage(lg);                                                                        remove one lg from one user
+----------------------------------------------------------------------------------------------
+var user = await User.findOne({where: {id: 2}, include: Language});
+var lgs = await Language.findAll({where: { name:{ [Op.or]: ['spanish','french']} } });
+user.removeLanguages(lgs);                                                                      remove some lgs from one user
+---------------------------------------------------------------------------------------------
+
 
 *************************************************************************************************************
-                                MySql QUERIES FROM EXPRESS
+                              
+                              RAW MySql QUERIES IN EXPRESS
 
 
     const db = require('../mysql);
@@ -110,106 +317,10 @@ app.listen('3000', () => {
     let query = db.query(sql, (err, result) => {}
 
 
-**************************************************************************************************************
-
-                                MySql + SEQUALIZE
-
-(npm): sequalize, mysql2
-
-1. connect to MySql with sequelize  (in sequelize.js)
-
-    const Sequelize = require('sequelize');
-
-    const sequelize = new Sequelize('test', 'root', 'gerKanuk55', {
-        host: 'localhost',
-        dialect: 'mysql'
-    });
-
-    sequelize
-        .authenticate()
-        .then(() => {
-            console.log('Connection has been established successfully.');
-        })
-        .catch(err => {  
-            console.error('Unable to connect to the database:', err);
-        });
-
-    module.exports = sequelize;
 
 
-
-2. MODELS
--------------------------------------------------------------------
-    const Sequelize = require('sequelize');
-    const sequelize = require('../sequelize');
-
-    const User = sequelize.define('user', {
-        firstName: {
-        type: Sequelize.STRING,
-        allowNull: false
-        },
-        lastName: {
-        type: Sequelize.STRING      
-        }
-    }, {    
-    });
-
-module.exports = User;
-
-    // !!! Sequelize.STRING, .UUID, .TEXT
-    // !!! will automatically add cols: createdAt, updatedAt
-
--------------------------------------------------------------------
-
-    const Sequelize = require('sequelize');
-    const sequelize = require('../sequelize');
-
-    const Post = sequelize.define('post', {    
-    title: {
-      type: Sequelize.STRING,
-      allowNull: false
-        }    
-    });
-    module.exports = Post;
-
-
-
-3. require Models from corresponding files (sequelize should be connected, pass after connection as arg)    
-
-    const User = require('./models/User');
-    const Post = require('./models/Post');
-
-4. define relationships
-
-    User.hasOne(Post);    // -> creates FK in posts:  userId
-    
-4. models (definded, relationships) -> db
-    !!! to also seed data, use .then(), to randamly generate json data:   <<<<< REF >>>>>>  generatedata.com
-    !!! withoud .bulkCreate or .create -> just creates empty tables
-
-
-    sequelize.sync({force: true})
-        .then(() => {
-            User.bulkCreate(data);            
-        })
-        .catch(err => console.log(err))
-        .then(() => {
-            Post.create({
-                title: "Post1", 
-                userId: 1
-        })
-        .catch(err => console.log(err));
-    });
-
-    !!! `force: true` will drop the table if it already exists
-
-*****************************************************************************************************************************************
-                                                QUERIES
-
-User.create({name, password: hash, city, country});                         add new record
-
-***********************************
-RELATIONSHIPS
+***************************************************************************************************************
+                    RELATIONSHIPS
 
 ONE TO ONE
 
@@ -271,58 +382,7 @@ MANY TO MANY
 
 *****************************************************************************
 
-                            QUERY WITH Sequelize
-
-
-                            User(M) - Language(M)
-!!! Op.or
-        const seq = require('sequelize');
-        const Op = seq.Op;
-
-var users = await User.findAll();                                                               all users without related languages
-------------------------------------------------------------------------------------------------
-var users = await User.findAll({include: Language});                                            all users with related languages
--------------------------------------------------------------------------------------------------
-var user = await User.findOne({where: {id: 1}});                                                one user without related languages
------------------------------------------------------------------------------------------------                                           
-var user = await User.findOne({where: {id: 1}, include: Language});                             one user with related languages
-------------------------------------------------------------------------------------------------
-var user = await User.findOne({
-        where: {id: 1},
-        attributes: ['name', 'city', 'country'], 
-        include: Language});                                                                    select some cols in one User
-------------------------------------------------------------------------------------------------
-var user = await User.findOne({
-        where: {id: 1},
-        attributes: ['name', 'city', 'country'],
-        include: [{model: Language, attributes: ['name']}]
-    });                                                                                         some cols one User, some cols in related Languages
------------------------------------------------------------------------------------------------
-var lgs = await Language.findAll({where: {id: { [Op.or]: [1, 2]} }});                           all lgs with id 1 and 2
-------------------------------------------------------------------------------------------------
-var user = await User.findOne({where: {id: 1}, include: Language});
-var lgs = await Language.findAll({where: {name: { [Op.or]: ['german', 'italian']} }});
-user.addLanguages(lgs);         
-
-!!! if addOfferedLgs -> addOfferedlgs  (no capital letters)                                     add existing lgs to one user
-------------------------------------------------------------------------------------------------
-var users = await User.findAll({
-        include: [{model: Language, where: {name: { [Op.or]: ['german', 'french']}}}]
-    });                                                                                         filter users with related lgs 'german' or 'french'
------------------------------------------------------------------------------------------------ 
-var user = await User.findOne({where: {id: 1}, include: Language});
-var lgs = await Language.findAll({where: {name: { [Op.or]: ['spanish', 'chinese']} }});
-user.setLanguages(lgs);                                                                         update lgs in one user (overrites)
------------------------------------------------------------------------------------------------
-var user = await User.findOne({where: {id: 1}, include: Language});
-var lg = await Language.findOne({where: {id: 3}});
-user.removeLanguage(lg);                                                                        remove one lg from one user
-----------------------------------------------------------------------------------------------
-var user = await User.findOne({where: {id: 2}, include: Language});
-var lgs = await Language.findAll({where: { name:{ [Op.or]: ['spanish','french']} } });
-user.removeLanguages(lgs);                                                                      remove some lgs from one user
----------------------------------------------------------------------------------------------
-
+                           
 
 
 
@@ -387,7 +447,7 @@ ________________________________________________________________________________
         CREATE TABLE users(
         id INT AUTO_INCREMENT,      
         PRIMARY KEY(id)
-        name VARCHAR(100)
+        name VARCHAR(255)
         );
 
         INSERT INTO users (name) values ('Slavik');
@@ -399,7 +459,7 @@ ________________________________________________________________________________
         PRIMARY KEY(id),
         user_id INT,
         FOREIGN KEY (user_id) REFERENCES users(id),        //can be > 1 foreign key
-        title VARCHAR(100)       
+        title VARCHAR(255)       
         );
 
         INSERT INTO posts(user_id, title)                     
@@ -499,7 +559,7 @@ ________________________________________________________________________________
 (time)
     date DATETIME DEFAULT CURRENT_TIMESTAMP    //value - now()
     date TIMESTAMP
-
+            !!! in mysgl table stored as  2020-06-06
 (number)
     age INT
 (word) 
@@ -525,5 +585,3 @@ ________________________________________________________________________________
     (now queries can be written in workbench, in query);  to run: ctrl + enter
 
 
-*************************************************************************************************************
-*********************************** ENTITY FW MySql ***************************************************************

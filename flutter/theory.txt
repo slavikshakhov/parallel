@@ -1,0 +1,306 @@
+                                SETUP 
+
+1. android studio, see android - theory.txt - setup 
+2. plugin for flutter
+    Start Android Studio.
+    Open plugin preferences (File -> preferences -> Plugins).
+    Select the Flutter plugin and click Install.
+    Click Yes when prompted to install the Dart plugin.
+    Click Restart when prompted.
+install flutter into C/src    (not C/Program File --- requires elevated privileges)
+in android studio: create -> new flutter project ....
+(mein is in lib)
+
+***********************************************************************************************************************
+void main() => runApp(MaterialApp(
+  home: Text('lala')
+));
+
+!!! MaterialApp is wrapper (root), google material design 
+
+------------------------------------------------------------------------------------------------------
+                                    START PROJECT (MAIN)
+
+!!! start with    
+        void main() => runApp(MaterialApp(
+            home: NameOfClass()
+        ));
+
+!!! delete test F
+!!! stful + enter -> creates stateful widget, call class    (or stless, then possible hot reload)
+!!! replace: retrurn Container() -> return Scaffold()
+
+********************************************************************************************************
+                                        STATEFUL and EVENTS
+
+  int x = 0;                                                         !!! field
+
+  
+  ... floatingActionButton: FloatingActionButton(                    (in like jsx)
+                onPressed: () {
+                    setState(() {
+                        x += 1;                              !!! change state
+                    });
+                },
+        )
+
+!!! to convert from stateless to statefull: highlight, convert
+
+!!! show list of els (strings)
+    field: 
+        List<String> quotes = [
+            'Be yourself; everyone else is already taken',
+            'I have nothing to declare except my genius',
+            'The truth is rarely pure and never simple'
+        ];
+    ----------------
+    body: Column(
+        children: quotes.map((quote) => Text(quote)).toList(),
+      ),
+
+
+**************************************************************************************************************
+**************************************************************************************************************
+                        ElList (get data from ElModel -> els) -> ElCard
+
+                            MODEL
+
+new dart file elModel 
+---------------------
+class ElModel {
+    int x;
+    int y;
+ 
+    ElModel(int x, int y){                        !!! ElModel el = ElModel(4, 6)
+        this.x = x;
+        this.y = y;
+    }
+}
+
+  !!! ElModel({ int x, int y }){                  !!! ElModel el = ElModel(y: 4, x: 6)   ----named params
+       this.x = x;
+       this.y = y;
+  }   
+
+  !!! ElModel({ this x, this y })                 !!! short version of above
+
+-------------------------------------------------------------------------------------------
+                                PASS DATA (ElList -> ElCard)
+
+ 
+ElCard (CARDCOMP -----StatelessWidget)
+
+     
+
+        import 'package:flutter/material.dart';
+        import 'elModel.dart';                           !!! see model
+
+        final El el;                             !!! (field) final...to allow data in StatelessWidget
+        ElCard({ this.el });                     !!! (K) called from ElList --- map ... ElCard(el: el)  
+                                                            where el is obj of elModel     
+
+        ....Card(                                 (like jsx)
+                .....
+                ... el.x ...
+                ... el.y ...
+            )        
+
+MAIN (here list using model and calling ElCard's K)
+
+           
+    import 'elModel.dart';
+    import 'elCard.dart';
+
+    List<El> els = [ El(x: 5, y: 9), El(x: 4, y: 8) ];
+            
+        
+    ..... body: Column(                                                (like jsx)
+            children: els.map((el) => ElCard(el: el)).toList(),        !!! calls constructor of ElCard
+        ),
+    
+
+       
+*******************************************************************************************************************
+                                PASS EVENT (ElCard -> ElList)
+
+ElCard (CARDCOMP -----StatelessWidget)
+     
+
+    import 'package:flutter/material.dart';
+    import 'elModel.dart';                              !!! see model
+
+    final El el;                                        !!! (field) final...to allow data in StatelessWidget
+    final Function delete;
+
+    ElCard({ this.el, this.delete });                   !!! (K) called from ElList --- map ... ElCard(el: el)  
+                                                        where el is obj of elModel     
+
+    ....Card(                                           (like jsx)
+            .....
+            ... el.x ...
+            ... el.y ...
+            FlatButton.icon(
+                onPressed: delete,
+                ...
+              )
+        )        
+
+
+
+MAIN (here list using model and calling ElCard's K)
+
+    import 'elModel.dart';
+    import 'elCard.dart';
+
+    List<El> els = [ El(x: 5, y: 9), El(x: 4, y: 8) ];
+    
+            
+        
+    ..... body: Column(                                                             
+            children: els.map((el) => ElCard(
+                el: el,
+                delete: () { setState(() { els.remove(el)}  )})).toList(),       
+            ),
+
+!!! list comp is statefull to be able to use setState, el comp can be stateless but fields final
+
+*************************************************************************************************************
+
+                        PAGES 
+
+lib - pages - home.dart                         (stful)
+            - choose_location.dart              (stful)
+            -loading.dart                       (stful)
+
+lib - main  
+
+        ... home: Home()                        !!! import 
+
+!!! import as relative path:  import 'home.dart'
+           as package         import 'package:myApp/pages/home.dart         !!! omit lib
+
+                                ROUTES 
+
+(in main, MaterialApp -> )
+
+    initialRoute: '/',                                      !!! first to load (overrides default if different)
+    routes: {
+      '/': (context) => Loading(),                          !!! first to load by default
+      '/home': (context) => Home(),
+      '/location': (context) => ChooseLocation(),
+    }
+
+    !!! import files 
+
+(in loading.dart) in Scaffold - body - Column - FlatButton.ocon (edit_location):
+
+                onPressed: () { Navigator.pushNamed(context, '/location'); }    !!! pushes this pages under
+
+(in choose_location) in AppBar appears link as arrow  <-  to go back to previous pages
+!!! push page down stack, now this page up,  with  <- remove top page on stack 
+
+
+                                REDIRECT WITH NEWLY ARRIVED DATA
+
+
+(in loading.dart, from initState call getData(), defined in fields area)
+
+    void getData() async {
+        ....(http get req, directly or delegate to custom class) ...
+        Navigator.pushReplacementNamed(context, '/home', arguments: {
+            'location': instance.location,                                       !!! instance of custom class            
+            'time': instance.time
+        });
+    }     
+
+(in '/home ---- Home)
+
+    Map data = {}                         !!! state field
+    ------------
+    data = ModalRoute.of(context).settings.arguments;        !!! in build 
+    print(data);
+    ------------
+    .... data['x']                                           !!! in (like jsx) access data's prop
+
+**********************************************************************************************************************
+                                    STATEFULL vs STATELESS (lifecycle methods, write in field area)
+
+stateless:   only build on load once 
+statefull:   initState()                --- on load (use to subscribe to streams, objects...)
+             Build()                    --- called after setState()  -> rebuilds tree
+             Dispose()                  --- remove component (Widget)
+
+**********************************************************************************************************************
+                                        ASYNC
+
+(in fields area, called from initState)
+
+    void getData() async {   
+        String username = await Future.delayed(Duration(seconds: 3), () {      
+            return 'yoshi';
+        });
+        print('lala');                                                          !!! executed last                  
+    }
+        
+        !!! like js setTimeInterval
+            within async fun all await funs one after another
+            from outside async not blocking: 
+            (from initState) getData()
+                             print('tata')         !!! executed first
+
+                             !!! to wait till getData() then print('lala'), use Future<rt> in fun
+                                    Future<void> getData() async { ... }
+
+************************************************************************************************************************
+                                    FLUTTER PACKAGES (http)
+
+
+        !!! all get requests in initState
+
+pub.dev/flutter  ----- http ---- install ---- add to dependencies in pubspec.yaml 
+
+(in load.dart) 
+    import 'package:http/http.dart';
+    -------
+    void getData() async {
+        Response response = await get('https://jsonplaceholder.typicode.com/todos/1');    !!! returns json obj         
+        Map data = jsonDecode(response.body);                                             !!! json -> map 
+        print(data);
+        print(data['title']);
+    }
+
+    !!! Map m = {'x': 'lala', 'y': 9}     |    m['x']
+    !!! jsonDecode automatically ->   import 'dart:convert';
+    !!! see third_party_libraries.txt  --- worldtime api  
+            !!! if too much logic in get request and process data, use custom class 
+                    K of custom class takes url
+                    getTime() of custom class prints current time 
+    
+*****************************************************************************************************************
+                                    ERROR HANDLING
+
+try { ... }
+catch(e) {
+    print('error: $e');
+    x = 'some error';                           !!! x is what shown to UI 
+    }
+
+***************************************************************************************************************
+                                CUSTOM CLASS 
+
+ex. to get http req (in custom class's fun ---- http req, set pieces of received data in field area)
+has fun and fields, first get instance of custom class by calling K with args needed to get data
+                    then access fields of custom class using instance 
+
+**************************************************************************************************************
+                                FORMAT DATES 
+
+pub.dev/flutter  ----- intl  ---- install ---- add to dependencies in pubspec.yaml
+
+import where used
+DateFormat.jm().format(dt);       !!! DateTime obj -> formatted string 
+
+************************************************************************************************************
+                                    SPINNER 
+
+pub.dev/flutter  ----- flutter_spinkit  ---- install ---- add to dependencies in pubspec.yaml

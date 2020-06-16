@@ -1,0 +1,147 @@
+                            NPM 
+
+npm install --save nodemon express express-validator body-parser cors sequelize mysql2 jsonwebtoken bcrypt dotenv
+
+******************************************************************************************************
+                            1. CREATE MODEL (User)
+
+(models/User.js)
+
+    const Sequelize = require('sequelize');
+    const sequelize = require('../connection');
+
+    const User = sequelize.define('user', {
+        name: {
+        type: Sequelize.STRING,
+        allowNull: false
+        },
+        password: {
+        type: Sequelize.STRING      
+        }        
+    },
+    { timestamps: false }
+    );
+
+module.exports = User;
+*****************************************************************************************************
+                        2. CONNECT MODEL TO MySql (on connecting -> creates empty table in db)
+
+(connection.js)
+
+    const Sequelize = require('sequelize');
+    const mysql = require('mysql2');
+
+    const connection = new Sequelize('tandem', 'root', 'gerKanuk55', {
+        host: 'localhost',
+        dialect: 'mysql'
+    });
+    connection
+    .authenticate()
+    .then(() => {
+        console.log('Connection has been established successfully.');
+    })
+    .catch(err => {  
+        console.error('Unable to connect to the database:', err);
+    });
+
+    module.exports = connection;
+
+******************************************************************************************************
+                         3. CREATE SERVER 
+
+require('dotenv').config();                  // to store api keys
+const express = require("express");
+const app = express();
+var cors = require("cors");
+
+const bodyParser = require("body-parser");
+
+const port = 4000;
+
+const seq = require("sequelize");
+
+const auth = require("./routes/auth");
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(cors());
+
+app.use("/auth", auth);
+
+app.listen(port, () => {
+  console.log(`server running on port ${port}`);
+});
+
+*********************************************************************************************************
+               
+                            4. AUTH ROUTES  
+                                            /auth/register
+                                            /auth/login
+const express = require('express');
+const app = express();
+                         
+const jwt = require('jsonwebtoken');
+const { check, validationResult } = require('express-validator');
+const router = express.Router();
+
+
+const seq = require('sequelize');
+const Op = seq.Op;
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
+const User = require("../models/User");
+
+router.post('/register', [
+  check('password').isLength({ min: 4, max: 8 }).withMessage('Must be between 4 and 8 characters long')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() })
+  }
+
+  let {name, password} = req.body;
+  name = name.toLowerCase();
+
+  var user = await User.findOne({where: {name: name}});
+  if(user){
+    res.status(400).json('user with this name already exists');
+  } else {
+    bcrypt.hash(password, saltRounds, function(err, hash) {
+      //save hash as pw in db
+      if(err){
+          res.json('password could not be hashed');
+      } else {
+          User.create({name, password: hash});
+          res.status(200).json({message: 'Successfully registered!'});
+        }
+    });
+  }
+});
+
+
+router.post('/login', async (req, res) => {
+  let {name, password} = req.body;
+  name = name.toLowerCase();
+  var user = await User.findOne({where: {name: name}});
+  if(!user){
+    res.status(401).json({message: 'No user with this name!'});
+  } else {
+    
+    bcrypt.compare(password, user.password, (error, isMatch) => {
+      if(!isMatch){
+        res.status(403).json('password is incorrect!');
+      } else {
+        jwt.sign({id: user.id, name: user.name}, 'secretkey', { expiresIn: '300s' }, (err, token) => { 
+          delete user.password;
+          res.json({
+            token,
+            user
+          });
+        });
+      }      
+    });
+  }
+});
+module.exports = router;
+***********************************************************************************************************

@@ -241,8 +241,9 @@ GET REF FROM DRAWABLE
 ----------------------------
 GET VAL vs REFER TO VAL (id)
 
-        R.id.btn-id vs  view?.id  as ref 
-        R.id.btn-id  -> returns id val 
-        view?.id      -> refers to id val directly
+        R.id.btn-id vs  view?.id                    -> id var
+        btn-id                                      -> TextView  (or another View)
+        
+********************************************************************************************************************
 
-        view?.id    ------  R.id.btn-id
+

@@ -1,0 +1,6 @@
+> mix phx.new proj       
+proj> mix ecto.create        !!! creates db
+
+
+
+

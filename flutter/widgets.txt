@@ -1,0 +1,112 @@
+                                ATTRS 
+
+ABBREVIATIONS 
+    b  -> body
+    t  -> title
+    tx -> text
+    ch -> child 
+    chn -> children
+    i  -> icon
+    l  -> label
+    p  -> padding
+    bgIm -> backgroundImage
+
+Scaffold -> AppBar centerTitle / backgroundColor / elevation
+                   -> (t) Text  ...
+         -> (b) W ...
+
+         !!! w/o AppBar:  Scaffold -> (b) SafeArea -> (ch) W
+
+Text ''
+     -> (st) TextStyle fontSize / fontWeight / letterSpacing / color / fontFamily
+
+Icon Icons.lala / color
+
+FlatButton onPressed / backgroundColor / color 
+           -> (ch) Text
+
+!!! FlatButton or RaisedButton or FloatingActionButton
+
+FlatButton onPressed / backgroundColor / color 
+           -> (ch) Icon(Icons.lala)
+
+IconButton onPressed / color / iconSize
+           -> (i) Icon(Icons.lala)
+
+RaisedButton.icon onPressed / color
+                  -> (i) Icon(Icons.lala)
+                  -> (l) Text                                       !!! text to right of icon
+
+
+RaisedButton onPressed / color 
+            -> (tx) Text                                        
+
+CircleAvatar radius 
+             -> (bgIm) AssetImage('...')
+
+Divider color / height
+
+SizedBox height       !!! or width
+
+Card margin
+     -> (p) Padding -> (ch) Column ...
+
+Container padding / margin / color 
+          -> (ch) Text
+
+Padding padding
+        -> (ch) Text 
+
+W  margin / padding /color
+   -> (ch) Text
+
+Row mainAxisAlignment / crossAxisAlignment
+    -> (chn) [ W1, W2]
+
+Row mainAxisAlignment / crossAxisAlignment
+    -> (chn) [ 
+        Expanded flex / 
+                 -> (ch) Container ...
+        Expanded flex / 
+                 -> (ch) Container ...
+    ]
+
+----------------------------------------------------------------------------------------------------------------
+
+
+color: Colors.amber
+
+padding: EdgeInsets.all(20.0),
+padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0)
+padding: EdgeInsets.fromLTRB(10.0, 20.0, 5.0, 30.0),
+
+mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+crossAxisAlignment: CrossAxisAlignment.end,
+
+children: <Widget>[ ... ]
+
+flex: 3
+
+elevation: 0.0,
+
+backgroundImage: AssetImage('assets/thumb.jpg'),
+
+child: Image( image: AssetImage('assets/universe.jpg')
+child: Image.asset('assets/universejpg')
+
+child: Image ( image: NetworkImage('https://......'))
+child: Image.network('https:// ... ')
+
+
+
+
+!!! for images, place image into assets F                
+                (pubspec.yaml)
+                    assets:    
+                        - assets/
+
+!!! CrossAxisAlignment.end   ------ based on highest el 
+    CrossAxisAlignment.stretch  --- stretched to height of parent
+
+
+

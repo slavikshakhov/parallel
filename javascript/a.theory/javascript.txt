@@ -13,6 +13,31 @@ group obj's props by one key:
         var _ = require('lodash');
         const grouped = _.groupBy(arr, el => el.id);   
 
+
+GROUP ARRAY OF OBJS BY OBJ'S KEY (JS)
+
+    let result = [{a: 5, b: 6}, {a: 5, b: 10}, {a: 6, b: 20}].reduce((ac, el) => {
+        ac[el.a] = (ac[el.a] || []).concat(el);
+        return ac; 
+    }, {})
+
+    see reduce, here ac's initial value is {}
+
+**************************************************************************************************************
+                                REDUCE 
+
+[1, 5].reduce((ac, el) => ac + el, 2)       -> 2 + 1 + 5
+[1, 5].reduce((ac, el) => ac + el)          -> 1 + 5
+
+    !!! ac is 0 in first iteration, unless initial value given
+
+*************************************************************************************************************
+                            Object.assign()
+
+Object.assign({a:5, b:6}, {a:20, c:10})    -> {a: 20, b: 6, c: 10}
+Object.assign({a:5, b:6}, {})              -> {a:5, b:6}             ---- copy, same as {...obj}
+
+
 *************************************************************************************************************
                             JSON
 

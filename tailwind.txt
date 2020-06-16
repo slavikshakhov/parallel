@@ -1,0 +1,145 @@
+                            REACT + TAILWIND (SETUP)
+
+(npm)  tailwindcss
+       autoprefixer 
+       postcss-cli
+
+>> npx tailwind init tailwind.config.js
+
+>> npx tailwind init postcss.config.js (replace):
+
+            const tailwindcss = require('tailwindcss');
+            module.exports = {
+                plugins: [
+                    tailwindcss('./tailwind.config.js'),
+                    require('autoprefixer'),
+                ],
+            };
+
+(src/styles/index.css)
+
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+
+(package.json, scripts):
+
+    "build:css": "postcss src/styles/index.css -o src/index.css",    
+    "watch:css": "postcss src/styles/index.css -o src/index.css",
+    "start": "npm run watch:css & react-scripts start",
+    "build": "npm run build:css && react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+
+    !!! index.js <- import './index.css'
+
+>> npm start
+
+
+*************************************************************************************************************
+
+nums            1 - 6,
+                8, 10, 12, 16, 20, 24, 32, 40, 48, 56, 64
+
+letters         xs sm md lg xl 
+                2xl  (2 - 6)
+
+*************************************************************************************************************************
+                                            LAYOUT
+FLEX (p flex)
+
+    p items-center ... 
+    p justify-end ...
+
+    self-start ...
+
+    flex-no-wrap
+
+    flex-row   |  flex-col
+
+    flex-1     !!! all siblings same width
+
+_______________________________________________
+
+GRID  (p grid)
+
+    p grid-cols-3  gap-4     
+
+    col-span-3     (if par --- 3, children --- 3, 2, 1 -> 2 rows: full width, 2 + 1)
+    col-start-2 col-span-4
+
+    p grid grid-rows-3 grid-flow-col gap-4
+    row-start-2 row-span-2
+
+    !!! gap --- nums
+
+--------------------------------------------------------------------------------------
+SPACE, SIZE 
+
+    p space-y-6              !!! space between children (nums)
+    p space-x-20
+
+    p-6
+    m-20
+    w-6      |  h-20          !!! nums 
+
+_____________________________________________
+    min-w-0   
+    min-w-full     
+    w-1/6                 
+
+
+    max-w-xs                     letters 
+    max-w-full 
+
+    max-w-screen-sm           sm md lg xl 
+
+_______________________________________________
+
+    min-h-0   
+    min-h-full               
+    min-h-screen                -> 100vh   
+
+    max-h-full
+    max-h-screen
+
+
+BORDER 
+
+    border-0        0  2  4  8
+    border-r-4
+    border-blue-700
+
+POSITION
+
+    absolute, relative, fixed, static, sticky
+    ch absolute inset-x-0 top-0                   !!! inset-x if horizontal
+                                                           -y if vertical 
+                                                      top-0 --- on top of parent (also right-0, ...)
+
+    ch absolute inset-0                            -> occupies all parent space
+
+    !!! for imgs, see ---- object position, object fit ---  in docs 
+
+    _____________________________________________
+    text-center                 !!! text-right ... -justify
+
+    align-baseline   /-top /-bottom  /-middle       !!! vertically based on parent 
+
+
+
+VISIBLE 
+
+    visible    |   invisible
+
+
+
+
+
+***************************************************************************************************************
+                                TEXT 
+
+text-opacity-0               !!!  0  25  50  75  100 
+no-underline 
+uppercase  /  lowercase  / capitalize 
+

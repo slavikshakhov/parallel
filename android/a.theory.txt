@@ -25,6 +25,11 @@ settings -> about device -> software info -> build number (switches to developer
 
             fun main() { ... }
 
+---------------------------------------------------------------------------------------------------
+                            UPDATE 
+File -> Settings
+Appearance & Behavior > System Settings > Updates
+
 -------------------------------------------------------------------------------------------------
                                     DEVICE ORIENTATION 
 

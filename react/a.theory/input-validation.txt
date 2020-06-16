@@ -1,0 +1,136 @@
+import React, { useState, useEffect } from "react";
+import StartStyles from "./Start.module.css";
+
+const Start = () => {
+
+  // VALIDATION RULES 
+
+  const minNumberOfChars = 4;
+  const maxNumberOfChars = 7;
+  const oneCapitalLetter = new RegExp("(?=.*[A-Z])");
+
+
+
+  const [inputValue, setInputValue] = useState({});
+
+
+  // TOUCHED ------- field empty -> onBlur 
+     TOUCHEDVAL ---- field full -> onBlur
+     PRISTINE ------ field empty
+     DIRTY --------- field was once full, now empty
+
+
+  const [touched, setTouched] = useState({});
+  const [touchedVal, setTouchedVal] = useState(false);
+  const [pristine, setPristine] = useState({});
+  const [dirty, setDirty] = useState({});
+
+
+  const [errors, setErrors] = useState({});
+
+  // name of input that is active
+
+  const [changedInput, setChangedInput] = useState("");
+
+  
+
+  useEffect(() => {
+    validate(changedInput);
+  }, [touched, touchedVal, pristine, dirty]);
+
+
+
+  // SET TOUCHED, TOUCHEDVAL
+  
+  const onInputBlur = ({ target: { name, value } }) => {
+    value.length === 0
+      ? setTouched({ ...touched, [name]: true })
+      : setTouched({ ...touched, [name]: false });
+    value.length > 0
+      ? setTouchedVal({ ...touchedVal, [name]: true })
+      : setTouchedVal({ ...touchedVal, [name]: false });
+    setChangedInput(name);
+  };
+
+
+
+  // SET PRISTINE, DIRTY
+
+  const onInputChange = ({ target: { name, value } }) => {
+    setInputValue({ ...inputValue, [name]: value });
+    value.length > 0
+      ? setPristine({ ...pristine, [name]: true })
+      : setPristine({ ...pristine, [name]: false });
+    value.length === 0 && pristine[name]
+      ? setDirty({ ...dirty, [name]: true })
+      : setDirty({ ...dirty, [name]: false });
+    setChangedInput(name);
+  };
+
+  
+
+  const validate = (name) => {
+
+    let required = "Required";
+    let minimum = "Minimum";
+    let maximum = "Maximum";
+    let capitalLetter = "CapitalLetter";
+
+    const errs = {};
+
+    console.log(touched, touchedVal, pristine, dirty);
+    console.log(errors);
+
+
+    // REQUIRED 
+
+    errs[`${name}${required}`] =
+      (touched[name] || dirty[name]) && !pristine[name]
+        ? `${name} required`
+        : (touchedVal[name] || pristine[name]) && "";
+
+
+
+    //MINIMUM 
+
+    errs[`${name}${minimum}`] =
+      touchedVal[name] && inputValue[name].length < minNumberOfChars
+        ? `minimum ${minNumberOfChars} characters!`
+        : "";
+    console.log(errs);
+
+
+    // MAXIMUM
+
+    errs[`${name}${maximum}`] =
+      pristine[name] && inputValue[name].length >= maxNumberOfChars
+        ? `maximum ${maxNumberOfChars} characters!`
+        : "";
+
+    // PATTERN (RegExp)
+
+    errs[`password${capitalLetter}`] =
+      touchedVal?.password && oneCapitalLetter.test(inputValue.password)
+        ? ""
+        : touchedVal?.password &&
+          !oneCapitalLetter.test(inputValue.password) &&
+          "one capital letter!";
+
+
+
+    setErrors({ ...errs });
+  };
+ 
+
+
+
+------------------------------------------------------
+JSX 
+
+    <input
+    ......
+    name="username"
+    onChange={onInputChange}
+    onBlur={onInputBlur}
+    />
+             

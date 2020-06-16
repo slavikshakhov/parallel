@@ -23,8 +23,14 @@ FETCH
         a. javascript code snippets  //see code-extensions.txt
         b. ES7 React/Redux/Graph ...
 
+************************************************************************************************************
+                                    GLOBAL VARS 
 
 
+(in .env)  REACT_APP_LALA='lala'
+process.env.REACT_APP_LALA                  -> lala
+
+!!! must start with REACT_APP_
 
 
 *************************************************************************************************************
@@ -146,10 +152,10 @@ import { useForm } from 'react-hook-form';
 ----
 (js)
     const {register, handleSubmit, errors, watch} = useForm();
-    const submitForm = (e) => { 
+    const submitForm = (values) => { 
         e.preventDefault();
-        ... name ....
-        ... password ...
+        ... values.name ....
+        ... values.password ...
         ... errors.name ...
     }
     !!! ex.  const user = {name, password};
@@ -375,34 +381,85 @@ const Ch = props => {
 
 
 *************************************************************************************************************
+                                       CONTEXT 
+
+(DataContext.js)
+
+    import React, { useState, createContext } from "react";   
+
+    export const DataContext = createContext();
+
+    export const DataProvider = (props) => {
+        const [la, setLa] = useState(5);       
+        
+        const fff = (x) => {            
+            setLa(x);
+            }
+        };
+        return (
+            <DataContext.Provider value={{ la, fff }}>
+                {props.children}
+            </DataContext.Provider>
+        );
+    };
+
+--------------------------------------------
+wrap components or routes inside    <DataContext> ... </DataContext>
+
+--------------------------------------------
+(any wrapped component)
+
+    import React, { useContext } from "react";
+    ----------
+     const { la, fff } = useContext(DataContext);    // now has access to la, fff
+
+
+
+*************************************************************************************************************
                                         ROUTING
 
 (App component)
-    import {BrowserRouter as Router, Switch, Route, Link} from "react-router-dom";
+   import { BrowserRouter, Switch, Route, Link } from "react-router-dom";
+   ---------------- (in jsx)
+   <BrowserRouter>
+      <Switch>
+        <Route path={"/"} component={Start} />
+        <PrivateRoute exact path={"/home"} component={Home} />
+        <Redirect from="*" to="/" />
+      </Switch>
+    </BrowserRouter>
 
-    export default function App() {
+
+(PrivateRoute.js)
+
+    import React from "react";
+    import { Route, Redirect } from "react-router-dom";
+
+    const PrivateRoute = ({ component: Component, path, ...rest }) => {
+    let isAuth = false;
     return (
-        <Router>   
-            <Nav /> 
-            <div className='container'>
-                <Switch> 
-                    <Route exact path='/register'>
-                        <Register />
-                    </Route> 
-                    <Route exact path='/home'>
-                        <Home />
-                    </Route>
-                    <Route path='**'>
-                        <Home />
-                    </Route> 
-                </Switch>
-            </div>                             
-        </Router>     
-    );
+        <Route
+            {...rest}
+            path={path}
+            render={(props) =>
+                isAuth ? <Component {...props} /> : <Redirect to={"/start"} />
+            }
+        />
+        );
+    };
+    export default PrivateRoute;
 
-    !!! path="/"   last!
-    !!! Nav always displayed;
-        container always displayed, will contain all routes
+!!! paths in order:            "/"   
+                    exact --- "/la"    
+                                "*" component={() => "404 Not found" }
+
+
+!!! in any comp ---- props.history.push("/lala")
+!!! props.match.params 
+!!! get query from b: and -> obj:                       !!! https://lala.com/la?xxxxxxxxx  -> xxxxxxxx
+            import queryString from 'query-string'
+            ----
+            queryString.parse(props.location.search)
 
 **********************************************************************************************************
                                             FETCH

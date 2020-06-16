@@ -1,0 +1,36 @@
+
+!!! google font: download font -> unzip -> drag into F (root - fonts)
+                    pubspec.yaml ... uncomment (ctrl + /) fonts -> 
+
+                                                    fonts:
+                                                        - family: IndieFlower
+                                                            fonts:
+                                                            - asset: fonts/IndieFlower-Regular.ttf
+
+
+                                                            !!! family: IndieFlower can call whatever
+                                                                        (refered by this name in style)
+                                                                asset: name of file in fonts
+                                                            
+************************************************************************************************************
+jsonplaceholder  to test http get requests
+
+************************************************************************************************************
+WORLDTIME API 
+
+timezones -> ctrl + F (search for country) -> 
+
+    Current UTC Date/Time (ISO8601)
+        2020-05-26T17:26:04.334429+00:00
+    Local Time's UTC offset
+        -04:00
+
+        !!! Current UTC (datetime) + Local Time (utf_offset) = actual time 
+    json -> copy url (use in get req)
+            extract datetime, utf_offset                    !!! str, to get hour, use substring  ('23.22' -> '23')
+
+
+    DateTime dt = DateTime.parse(datetime);                  !!! timestamp -> date object
+    dt = dt.add(Duration(hours: int.parse(datetimeObj2)));         !!! DateTime obj + int (hours)
+
+*************************************************************************************************************

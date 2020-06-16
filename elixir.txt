@@ -1,0 +1,379 @@
+Elixir (transpile) -> Erlang (compile) -> BEAM 
+                        
+                            
+                            SETUP 
+
+install elixir 
+> elixir -v
+
+
+VSC extensions: 
+    vscode-elixir
+    vscode-elixir-formatter
+    +- ElixirLS
+
+
+
+**********************************************************************************************************
+                            IEX (REPL)  >iex 
+
+> i 'lala'          -> list  [108, 97, 108, 97]   ---- list of ASCII characters
+> i "lala"          -> binary  <<108, 97, 108, 97>>
+> i [1, 2, 3]       -> list
+> i 2               -> gives info what 2 is (integer ... )        
+
+> 4/2               -> 2 
+> [:a, :b] ++ [1, 2, 3]        -> [:a, :b, 1, 2, 3]
+> "lala" <> "tata"             -> "lalatata"
+> div 51, 2                    -> 25 
+    > div a + b, 2             !!! where a and b passed as args 
+> rem 51, 2                    -> 1 
+> min 50, 6                    -> 6 
+> IO.puts(5)                    -> like console.log(5)
+> IO.puts "lala #{fun(5)}\n" 
+  IO.puts ~s({lala "something"})   -> puts as message, sting in sting
+> IO.gets "lala #{fun(5)}\n"    -> gets input from user -> feedback
+> answ = IO.gets "type a word\n"
+         lala 
+         > answ                 -> "lala\n" 
+         > String.trim answ     -> "lala"
+
+         inside fun: 
+
+            answer = IO.gets("is it #{fun(2)}?\n")
+
+            case String.trim(answer) do
+                "bigger" -> fun1(7)                
+                "smaller" -> fun2(8)
+                "yes" -> "Correct!"
+                _ -> "none of above was typed"
+                      fun3(6)
+            end
+--------------------------------------------------------------------------
+> answ = IO.gets "Type a word\n"        
+!!! answ = String.trim(IO.gets("Type a word: "))  --- same line with sace
+!!! answ = IO.gets("Type a word: ") |> String.trim()
+> IO.puts(answ)
+-------------------------------------------------------------------------
+> Enum.count(["a", "b", "c"])        -> 3
+        !!! ["a", "b", "c"] |> Enum.count() |> IO.puts()
+
+-------------------------------------------------------------------------
+> double = fn x -> x*2 end 
+> double.(7)                      -> 14
+------------------------------------------------------------------------
+> not_empty = fn x -> x != ""
+> not_empty.("lala")                     -> true 
+----------------------------------------------------------------------
+["", "la", "ta"] |> Enum.filter(fn x -> x != "" end)    -> ["la", "ta"]
+
+----------------------------------------------------------------------
+COUNT WORDS IN FILE, OMIT \n, ""; if it's -> it's (escape opostraphy); show in cmd
+
+    IO.gets("File name: ")
+        |> String.trim()
+        |> File.read!()
+        |> String.split(~r{[^\w']+})
+        |> Enum.filter(fn x -> x != "" end)
+        |> Enum.count()
+        |> IO.puts()
+--------------------------------------------------------------------------
+
+***********************************************************************************************************
+def fun(x, y) when a > b do
+    fun2(y, x)
+end
+
+!!! def fun(x, y) when a > b, do: fun2(y, x)
+
+--------------------------------------------------------
+body = File.read!("b.ex")             
+IO.inspect(body)                    -> returns content of file, if string, ends with \n
+                                        !!! File.read!  ! in case file does not exist 
+
+body = File.read!("b.ex") |> String.split               -> ["\"a", "few", "words", "here\""]
+    !!! body = File.read!(file) |> String.split(~r{[^\w]+})   -> ["", "a", "few", "words", "here", ""]   
+IO.inspect(body)                            
+
+!!! regex: ~r{....} 
+        except words: [^\w]+   (1 or more, all)
+        (la | ta)    match la or ta or both
+        \\n          match \n 
+        [^\w']+      (1 or more non word chars or apostrophy)  it's 
+************************************************************************************************************
+                                NEW PROJ (ex) ------ with module
+
+new file ----- a.ex   
+
+    defmodule A do
+        def fun(x, y) do
+            x + y
+        end
+    end
+> c "a.ex"                  -> compiles 
+> A.fun(5, 8)               -> 13
+
+---------------------------------------------------------------------------------------------------------
+                                NEW PROJ (exs) ---- no module 
+
+new file ----- a.exs 
+> elixir a.exs 
+
+
+
+
+
+
+
+
+
+
+
+
+**************************************************************************************************************
+                            DATATYPES
+
+
+> y = A.create_y        -> A is module, create_y is fun returning some value
+!!! if y passed to fun and output diff from original y, y still original  (immutable)
+
+
+"lala"
+["la", "ta"]
+
+ARRAY  
+        ar = [1, 2, 3]
+        [a, b, c] = ar
+        a                                               -> 1
+        [a, b | _tail] = hex_list                       -> 1       !!! if maybe hex_list has > 2 vals
+
+
+TUPLE 
+
+
+    t = {["a", "b"], [1, 2, 3]} 
+    {x, y} = t    
+    x                  -> ["a", "b"]
+    y                  -> [1, 2, 3]
+
+MAP 
+    m = %{x: 5, y: 8}
+    m.x                  -> 5
+
+    %{x: val} = m
+    val                  -> 5
+
+    -----------------------------------
+    UPDATE FIELD 
+
+        newM = Map.put(m, :x, 20)    -> x updated from 5 to 20
+        newM2 = Map.put(m, :z, 10)   -> z is new field 
+
+        -------------------------------
+        newM3 = %{m | x: 50}          !!! only if existed field
+
+KEYWORD LIST 
+ 
+    kws = [{:x, 5}, {:y, 8}]         !!! same as [x: 5, y: 8]
+    kws[:x]                          -> 5
+
+    !!! if keyword list passed to fun as last arg, can ommit fun's () and list's [], used in db queries
+
+!!! if map has 2 fields with same key -> returns last (overrides)
+    if keyword list has 2 fields with same key -> both retained
+
+
+
+
+**************************************************************************************************************
+                            PATTERN MATCHING (js destructuring)
+
+t = {["a", "b"], [1, 2, 3]} 
+{x, y} = t    
+x                  -> ["a", "b"]
+y                  -> [1, 2, 3]
+-----------------------------------------
+
+[ar] = [1]
+ar              -> 1
+---------------------------------------
+[a, b] = [1, 2]
+a               -> 1
+
+
+*************************************************************************************************************
+                             ITERATION (list comprehension) 
+
+SIMPLE LOOP
+
+    (inside fun):  xs = ["A", "B"]
+                   for x <- xs do 
+                        x
+                    end                         !!! fun returns new arr (map)
+
+NESTED LOOP  (returns arr of arrs, need to flatten to get arr)
+
+    (inside fun): 
+        xs = ["A", "B"]
+        ys = [1, 2, 3]
+        vals = for x <- xs do 
+            for y <- ys do
+                "#{x} of #{y}"
+            end 
+        end 
+        List.flatten(vals)
+
+    -------------------------------------------
+        xs = ["A", "B"] 
+        ys = [1, 2, 3]
+        for  x <- xs, y <- ys do
+            "#{x} of #{y}"
+        end
+***********************************************************************************************************
+                                    PIPE (change methods)
+A.f1
+|> A.f2
+|> A.f3(x)
+
+!!! return value of preceeding function inserted as 1st arg of following function
+
+inside fun: 
+
+    5
+    |> A.f2
+
+
+|> Enum.map(&fun/1)          -> takes 1 return value from previous fun, passes it as arg to fun 
+
+!!! x = ........chained funs ..... 
+
+**************************************************************************************************************
+                            standard library  (docs)
+
+ARRAYS    ---- Enum. 
+                    shuffle([1, 2, 3])
+                    member?(ar, el)          -> true/false if ar has el
+                    split([1, 2, 3, 4, 5], 2)   -> {[1, 2], [3, 4, 5]}    ---- tuple
+                    chunk([1, 2, 3, 4, 5, 6], 2) -> [[1, 2], [3, 4], [5, 6]]  ----- array
+                    map(1..3, fn x -> x * 2 end)
+                    
+WRITE TO FILE
+
+    binary = :erlang.term_to_binary("lala")         # -> object
+    File.write(filename, binary)
+
+        !!! if filename is "my_file" -> creates this file in code's directory
+        !!! > File.read("my_file")   ->  {:ok, <<131, 107, 0, 3, 1, 2, 3>>}
+                > {status, binary} = File.read("my_file")
+                > :erlang.binary_to_term(binary)           -> "lala"
+        
+
+**************************************************************************************************************
+
+"#{x} of #{y}"
+[1, 2] ++ [3, 4]   -> [1, 2, 3, 4]
+------------------------
+ar = [1, 2, 3]     
+[x, y | _tail] = ar
+ar ++ [y, x]                       -> [1, 2, 2, 1]
+----------------------
+*************************************************************************************************************
+                            ERROR HANDLING (use pattern matching and cases, not if statements)
+
+File.read("nonexistin")                        -> {:error, :enoent}  or ->  {:ok, <<131, 107, 0, 3, 1, 2, 3>>}
+---------
+{status, binary} = File.read("nonexistin")  
+case status do
+    :ok -> :erlang.binary_to_term binary
+    :error -> "File doesn't exist"
+end
+    !!! :la  is atom, like string
+-----------------------------------------
+case File.read("nonexisting") do                       ->  {:ok, <<131, 107, 0, 3, 1, 2, 3>>}
+    {:ok, binary} -> :erlang.binary_to_term binary
+    {:error, _message} -> "File doesn't exist"
+end
+  !!! case here destructured into {:ok, binary} or {:error, _message}
+  !!! _message ---- not used, but filler of arg
+
+**************************************************************************************************************
+                            HASH STRING 
+
+hash = :crypto.hash(:md5, "lala")     -> <<46, 56, 23, 41, 63, 194, 117, 219, 238, 116, 189, 113, 206, 110>>
+Base.encode16(hash)                   -> "2E3817293FC275DBEE74BD71CE6EB056"
+:binary.bin_to_list(hash)             -> [46, 56, 23, 41, 63, 194, 117, 219, 238, 116, 189, 113, 206, 110]
+
+
+***********************************************************************************************************
+                            STATE (struct), like Map
+
+(lib/state.ex)  !!! main module is Identicon in lib.identicon.ex
+
+defmodule A.State do
+  defstruct ar: nil, ar2: nil
+end
+--------------------------------------------------------------
+from cmd or anywhere in proj: 
+
+    %A.State{}      -> {ar: nil, ar2: nil}    creates struct
+    ----------------------------------------------------------
+    data = %A.State{ar: [1, 2, 3]}                  
+    data.ar                                         -> [1, 2, 3]
+    ---------------------------------------------------------
+    defmodule A do
+        def main do
+            hash
+            |> test
+        end
+        def hash do
+            %A.State{ar: [1, 2, 3, 4]}
+        end 
+        def test(state) do 
+            %A.State{ar: val} = state                  !!! whole state
+            val                                       -> [1, 2, 3, 4]
+        end         
+    end
+
+    !!! %A.State{ar: val} = state      =====    %A.State{ar: val} = %A.State{ar: [1, 2, 3, 4], y: nil}
+    
+    ------------------------------------------------------------
+
+    defmodule Cards do
+        def main do
+            hash
+            |> test
+        end
+        def hash do
+            %Cards.State{ar: [1, 2, 3, 4]}
+        end 
+        def test(state) do 
+            %Cards.State{ar: [a, b | _tail]} = state    
+            %Cards.State{state | ar2: {a, b}}    
+        end   
+    end
+     
+     -> %Cards.State{ar: [1, 2, 3, 4], ar2: {1, 2}}
+
+    -----------------------------------------------------------------
+    defmodule Cards do
+        def main do
+            hash
+            |> test
+        end
+        def hash do
+            %Cards.State{ar: [1, 2, 3, 4]}
+        end 
+        def test(%Cards.State{ar: [a, b | _tail]} = state) do         
+            %Cards.State{state | ar2: {a, b}}    
+        end   
+    end
+
+    !!! can destructure inside fun arg
+
+
+
+
+
+    
+!!! %{x: val} =  %{x: 5, y: 8}
+    val                                          -> 5
