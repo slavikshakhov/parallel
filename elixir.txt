@@ -25,6 +25,7 @@ VSC extensions:
 > 4/2               -> 2 
 > [:a, :b] ++ [1, 2, 3]        -> [:a, :b, 1, 2, 3]
 > "lala" <> "tata"             -> "lalatata"
+> String.downcase("LALA")      -> "lala"
 > div 51, 2                    -> 25 
     > div a + b, 2             !!! where a and b passed as args 
 > rem 51, 2                    -> 1 
@@ -68,16 +69,6 @@ VSC extensions:
 ["", "la", "ta"] |> Enum.filter(fn x -> x != "" end)    -> ["la", "ta"]
 
 ----------------------------------------------------------------------
-COUNT WORDS IN FILE, OMIT \n, ""; if it's -> it's (escape opostraphy); show in cmd
-
-    IO.gets("File name: ")
-        |> String.trim()
-        |> File.read!()
-        |> String.split(~r{[^\w']+})
-        |> Enum.filter(fn x -> x != "" end)
-        |> Enum.count()
-        |> IO.puts()
---------------------------------------------------------------------------
 
 ***********************************************************************************************************
 def fun(x, y) when a > b do
@@ -87,6 +78,20 @@ end
 !!! def fun(x, y) when a > b, do: fun2(y, x)
 
 --------------------------------------------------------
+m = %{la: 5, ta: 8}     -> true if has 'la' key 
+     
+     if Map.has_key? m, "la"
+        ...
+     else 
+        ...
+     end 
+
+----------------------------------------------------------------
+m = %{la: 5, ta: 8}     ->  %{ta: 8}
+
+    Map.drop(m, ["la"])
+
+----------------------------------------------------------------
 body = File.read!("b.ex")             
 IO.inspect(body)                    -> returns content of file, if string, ends with \n
                                         !!! File.read!  ! in case file does not exist 
@@ -100,7 +105,94 @@ IO.inspect(body)
         (la | ta)    match la or ta or both
         \\n          match \n 
         [^\w']+      (1 or more non word chars or apostrophy)  it's 
-************************************************************************************************************
+
+----------------------------------------------------------------------------
+File.read(filename)         -> {:ok, body}   ------ body
+                            -> {:error, reason} --- IO.puts(~s("#{:file.format_error(reason)}"\n))
+
+-----------------------------------------------------------------------------------------------------------
+FORMAT (PARSE) RESULT OF .CSV FILE  
+        "team,priority,urgency,Data Added,Notes\r\nclean,3,1,06/17/20,important to do\r\nstudy,1,2,06/18/20,a lot of info\r\n"
+        !!! first line is header, other lines put in order 
+
+    ---------------------------
+    1. separate into lines -> 
+        ["team,priority,urgency,Data Added,Notes", "clean,3,1,06/17/20,important to do", "study,1,2,06/18/20,a lot of info", ""]
+
+        lines = String.split(body, ~r{(\r\n|\r|\n)})        !!! where body is "...." returned from reading .csv file 
+    2. separate header (1st line) from the rest             (see pattern matching, [h | t] = lines)
+    3. separate in header words by comma                    String.split(header, ",")
+------------------------------------------------------------------------------------------------------------
+PRINT ELS OF [] IN NEW LINES 
+
+    Enum.each els, fn el -> IO.puts el and 
+            
+
+********************************************************************************************************
+                                PATTERN MATCHING 
+
+[1]      is   [1 | []]  
+[1, 2]   is   [1 | [2 | []]]         !!! points to location in memory, if el -> el
+------------------------------------
+ar = [1, 2, 3, 4] 
+[h | t] = ar                         !!! h = 1     t = [2, 3, 4]
+                                     !!! alt:  hd(ar)      -> 1
+                                               tl(ar)      -> [2, 3, 4]
+                                               hd(tl(ar))  -> 3                 ---- 2nd el 
+-----------------------------------
+
+*********************************************************************************************************
+                                    CONVERTING DATATYPES
+
+["a", "b"] and  [1, 2]          ->      [{"a", "1"}, {"b", "2"}]  
+
+            Enum.zip(["a", "b"], [1, 2])  
+            !!! must be same length ---- Enum.count(ar)
+
+[{"a", "1"}, {"b", 2}]          ->       %{"a" => "1", "b" => "2"}  or  %{a: 1, b: 2}      
+
+            m = Enum.into(ar, %{})
+            m["a"]     -> 1
+
+
+
+%{la: 40}  -> %{la: 40, a: 32} 
+
+        Map.merge(map1, %{:a => 32}) 
+
+%{la: 40}  -> %{la: 50} 
+
+        %{map | la: 50}               !!! only if key exists
+
+[1, 2, 3]     ->  6  (sum)
+
+        res = Enum.reduce(ar, fn x, y -> x + y end)             !!! y is accum, starts after 1st operation
+          !!! Enum.reduce(ar, 0, fn x, y -> x + y end)
+
+---------------------------------------------------------------------
+header = ["activity", "when", "where"]
+lines - ["clean, now, in the room", "work, tomorrow, at the office"]     
+      -> 
+      %{ "clean" => %{"when" => "now", "where" => "in the room" }, 
+         "work" => %{"when" => "tomorrow", "where" => "at the office" }}
+
+         Enum.reduce(lines, %{}, fn line, acc -> [name, rest] = String.split(",")
+            if Enum.count(rest) == Enum.count(headers) do
+                row = Enum.zip(headers, rest)                                 -> ar + ar = [obj, obj]
+                      |> Enum.into(%{})                                       -> [obj, obj] -> {obj's k-v, obj's k-v}
+                Map.merge(acc, %{name => row})                                -> {"a": {obj's k-v, obj's k-v}, "b": {obj's k-v, obj's k-v}, }
+            else 
+                acc
+            end 
+         end
+         ) 
+         
+!!! returned   obj --- {"a": {obj's k-v, obj's k-v}, "b": {obj's k-v, obj's k-v}, }
+      obj["a"]  -> {obj's k-v, obj's k-v}
+      obj["clean"]["where"]  -> "in the room"
+
+********************************************************************************************************
+
                                 NEW PROJ (ex) ------ with module
 
 new file ----- a.ex   
@@ -113,12 +205,41 @@ new file ----- a.ex
 > c "a.ex"                  -> compiles 
 > A.fun(5, 8)               -> 13
 
+!!! > import A 
+    > fun(5, 8)
+
 ---------------------------------------------------------------------------------------------------------
                                 NEW PROJ (exs) ---- no module 
 
 new file ----- a.exs 
 > elixir a.exs 
 
+**********************************************************************************************************
+                        PROJECTS 
+
+COUNT WORDS IN FILE, OMIT \n, ""; if it's -> it's (escape opostraphy); show in cmd
+
+    IO.gets("File name: ")
+        |> String.trim()
+        |> File.read!()
+        |> String.split(~r{[^\w']+})
+        |> Enum.filter(fn x -> x != "" end)
+        |> Enum.count()
+        |> IO.puts()
+--------------------------------------------------------------------------
+TODO LIST  
+
+    ask user for file name
+    open file and read it
+    parse the data
+    ask user for command
+
+    read todo
+    add todo
+    delete todo
+    load file
+    save file
+    quit
 
 
 
