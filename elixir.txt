@@ -56,6 +56,21 @@ VSC extensions:
 !!! answ = IO.gets("Type a word: ") |> String.trim()
 > IO.puts(answ)
 -------------------------------------------------------------------------
+!!! prompt user to press "r" or "a" to read or add new element
+
+def get_command(data) do
+        prompt = """ lalala\n
+                    R)ead A)dd """
+        command = IO.gets(prompt)
+                    |> String.trim
+                    |> String.downcase          ---> get "r" or "a"
+        case command do 
+            "r" -> show_todos(data)  
+            "a" -> add_todo(data)   
+            _ -> get_command(data)   
+        end
+end
+-------------------------------------------------------------------------
 > Enum.count(["a", "b", "c"])        -> 3
         !!! ["a", "b", "c"] |> Enum.count() |> IO.puts()
 
@@ -80,17 +95,45 @@ end
 --------------------------------------------------------
 m = %{la: 5, ta: 8}     -> true if has 'la' key 
      
-     if Map.has_key? m, "la"
+     if Map.has_key? m, "la" 
         ...
      else 
         ...
      end 
 
 ----------------------------------------------------------------
+DELETE EL FROM MAP
+
 m = %{la: 5, ta: 8}     ->  %{ta: 8}
 
     Map.drop(m, ["la"])
 
+original data:  %{ cleaning: %{when: "now", where: "home"}, %{when: "tomorrow", where: "at work"} }
+
+1. ask user which item to drop (ex: "cleaning")
+2. does data contain "cleaning" key?   (Map.has_key)
+    -> yes -> "ok";
+               remove this el by key    (Map.drop(data, ["cleaning"]))
+               "cleaning" was deleted
+               get_command(new_data)          !!! prompts user to choose what to do next
+    -> no -> No els named "cleaning"
+       show_todos(data, false)                !!! shows list of all elements in data 
+       recursively call this function with data as arg
+--------------------------------------------------------------------
+SHOW ALL ELS 
+
+data passed as arg: %{ cleaning: %{when: "now", where: "home"}, working: %{when: "tomorrow", where: "at work"} }
+
+
+    def show_todos(data, next_command? \\true) do            !!! true is default value, set to false when just to show, not ask for choices
+        1. -> ["cleaning", "working"]
+        2. "you have todos: 
+            "cleaning"
+            "working"                                         !!! Enum.each els, fn el -> IO.puts el end 
+        3. if next_command? do                                
+                get_command(data)                             !!! prompts user to make a choice what to do next
+           end 
+    end 
 ----------------------------------------------------------------
 body = File.read!("b.ex")             
 IO.inspect(body)                    -> returns content of file, if string, ends with \n
@@ -154,7 +197,27 @@ ar = [1, 2, 3, 4]
             m = Enum.into(ar, %{})
             m["a"]     -> 1
 
+create  m2 =  %{el1: %{a: 1, b: 2}, el2:  %{a: 8, b: 6}}
 
+    1. create m1 = %{el1:  %{a: 1, b: 2}}
+
+        ar =  [{"a", "1"}, {"b", "2"}]
+        m1 = %{"el1" => Enum.into(ar, %{})}
+
+    2. add el2 to this m: 
+
+        ar2 =  [{"a", "10"}, {"b", "20"}]
+        el2 = %{"el2" => Enum.into(ar2, %{})}
+        m2 = Map.merge(m1, el2)
+        
+m =  %{ el1: %{a: 80, b: 60, c: 70}, el2: %{a: 8, b: 6, c: 7}}   -> ["a", "b", "c"]
+ 
+           
+                    mk =  Map.keys(m)    -> ["el1", "el2"]
+                    first_el_key = hd(mk)               -> "el1"
+                    first_el_val = m[first_el_key]      -> %{a: 80, b: 60, c: 70}
+                    first_el_val |> Map.keys            -> ["a", "b", "c"]
+    
 
 %{la: 40}  -> %{la: 40, a: 32} 
 
@@ -170,7 +233,23 @@ ar = [1, 2, 3, 4]
           !!! Enum.reduce(ar, 0, fn x, y -> x + y end)
 
 ---------------------------------------------------------------------
-header = ["activity", "when", "where"]
+original data: %{ cleaning: %{when: "now", where: "home"}, %{when: "tomorrow", where: "at work"} }
+   
+    1)  ask user to give val for "item" (ex. "cleaning")
+    2)  get ["when", "where"]
+    3)  ["when", "where"] -> ask vals for each el 
+                -> for each iteration return, ex:  {"when", "now"} 
+            -> [{"when","now"}, {"where", "home"}]
+
+    4) [{"when","now"}, {"where", "home"}]  
+            -> %{"cleaning":  %{ when: "now", where: "home"}}
+    5) add (4) to original data (Map.merge)
+    6) ask user which next command (Add, Delete, Load, Save) 
+
+
+
+---------------------------------------------------------------------
+headers = ["activity", "when", "where"]
 lines - ["clean, now, in the room", "work, tomorrow, at the office"]     
       -> 
       %{ "clean" => %{"when" => "now", "where" => "in the room" }, 
