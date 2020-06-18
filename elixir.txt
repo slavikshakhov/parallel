@@ -255,11 +255,12 @@ lines - ["clean, now, in the room", "work, tomorrow, at the office"]
       %{ "clean" => %{"when" => "now", "where" => "in the room" }, 
          "work" => %{"when" => "tomorrow", "where" => "at the office" }}
 
-         Enum.reduce(lines, %{}, fn line, acc -> [name, rest] = String.split(",")
+         Enum.reduce(lines, %{}, fn line, acc -> 
+            [name | rest] = String.split(line, ",")
             if Enum.count(rest) == Enum.count(headers) do
                 row = Enum.zip(headers, rest)                                 -> ar + ar = [obj, obj]
                       |> Enum.into(%{})                                       -> [obj, obj] -> {obj's k-v, obj's k-v}
-                Map.merge(acc, %{name => row})                                -> {"a": {obj's k-v, obj's k-v}, "b": {obj's k-v, obj's k-v}, }
+                Map.merge(acc, %{name => row})                                -> {"a": {obj's k-v, obj's k-v}
             else 
                 acc
             end 
@@ -307,6 +308,43 @@ COUNT WORDS IN FILE, OMIT \n, ""; if it's -> it's (escape opostraphy); show in c
         |> IO.puts()
 --------------------------------------------------------------------------
 TODO LIST  
+
+1. user -> filename (.csv)  ex: excell 
+2. FORMAT FILENAME INTO %{x: %{y: "la", z: "ta"},f:  %{y: "la", z: "ta"}} 
+            where yeach el is row, x is first col's value (for name header of this col)
+                                   y is header of 2nd col, "la" is value of y in this row 
+
+    read filename -> if error -> send error message (built in)
+                 -> if ok -> ["lalo\ntato\r\ndado\n"]
+                            -> ["name,col1,col2", "ta,to,tu", "da,do,du"]
+                                -> ["name", "col1", "col2"] -> ["col1", "col2"]  +  ["ta,to,tu", "da,do,du"] 
+                                        !!!                      headers                     rows
+                                      %{"ta": %{"col1":"to", "col2": "tu"}, "da": %{ "col1":"do", "col2": "du"}}
+
+                                        1. for each of ["ta,to,tu", "da,do,du"], ex: "ta,to,tu" (reduce)
+                                            a. "ta,to,tu" -> ["ta", "to", "tu"]
+                                              !!!               row_els
+                                            b. "ta" as first el is name, ["to", "tu"] is row_rest 
+                                            c. if headers and row_rest same size: 
+                                                c1. (yes) ->  ["col1", "col2"] + ["to", "tu"] =
+                                                                =  %{ "ta": %{"col1" : "to", "col2", "tu"}}
+                                                               merge it with acc (initial %{})
+                                                c2. (no)  -> return acc (initial %{})
+
+
+
+
+Enum.reduce(lines, %{}, fn line, acc -> 
+            [name | rest] = String.split(line, ",")
+            if Enum.count(rest) == Enum.count(headers) do
+                row = Enum.zip(headers, rest)                                 -> ar + ar = [obj, obj]
+                      |> Enum.into(%{})                                       -> [obj, obj] -> {obj's k-v, obj's k-v}
+                Map.merge(acc, %{name => row})                                -> {"a": {obj's k-v, obj's k-v}
+            else 
+                acc
+            end 
+         end
+         ) 
 
     ask user for file name
     open file and read it
