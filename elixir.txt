@@ -33,243 +33,69 @@ VSC extensions:
 > IO.puts(5)                    -> like console.log(5)
 > IO.puts "lala #{fun(5)}\n" 
   IO.puts ~s({lala "something"})   -> puts as message, sting in sting
+  IO.puts ~s(#x {lala "something"})    !!! where x is var
 > IO.gets "lala #{fun(5)}\n"    -> gets input from user -> feedback
-> answ = IO.gets "type a word\n"
-         lala 
-         > answ                 -> "lala\n" 
-         > String.trim answ     -> "lala"
-
-         inside fun: 
-
-            answer = IO.gets("is it #{fun(2)}?\n")
-
-            case String.trim(answer) do
-                "bigger" -> fun1(7)                
-                "smaller" -> fun2(8)
-                "yes" -> "Correct!"
-                _ -> "none of above was typed"
-                      fun3(6)
-            end
---------------------------------------------------------------------------
-> answ = IO.gets "Type a word\n"        
-!!! answ = String.trim(IO.gets("Type a word: "))  --- same line with sace
-!!! answ = IO.gets("Type a word: ") |> String.trim()
-> IO.puts(answ)
--------------------------------------------------------------------------
-!!! prompt user to press "r" or "a" to read or add new element
-
-def get_command(data) do
-        prompt = """ lalala\n
-                    R)ead A)dd """
-        command = IO.gets(prompt)
-                    |> String.trim
-                    |> String.downcase          ---> get "r" or "a"
-        case command do 
-            "r" -> show_todos(data)  
-            "a" -> add_todo(data)   
-            _ -> get_command(data)   
-        end
-end
--------------------------------------------------------------------------
-> Enum.count(["a", "b", "c"])        -> 3
-        !!! ["a", "b", "c"] |> Enum.count() |> IO.puts()
-
--------------------------------------------------------------------------
-> double = fn x -> x*2 end 
-> double.(7)                      -> 14
-------------------------------------------------------------------------
-> not_empty = fn x -> x != ""
-> not_empty.("lala")                     -> true 
-----------------------------------------------------------------------
-["", "la", "ta"] |> Enum.filter(fn x -> x != "" end)    -> ["la", "ta"]
-
-----------------------------------------------------------------------
-
-***********************************************************************************************************
-def fun(x, y) when a > b do
-    fun2(y, x)
-end
-
-!!! def fun(x, y) when a > b, do: fun2(y, x)
-
---------------------------------------------------------
-m = %{la: 5, ta: 8}     -> true if has 'la' key 
-     
-     if Map.has_key? m, "la" 
-        ...
-     else 
-        ...
-     end 
-
-----------------------------------------------------------------
-DELETE EL FROM MAP
-
-m = %{la: 5, ta: 8}     ->  %{ta: 8}
-
-    Map.drop(m, ["la"])
-
-original data:  %{ cleaning: %{when: "now", where: "home"}, %{when: "tomorrow", where: "at work"} }
-
-1. ask user which item to drop (ex: "cleaning")
-2. does data contain "cleaning" key?   (Map.has_key)
-    -> yes -> "ok";
-               remove this el by key    (Map.drop(data, ["cleaning"]))
-               "cleaning" was deleted
-               get_command(new_data)          !!! prompts user to choose what to do next
-    -> no -> No els named "cleaning"
-       show_todos(data, false)                !!! shows list of all elements in data 
-       recursively call this function with data as arg
---------------------------------------------------------------------
-SHOW ALL ELS 
-
-data passed as arg: %{ cleaning: %{when: "now", where: "home"}, working: %{when: "tomorrow", where: "at work"} }
 
 
-    def show_todos(data, next_command? \\true) do            !!! true is default value, set to false when just to show, not ask for choices
-        1. -> ["cleaning", "working"]
-        2. "you have todos: 
-            "cleaning"
-            "working"                                         !!! Enum.each els, fn el -> IO.puts el end 
-        3. if next_command? do                                
-                get_command(data)                             !!! prompts user to make a choice what to do next
-           end 
-    end 
-----------------------------------------------------------------
-body = File.read!("b.ex")             
-IO.inspect(body)                    -> returns content of file, if string, ends with \n
-                                        !!! File.read!  ! in case file does not exist 
+> Enum.member?([1, 2, 3], 2)    -> true    !!! if arr contains el 
+[1, 2, 3] |> Enum.each(fn el -> IO.puts(el) and) 
+[1, 2, 3] |> Enum.reduce(0, fn x, y -> x + y end) 
+[1, 2, 3] |> Enum.reduce(fn x, y -> x + y end)
+["a", "b", "c"] |> Enum.zip([1, 2, 3])      --> [{"a", "1"}, {"b", 2}, {"c", 3}]   !!! check if same lentghs
+%{"el1" => Enum.into(ar, %{})}
+["a", "b", "c"] |> Enum.reduce(%{}, fn el, acc ->  Map.merge(acc, %{el => 5}) end)  -->  %{"a" => 5, "b" => 5, "c" => 5}
+["a", "b", "c"] |> Enum.reduce(%{}, fn el, acc -> Map.put(acc, el, el) end)   -->  %{"a" => "a", "b" => "b", "c" => "c"}
+["a", "b", "c"] |> Enum.zip([1, 2, 3]) |> Enum.into(%{})   ->  %{"a" => 1, "b" => 2, "c" => 3}
+String.split(str, ~r{(\r\n|\r|\n)})   -> arr
+[1, 2, 3] |> Enum.join(", ")     --> "1, 2, 3"
+[1, 2, 3] |> Enum.each(fn el -> IO.gets("#{el}\n") |> String.trim  end)    -> ask for info for each el
+ [1, 2, 3] |> Enum.map(fn x -> x*2 end)
+ ["", "la", "ta"] |> Enum.filter(fn x -> x != "" end)    -> ["la", "ta"]
+["a", "b", "c"] |> Enum.count  
+[1, 2, 3, 4, 5] |> split(2)             -> {[1, 2], [3, 4, 5]}    ---- tuple
+[1, 2, 3, 4, 5, 6] |> chunk(2)          -> [[1, 2], [3, 4], [5, 6]]  ----- array
+ar = [1, 2, 3]     ------ [x, y | _tail] = ar
+[1, 2] ++ [3, 4]                  -> [1, 2, 3, 4]
+ar = [1, 2, 3, 4]  ----------- [h | t] = ar  -------- hd(ar)  ---- tl(ar)  ---- hd(tl(ar))
 
-body = File.read!("b.ex") |> String.split               -> ["\"a", "few", "words", "here\""]
-    !!! body = File.read!(file) |> String.split(~r{[^\w]+})   -> ["", "a", "few", "words", "here", ""]   
-IO.inspect(body)                            
 
-!!! regex: ~r{....} 
-        except words: [^\w]+   (1 or more, all)
-        (la | ta)    match la or ta or both
-        \\n          match \n 
-        [^\w']+      (1 or more non word chars or apostrophy)  it's 
+%{"a" => 5}
+> Map.has_key?(%{a: 5, b: 8}, "a")   -> true   !!! if map contains key 
+%{a: 5, b: 8} |> Map.keys
+%{a: 5, b: 8} |> Map.values
+> %{map | la: 50}                    -> updates existing key's value
+> Map.merge(map1, %{:a => 32})       -> adds new key to map, if exists, updates ?  
+Map.drop(m, ["la"])                     !!! first if has "la" key
+m = %{a: 5, b: 6}   ---- m["a"]
+%{x: val} =  %{x: 5, y: 8}    ----------  val ---  -> 5
 
-----------------------------------------------------------------------------
+ 
+double = fn x -> x*2 end    ------ double.(7)                      -> 14
+def fun(x, y) when a > b do   .... end 
+def fun(x, y) when a > b, do: fun2(y, x)
+
+
 File.read(filename)         -> {:ok, body}   ------ body
                             -> {:error, reason} --- IO.puts(~s("#{:file.format_error(reason)}"\n))
+File.write("filename.txt", "lala\ntata")        -> :ok  ------ "saved"
+                                                -> {:error, reason} --- IO.puts(~s("#{:file.format_error(reason)}"\n))
 
------------------------------------------------------------------------------------------------------------
-FORMAT (PARSE) RESULT OF .CSV FILE  
-        "team,priority,urgency,Data Added,Notes\r\nclean,3,1,06/17/20,important to do\r\nstudy,1,2,06/18/20,a lot of info\r\n"
-        !!! first line is header, other lines put in order 
-
-    ---------------------------
-    1. separate into lines -> 
-        ["team,priority,urgency,Data Added,Notes", "clean,3,1,06/17/20,important to do", "study,1,2,06/18/20,a lot of info", ""]
-
-        lines = String.split(body, ~r{(\r\n|\r|\n)})        !!! where body is "...." returned from reading .csv file 
-    2. separate header (1st line) from the rest             (see pattern matching, [h | t] = lines)
-    3. separate in header words by comma                    String.split(header, ",")
-------------------------------------------------------------------------------------------------------------
-PRINT ELS OF [] IN NEW LINES 
-
-    Enum.each els, fn el -> IO.puts el and 
-            
-
-********************************************************************************************************
-                                PATTERN MATCHING 
-
-[1]      is   [1 | []]  
-[1, 2]   is   [1 | [2 | []]]         !!! points to location in memory, if el -> el
-------------------------------------
-ar = [1, 2, 3, 4] 
-[h | t] = ar                         !!! h = 1     t = [2, 3, 4]
-                                     !!! alt:  hd(ar)      -> 1
-                                               tl(ar)      -> [2, 3, 4]
-                                               hd(tl(ar))  -> 3                 ---- 2nd el 
------------------------------------
-
-*********************************************************************************************************
-                                    CONVERTING DATATYPES
-
-["a", "b"] and  [1, 2]          ->      [{"a", "1"}, {"b", "2"}]  
-
-            Enum.zip(["a", "b"], [1, 2])  
-            !!! must be same length ---- Enum.count(ar)
-
-[{"a", "1"}, {"b", 2}]          ->       %{"a" => "1", "b" => "2"}  or  %{a: 1, b: 2}      
-
-            m = Enum.into(ar, %{})
-            m["a"]     -> 1
-
-create  m2 =  %{el1: %{a: 1, b: 2}, el2:  %{a: 8, b: 6}}
-
-    1. create m1 = %{el1:  %{a: 1, b: 2}}
-
-        ar =  [{"a", "1"}, {"b", "2"}]
-        m1 = %{"el1" => Enum.into(ar, %{})}
-
-    2. add el2 to this m: 
-
-        ar2 =  [{"a", "10"}, {"b", "20"}]
-        el2 = %{"el2" => Enum.into(ar2, %{})}
-        m2 = Map.merge(m1, el2)
-        
-m =  %{ el1: %{a: 80, b: 60, c: 70}, el2: %{a: 8, b: 6, c: 7}}   -> ["a", "b", "c"]
  
-           
-                    mk =  Map.keys(m)    -> ["el1", "el2"]
-                    first_el_key = hd(mk)               -> "el1"
-                    first_el_val = m[first_el_key]      -> %{a: 80, b: 60, c: 70}
-                    first_el_val |> Map.keys            -> ["a", "b", "c"]
-    
-
-%{la: 40}  -> %{la: 40, a: 32} 
-
-        Map.merge(map1, %{:a => 32}) 
-
-%{la: 40}  -> %{la: 50} 
-
-        %{map | la: 50}               !!! only if key exists
-
-[1, 2, 3]     ->  6  (sum)
-
-        res = Enum.reduce(ar, fn x, y -> x + y end)             !!! y is accum, starts after 1st operation
-          !!! Enum.reduce(ar, 0, fn x, y -> x + y end)
-
----------------------------------------------------------------------
-original data: %{ cleaning: %{when: "now", where: "home"}, %{when: "tomorrow", where: "at work"} }
-   
-    1)  ask user to give val for "item" (ex. "cleaning")
-    2)  get ["when", "where"]
-    3)  ["when", "where"] -> ask vals for each el 
-                -> for each iteration return, ex:  {"when", "now"} 
-            -> [{"when","now"}, {"where", "home"}]
-
-    4) [{"when","now"}, {"where", "home"}]  
-            -> %{"cleaning":  %{ when: "now", where: "home"}}
-    5) add (4) to original data (Map.merge)
-    6) ask user which next command (Add, Delete, Load, Save) 
+str = """ lalala\n
+             tata """
+"LALA" |> String.downcase 
+"lala\n" |> String.trim 
+hash = :crypto.hash(:md5, "lala")     -> <<46, 56, 23, 41, 63, 194, 117, 219, 238, 116, 189, 113, 206, 110>>
+Base.encode16(hash)                   -> "2E3817293FC275DBEE74BD71CE6EB056"
+:binary.bin_to_list(hash)             -> [46, 56, 23, 41, 63, 194, 117, 219, 238, 116, 189, 113, 206, 110]
 
 
+~r{....} 
+    except words: [^\w]+   (1 or more, all)
+    (la | ta)    match la or ta or both
+    \\n          match \n 
+    [^\w']+      (1 or more non word chars or apostrophy)  it's 
 
----------------------------------------------------------------------
-headers = ["activity", "when", "where"]
-lines - ["clean, now, in the room", "work, tomorrow, at the office"]     
-      -> 
-      %{ "clean" => %{"when" => "now", "where" => "in the room" }, 
-         "work" => %{"when" => "tomorrow", "where" => "at the office" }}
-
-         Enum.reduce(lines, %{}, fn line, acc -> 
-            [name | rest] = String.split(line, ",")
-            if Enum.count(rest) == Enum.count(headers) do
-                row = Enum.zip(headers, rest)                                 -> ar + ar = [obj, obj]
-                      |> Enum.into(%{})                                       -> [obj, obj] -> {obj's k-v, obj's k-v}
-                Map.merge(acc, %{name => row})                                -> {"a": {obj's k-v, obj's k-v}
-            else 
-                acc
-            end 
-         end
-         ) 
-         
-!!! returned   obj --- {"a": {obj's k-v, obj's k-v}, "b": {obj's k-v, obj's k-v}, }
-      obj["a"]  -> {obj's k-v, obj's k-v}
-      obj["clean"]["where"]  -> "in the room"
 
 ********************************************************************************************************
 
@@ -294,47 +120,18 @@ new file ----- a.ex
 new file ----- a.exs 
 > elixir a.exs 
 
-**********************************************************************************************************
-                        PROJECTS 
-
-COUNT WORDS IN FILE, OMIT \n, ""; if it's -> it's (escape opostraphy); show in cmd
-
-    IO.gets("File name: ")
-        |> String.trim()
-        |> File.read!()
-        |> String.split(~r{[^\w']+})
-        |> Enum.filter(fn x -> x != "" end)
-        |> Enum.count()
-        |> IO.puts()
---------------------------------------------------------------------------
-TODO LIST  
-
-1. user -> filename (.csv)  ex: excell 
-2. FORMAT FILENAME INTO %{x: %{y: "la", z: "ta"},f:  %{y: "la", z: "ta"}} 
-            where yeach el is row, x is first col's value (for name header of this col)
-                                   y is header of 2nd col, "la" is value of y in this row 
-
-    read filename -> if error -> send error message (built in)
-                 -> if ok -> ["lalo\ntato\r\ndado\n"]
-                            -> ["name,col1,col2", "ta,to,tu", "da,do,du"]
-                                -> ["name", "col1", "col2"] -> ["col1", "col2"]  +  ["ta,to,tu", "da,do,du"] 
-                                        !!!                      headers                     rows
-                                      %{"ta": %{"col1":"to", "col2": "tu"}, "da": %{ "col1":"do", "col2": "du"}}
-
-                                        1. for each of ["ta,to,tu", "da,do,du"], ex: "ta,to,tu" (reduce)
-                                            a. "ta,to,tu" -> ["ta", "to", "tu"]
-                                              !!!               row_els
-                                            b. "ta" as first el is name, ["to", "tu"] is row_rest 
-                                            c. if headers and row_rest same size: 
-                                                c1. (yes) ->  ["col1", "col2"] + ["to", "tu"] =
-                                                                =  %{ "ta": %{"col1" : "to", "col2", "tu"}}
-                                                               merge it with acc (initial %{})
-                                                c2. (no)  -> return acc (initial %{})
 
 
 
 
-Enum.reduce(lines, %{}, fn line, acc -> 
+---------------------------------------------------------------------
+headers = ["activity", "when", "where"]
+lines - ["clean, now, in the room", "work, tomorrow, at the office"]     
+      -> 
+      %{ "clean" => %{"when" => "now", "where" => "in the room" }, 
+         "work" => %{"when" => "tomorrow", "where" => "at the office" }}
+
+         Enum.reduce(lines, %{}, fn line, acc -> 
             [name | rest] = String.split(line, ",")
             if Enum.count(rest) == Enum.count(headers) do
                 row = Enum.zip(headers, rest)                                 -> ar + ar = [obj, obj]
@@ -345,273 +142,8 @@ Enum.reduce(lines, %{}, fn line, acc ->
             end 
          end
          ) 
-
-    ask user for file name
-    open file and read it
-    parse the data
-    ask user for command
-
-    read todo
-    add todo
-    delete todo
-    load file
-    save file
-    quit
-
-
-
-
-
-
-
-
-
-
-
-**************************************************************************************************************
-                            DATATYPES
-
-
-> y = A.create_y        -> A is module, create_y is fun returning some value
-!!! if y passed to fun and output diff from original y, y still original  (immutable)
-
-
-"lala"
-["la", "ta"]
-
-ARRAY  
-        ar = [1, 2, 3]
-        [a, b, c] = ar
-        a                                               -> 1
-        [a, b | _tail] = hex_list                       -> 1       !!! if maybe hex_list has > 2 vals
-
-
-TUPLE 
-
-
-    t = {["a", "b"], [1, 2, 3]} 
-    {x, y} = t    
-    x                  -> ["a", "b"]
-    y                  -> [1, 2, 3]
-
-MAP 
-    m = %{x: 5, y: 8}
-    m.x                  -> 5
-
-    %{x: val} = m
-    val                  -> 5
-
-    -----------------------------------
-    UPDATE FIELD 
-
-        newM = Map.put(m, :x, 20)    -> x updated from 5 to 20
-        newM2 = Map.put(m, :z, 10)   -> z is new field 
-
-        -------------------------------
-        newM3 = %{m | x: 50}          !!! only if existed field
-
-KEYWORD LIST 
  
-    kws = [{:x, 5}, {:y, 8}]         !!! same as [x: 5, y: 8]
-    kws[:x]                          -> 5
-
-    !!! if keyword list passed to fun as last arg, can ommit fun's () and list's [], used in db queries
-
-!!! if map has 2 fields with same key -> returns last (overrides)
-    if keyword list has 2 fields with same key -> both retained
-
-
-
-
-**************************************************************************************************************
-                            PATTERN MATCHING (js destructuring)
-
-t = {["a", "b"], [1, 2, 3]} 
-{x, y} = t    
-x                  -> ["a", "b"]
-y                  -> [1, 2, 3]
------------------------------------------
-
-[ar] = [1]
-ar              -> 1
----------------------------------------
-[a, b] = [1, 2]
-a               -> 1
-
-
-*************************************************************************************************************
-                             ITERATION (list comprehension) 
-
-SIMPLE LOOP
-
-    (inside fun):  xs = ["A", "B"]
-                   for x <- xs do 
-                        x
-                    end                         !!! fun returns new arr (map)
-
-NESTED LOOP  (returns arr of arrs, need to flatten to get arr)
-
-    (inside fun): 
-        xs = ["A", "B"]
-        ys = [1, 2, 3]
-        vals = for x <- xs do 
-            for y <- ys do
-                "#{x} of #{y}"
-            end 
-        end 
-        List.flatten(vals)
-
-    -------------------------------------------
-        xs = ["A", "B"] 
-        ys = [1, 2, 3]
-        for  x <- xs, y <- ys do
-            "#{x} of #{y}"
-        end
-***********************************************************************************************************
-                                    PIPE (change methods)
-A.f1
-|> A.f2
-|> A.f3(x)
-
-!!! return value of preceeding function inserted as 1st arg of following function
-
-inside fun: 
-
-    5
-    |> A.f2
-
-
-|> Enum.map(&fun/1)          -> takes 1 return value from previous fun, passes it as arg to fun 
-
-!!! x = ........chained funs ..... 
-
-**************************************************************************************************************
-                            standard library  (docs)
-
-ARRAYS    ---- Enum. 
-                    shuffle([1, 2, 3])
-                    member?(ar, el)          -> true/false if ar has el
-                    split([1, 2, 3, 4, 5], 2)   -> {[1, 2], [3, 4, 5]}    ---- tuple
-                    chunk([1, 2, 3, 4, 5, 6], 2) -> [[1, 2], [3, 4], [5, 6]]  ----- array
-                    map(1..3, fn x -> x * 2 end)
-                    
-WRITE TO FILE
-
-    binary = :erlang.term_to_binary("lala")         # -> object
-    File.write(filename, binary)
-
-        !!! if filename is "my_file" -> creates this file in code's directory
-        !!! > File.read("my_file")   ->  {:ok, <<131, 107, 0, 3, 1, 2, 3>>}
-                > {status, binary} = File.read("my_file")
-                > :erlang.binary_to_term(binary)           -> "lala"
-        
-
-**************************************************************************************************************
-
-"#{x} of #{y}"
-[1, 2] ++ [3, 4]   -> [1, 2, 3, 4]
-------------------------
-ar = [1, 2, 3]     
-[x, y | _tail] = ar
-ar ++ [y, x]                       -> [1, 2, 2, 1]
-----------------------
-*************************************************************************************************************
-                            ERROR HANDLING (use pattern matching and cases, not if statements)
-
-File.read("nonexistin")                        -> {:error, :enoent}  or ->  {:ok, <<131, 107, 0, 3, 1, 2, 3>>}
----------
-{status, binary} = File.read("nonexistin")  
-case status do
-    :ok -> :erlang.binary_to_term binary
-    :error -> "File doesn't exist"
-end
-    !!! :la  is atom, like string
------------------------------------------
-case File.read("nonexisting") do                       ->  {:ok, <<131, 107, 0, 3, 1, 2, 3>>}
-    {:ok, binary} -> :erlang.binary_to_term binary
-    {:error, _message} -> "File doesn't exist"
-end
-  !!! case here destructured into {:ok, binary} or {:error, _message}
-  !!! _message ---- not used, but filler of arg
-
-**************************************************************************************************************
-                            HASH STRING 
-
-hash = :crypto.hash(:md5, "lala")     -> <<46, 56, 23, 41, 63, 194, 117, 219, 238, 116, 189, 113, 206, 110>>
-Base.encode16(hash)                   -> "2E3817293FC275DBEE74BD71CE6EB056"
-:binary.bin_to_list(hash)             -> [46, 56, 23, 41, 63, 194, 117, 219, 238, 116, 189, 113, 206, 110]
-
-
-***********************************************************************************************************
-                            STATE (struct), like Map
-
-(lib/state.ex)  !!! main module is Identicon in lib.identicon.ex
-
-defmodule A.State do
-  defstruct ar: nil, ar2: nil
-end
---------------------------------------------------------------
-from cmd or anywhere in proj: 
-
-    %A.State{}      -> {ar: nil, ar2: nil}    creates struct
-    ----------------------------------------------------------
-    data = %A.State{ar: [1, 2, 3]}                  
-    data.ar                                         -> [1, 2, 3]
-    ---------------------------------------------------------
-    defmodule A do
-        def main do
-            hash
-            |> test
-        end
-        def hash do
-            %A.State{ar: [1, 2, 3, 4]}
-        end 
-        def test(state) do 
-            %A.State{ar: val} = state                  !!! whole state
-            val                                       -> [1, 2, 3, 4]
-        end         
-    end
-
-    !!! %A.State{ar: val} = state      =====    %A.State{ar: val} = %A.State{ar: [1, 2, 3, 4], y: nil}
-    
-    ------------------------------------------------------------
-
-    defmodule Cards do
-        def main do
-            hash
-            |> test
-        end
-        def hash do
-            %Cards.State{ar: [1, 2, 3, 4]}
-        end 
-        def test(state) do 
-            %Cards.State{ar: [a, b | _tail]} = state    
-            %Cards.State{state | ar2: {a, b}}    
-        end   
-    end
-     
-     -> %Cards.State{ar: [1, 2, 3, 4], ar2: {1, 2}}
-
-    -----------------------------------------------------------------
-    defmodule Cards do
-        def main do
-            hash
-            |> test
-        end
-        def hash do
-            %Cards.State{ar: [1, 2, 3, 4]}
-        end 
-        def test(%Cards.State{ar: [a, b | _tail]} = state) do         
-            %Cards.State{state | ar2: {a, b}}    
-        end   
-    end
-
-    !!! can destructure inside fun arg
-
-
 
 
 
     
-!!! %{x: val} =  %{x: 5, y: 8}
-    val                                          -> 5
