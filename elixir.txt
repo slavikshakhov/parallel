@@ -68,6 +68,7 @@ ar = [1, 2, 3, 4]  ----------- [h | t] = ar  -------- hd(ar)  ---- tl(ar)  ---- 
 Map.drop(m, ["la"])                     !!! first if has "la" key
 m = %{a: 5, b: 6}   ---- m["a"]
 %{x: val} =  %{x: 5, y: 8}    ----------  val ---  -> 5
+Map.get(m, "a", "all")       --> val of "a"
 
  
 double = fn x -> x*2 end    ------ double.(7)                      -> 14

@@ -37,7 +37,52 @@
 
 
 *************************************************************************************************************
+                                PHOENIX + TAILWIND 
 
+assets> npx tailwindcss init  (creates tailwind.config.js)
+        npm install --save-dev tailwindcss postcss-loader postcss-import @fullhuman/postcss-purgecss 
+
+!!! purgecss shortens tailwind.css (optional)
+
+--------------------------------------------------------------
+(webpack.config.js) 
+        {
+          test: /\.[s]?css$/,
+          use: [
+            MiniCssExtractPlugin.loader,
+            'css-loader',
+            'sass-loader',
+            'postcss-loader',
+          ],
+        },
+-----------------------------------------------------------------
+create (postcss.config.js) 
+    const purgecss = require("@fullhuman/postcss-purgecss")({
+        content: [
+            "../**/*.html.eex",
+            "../**/*.html.leex",
+            "../**/views/**/*.ex",
+            "./js/**/*.js",
+            ],
+            defaultExtractor: (content) => content.match(/[\w-/:]+(?<!:)/g) || [],
+        });
+
+        module.exports = {
+            plugins: [
+                require("postcss-import"),
+                require("tailwindcss"),
+                require("autoprefixer"),
+                ...(process.env.NODE_ENV === 'production' ? [purgecss] : [])
+            ],
+        };
+
+----------------------------------------------------
+app.scss 
+
+        @tailwind base;
+        @tailwind components;
+        @tailwind utilities;
+************************************************************************************************************
 nums            1 - 6,
                 8, 10, 12, 16, 20, 24, 32, 40, 48, 56, 64
 

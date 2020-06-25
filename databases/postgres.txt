@@ -1,0 +1,11 @@
+                            SETUP 
+
+install (gerK....55), when finish --- other drivers cancel installation 
+edit system environment variables ---- bin and lib of PostgreSQL
+connect: pgAdmin4 
+------------------------------------------------------------------------------------------------------
+to use with bash (linux)
+!!! ubunto:  > sudo apt-get install postgresql-client 
+
+            >  psql -h localhost -U postgres      .... pw
+--------------------------------------------------------------------------------------------------------
