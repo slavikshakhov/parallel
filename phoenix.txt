@@ -4,8 +4,10 @@ proj> mix setup
 (config/dev.exs) ---- password for postgres  (default database, name is "postgres", "postgres")
 proj> mix ecto.create        !!! creates db 
 > mix phx.server     (runs on 4000)
+!!! > iex -S mix phx.server     (can also debug, rugn iex commands, query db....)
 
 !!! mix phx.new live_view_counter --live --no-ecto  
+
 
 ********************************************************************************************************
 def mount(_params, _session, socket) do

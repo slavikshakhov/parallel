@@ -12,92 +12,6 @@ VSC extensions:
     vscode-elixir-formatter
     +- ElixirLS
 
-
-
-**********************************************************************************************************
-                            IEX (REPL)  >iex 
-
-> i 'lala'          -> list  [108, 97, 108, 97]   ---- list of ASCII characters
-> i "lala"          -> binary  <<108, 97, 108, 97>>
-> i [1, 2, 3]       -> list
-> i 2               -> gives info what 2 is (integer ... )        
-
-> 4/2               -> 2 
-> [:a, :b] ++ [1, 2, 3]        -> [:a, :b, 1, 2, 3]
-> "lala" <> "tata"             -> "lalatata"
-> String.downcase("LALA")      -> "lala"
-> div 51, 2                    -> 25 
-    > div a + b, 2             !!! where a and b passed as args 
-> rem 51, 2                    -> 1 
-> min 50, 6                    -> 6 
-> IO.puts(5)                    -> like console.log(5)
-> IO.puts "lala #{fun(5)}\n" 
-  IO.puts ~s({lala "something"})   -> puts as message, sting in sting
-  IO.puts ~s(#x {lala "something"})    !!! where x is var
-> IO.gets "lala #{fun(5)}\n"    -> gets input from user -> feedback
-
-
-> Enum.member?([1, 2, 3], 2)    -> true    !!! if arr contains el 
-[1, 2, 3] |> Enum.each(fn el -> IO.puts(el) and) 
-[1, 2, 3] |> Enum.reduce(0, fn x, y -> x + y end) 
-[1, 2, 3] |> Enum.reduce(fn x, y -> x + y end)
-["a", "b", "c"] |> Enum.zip([1, 2, 3])      --> [{"a", "1"}, {"b", 2}, {"c", 3}]   !!! check if same lentghs
-%{"el1" => Enum.into(ar, %{})}
-["a", "b", "c"] |> Enum.reduce(%{}, fn el, acc ->  Map.merge(acc, %{el => 5}) end)  -->  %{"a" => 5, "b" => 5, "c" => 5}
-["a", "b", "c"] |> Enum.reduce(%{}, fn el, acc -> Map.put(acc, el, el) end)   -->  %{"a" => "a", "b" => "b", "c" => "c"}
-["a", "b", "c"] |> Enum.zip([1, 2, 3]) |> Enum.into(%{})   ->  %{"a" => 1, "b" => 2, "c" => 3}
-String.split(str, ~r{(\r\n|\r|\n)})   -> arr
-[1, 2, 3] |> Enum.join(", ")     --> "1, 2, 3"
-[1, 2, 3] |> Enum.each(fn el -> IO.gets("#{el}\n") |> String.trim  end)    -> ask for info for each el
- [1, 2, 3] |> Enum.map(fn x -> x*2 end)
- ["", "la", "ta"] |> Enum.filter(fn x -> x != "" end)    -> ["la", "ta"]
-["a", "b", "c"] |> Enum.count  
-[1, 2, 3, 4, 5] |> split(2)             -> {[1, 2], [3, 4, 5]}    ---- tuple
-[1, 2, 3, 4, 5, 6] |> chunk(2)          -> [[1, 2], [3, 4], [5, 6]]  ----- array
-ar = [1, 2, 3]     ------ [x, y | _tail] = ar
-[1, 2] ++ [3, 4]                  -> [1, 2, 3, 4]
-ar = [1, 2, 3, 4]  ----------- [h | t] = ar  -------- hd(ar)  ---- tl(ar)  ---- hd(tl(ar))
-
-
-%{"a" => 5}
-> Map.has_key?(%{a: 5, b: 8}, "a")   -> true   !!! if map contains key 
-%{a: 5, b: 8} |> Map.keys
-%{a: 5, b: 8} |> Map.values
-> %{map | la: 50}                    -> updates existing key's value
-> Map.merge(map1, %{:a => 32})       -> adds new key to map, if exists, updates ?  
-Map.drop(m, ["la"])                     !!! first if has "la" key
-m = %{a: 5, b: 6}   ---- m["a"]
-%{x: val} =  %{x: 5, y: 8}    ----------  val ---  -> 5
-Map.get(m, "a", "all")       --> val of "a"
-
- 
-double = fn x -> x*2 end    ------ double.(7)                      -> 14
-def fun(x, y) when a > b do   .... end 
-def fun(x, y) when a > b, do: fun2(y, x)
-
-
-File.read(filename)         -> {:ok, body}   ------ body
-                            -> {:error, reason} --- IO.puts(~s("#{:file.format_error(reason)}"\n))
-File.write("filename.txt", "lala\ntata")        -> :ok  ------ "saved"
-                                                -> {:error, reason} --- IO.puts(~s("#{:file.format_error(reason)}"\n))
-
- 
-str = """ lalala\n
-             tata """
-"LALA" |> String.downcase 
-"lala\n" |> String.trim 
-hash = :crypto.hash(:md5, "lala")     -> <<46, 56, 23, 41, 63, 194, 117, 219, 238, 116, 189, 113, 206, 110>>
-Base.encode16(hash)                   -> "2E3817293FC275DBEE74BD71CE6EB056"
-:binary.bin_to_list(hash)             -> [46, 56, 23, 41, 63, 194, 117, 219, 238, 116, 189, 113, 206, 110]
-
-
-~r{....} 
-    except words: [^\w]+   (1 or more, all)
-    (la | ta)    match la or ta or both
-    \\n          match \n 
-    [^\w']+      (1 or more non word chars or apostrophy)  it's 
-
-
 ********************************************************************************************************
 
                                 NEW PROJ (ex) ------ with module
@@ -122,29 +36,453 @@ new file ----- a.exs
 > elixir a.exs 
 
 
+---------------------------------------------------------------------------------------------------------
+                                NEW PROJ (folders)
 
-
-
+> mix new proj --sup          
+        sup ---generate an OTP application skeleton including a supervision tree
 ---------------------------------------------------------------------
-headers = ["activity", "when", "where"]
-lines - ["clean, now, in the room", "work, tomorrow, at the office"]     
-      -> 
-      %{ "clean" => %{"when" => "now", "where" => "in the room" }, 
-         "work" => %{"when" => "tomorrow", "where" => "at the office" }}
 
-         Enum.reduce(lines, %{}, fn line, acc -> 
-            [name | rest] = String.split(line, ",")
-            if Enum.count(rest) == Enum.count(headers) do
-                row = Enum.zip(headers, rest)                                 -> ar + ar = [obj, obj]
-                      |> Enum.into(%{})                                       -> [obj, obj] -> {obj's k-v, obj's k-v}
-                Map.merge(acc, %{name => row})                                -> {"a": {obj's k-v, obj's k-v}
-            else 
-                acc
-            end 
-         end
-         ) 
+*********************************************************************************************************
+ALIAS 
+
+defmodule MainModule.ThisModule do
+        alias IslandsEngine.{AnotherModule, ThisModule}  
+        ...
+end 
+    !!! this_module.ex 
+        in code:  %ThisModule{}   vs %MainModule.ThisModule{}    ---- struct
+    !!! alias __MODULE__                               ---- if only using ThisModule
+    iex> > alias MainModule.ThisModule
+         > ThisModule.fun(5)     vs > MainModule.ThisModule.fun(5)
+---------------------------------------------------------------------------------------
+TO USE KEYS IN STRUCT 
+    @enforce_keys [:x, :y]
+    defstruct [:x, :y]
+    inp x, y  ---- output  {:ok, %ThisModule{x: x, y: y}}
+
+
+**********************************************************************************************************
+                            IEX (REPL)  >iex 
+
+> i 'lala'          -> list  [108, 97, 108, 97]   ---- list of ASCII characters
+> i "lala"          -> binary  <<108, 97, 108, 97>>
+> i [1, 2, 3]       -> list
+> i 2               -> gives info what 2 is (integer ... ) 
+
+:ok                  ---- atom, var and val at the same time, descriptive, never change, not garbage-collected
+
+5 in 2..8           --> true 
+
+true or false           --> true 
+true and false          --> false
+not false               --> true 
+
+!!! false, nil --- falsy vals, rest truthy vals
+    &&  returns first falsy val, if none falsy --> returns second val 
+    ||  returns first truthy val, if none truthy --> returns second val 
+"lala" || false         --> lala
+"lala" && false         --> false 
+nil && "lala"           --> nil 
+!"lala"                 --> false 
+"lala" && "tata"        --> tata 
+"lala" || "tata"        --> lala 
+nil || false            --> false 
+
+
+> Integer.to_string(5)                      -> "5"
+> x = 5  .... x = 8    --> x = 8
+
+
+> [:a, :b] ++ [1, 2, 3]        -> [:a, :b, 1, 2, 3]
+> "lala" <> "tata"             -> "lalatata"
+> String.downcase("LALA")      -> "lala"
+> div(51, 2)                   -> 25 
+    > div(a + b, 2)             !!! where a and b passed as args 
+> rem(51, 2)                  -> 1 
+> min(50, 6)                    -> 6 
+> IO.puts(5)                    -> like console.log(5)
+> IO.pupts("lala #{fun(5)}\n") 
+  IO.pupts(~s(lala "something"))   -> sting in sting  
+> IO.gets("lala #{fun(5)}\n")   -> gets input from user -> feedback
+
+
+res = {:ok, 3}     ----- elem(res, 1)           --> 3
+                         put_elem(res, 1, 6)    --> {:ok, 6}
+    res                                         --> {:ok, 3}   
+!!! no more than 4 els in tuple should be used 
+
+
+
+
+
+> Enum.member?([1, 2, 3], 2)    -> true    !!! if arr contains el 
+[1, 2, 3] |> Enum.each(fn el -> IO.puts(el) and) 
+[1, 2, 3] |> Enum.reduce(0, fn x, y -> x + y end) 
+[1, 2, 3] |> Enum.reduce(fn x, y -> x + y end)
+["a", "b", "c"] |> Enum.zip([1, 2, 3])      --> [{"a", "1"}, {"b", 2}, {"c", 3}]   !!! check if same lentghs
+%{"el1" => Enum.into(ar, %{})}    
+
+
+
+!!! list of els to map... use reduce
+["a", "b", "c"] |> Enum.reduce(%{}, fn el, acc ->  Map.merge(acc, %{el => 5}) end)  -->  %{"a" => 5, "b" => 5, "c" => 5}
+["a", "b", "c"] |> Enum.reduce(%{}, fn el, acc -> Map.put(acc, el, el) end)   -->  %{"a" => "a", "b" => "b", "c" => "c"}
+
+1..100 |> Enum.reduce_while(0, fn x, acc ->  if x < 5, do: {:cont, acc + x}, else: {:halt, acc} end) 
+                --> 10      ------    (acc + x) returned 
+                !!! reduces until returnes :halt
+
+[1, 6, 10, 12] |> Enum.fetch(2)         --> 10  
+[1, 6, 10, 12] |> Enum.fetch(-1)         --> 12             !!! if no index found --> error     
+[1, 6, 10, 12] |> Enum.at(1)            --> 6               !!! if no index found --> nil     
+["a", "b", "c"] |> Enum.zip([1, 2, 3]) |> Enum.into(%{})   ->  %{"a" => 1, "b" => 2, "c" => 3}
+[1, 2, 3] |> Enum.map(&(&1 + 10)) |> Enum.zip(["a", "b", "c"])   
+            --> [{11, "a"}, {12, "b"}, {13, "c"}]
+String.split(str, ~r{(\r\n|\r|\n)})   -> arr
+[1, 2, 3] |> Enum.join(", ")     --> "1, 2, 3"
+[1, 2, 3] |> Enum.each(fn el -> IO.gets("#{el}\n") |> String.trim  end)    -> ask for info for each el
+[1, 2, 3] |> Enum.map(fn x -> x*2 end)
+["", "la", "ta"] |> Enum.filter(fn x -> x != "" end)    -> ["la", "ta"]
+["a", "b", "c"] |> Enum.count  
+[1, 2, 3, 4, 5] |> Enum.split(2)             -> {[1, 2], [3, 4, 5]}    ---- tuple
+[1, 2, 3, 4, 5, 6] |> Enum.chunk(2)          -> [[1, 2], [3, 4], [5, 6]]  ----- array
+ar = [1, 2, 3]     ------ [x, y | _tail] = ar
+[1, 2] ++ [3, 4]                  -> [1, 2, 3, 4]
+[0, 1, 1] -- [1, 2, 3]            -> [0, 1]
+1 in [0, 1, 3, 5]                 --> true   (list contains 1)
+ar = [1, 2, 3, 4]  ----------- [h | t] = ar  -------- hd(ar)  ---- tl(ar)  ---- hd(tl(ar))
+
+
+m = %{x => 5}                                   creates map %{x: 5} --- x is atom :x 
+m = %{x: 5}                                     same as above, shortcut to create map, only if atom 
+m[:x]     ---- m.x                              --> 5     !!! only if atom 
+Map.new()       ---- same as ---- %{}         --> %{}
+
+%{a: 5, b: 6} |> Map.fetch(:a)      --> {:ok, 5}
+%{"a" => 5, b: 6} |> Map.fetch("a")     --> {:ok, 5}
+%{a: 5, b: 8} |> Map.has_key?(:a)  -> true   !!! if map contains key 
+%{a: 5, b: 8} |> Map.keys               --> [:a, :b]
+%{a: 5, b: 8} |> Map.values             --> [5, 8]
+> %{map | la: 50}                    -> updates existing key's value  ---- la is atom :la 
+%{a: 5, b: 8} |> Map.merge(%{:c => 32})       --> %{a: 5, b: 8, c: 32} 
+%{a: 5, b: 8} |> Map.merge(%{b: 32})          --> %{a: 5, b: 32}
+Map.drop(m, ["la"])                     !!! first if has "la" key
+m = %{a: 5, b: 6}   ---- m[:a] or m.a 
+m = %{"x" =>  %{y: 5}} ----- m["x"]
+    mm |> Map.put(:y, 8)       --> %{:y => 8, "x" => %{y: 5}}
+
+%{x: val} =  %{x: 5, y: 8}    ----------  val ---  -> 5
+
+
+kwl = [x: 5, y: "la"]           --- kwl[:x]   --> 5
+    !!! in kwl vs map: key can have > 1 val, order of keys can be controlled
+[x: "a"] |> Keyword.fetch(:x)       --> {:ok, "a"}
+
+
+
+MapSet.new()       --> #MapSet<[]>
+%MapSet{}               --> #MapSet<[]>
+%MapSet{} |> MapSet.put(6)      --> #MapSet<[6]>
+MapSet.new([2]) |> MapSet.put(4) |> MapSet.put(0) |>  MapSet.put(2)   --> #MapSet<[0, 2, 4]>
+MapSet.equal?(MapSet.new([1, 2]), MapSet.new([2, 1]))    --> true    
+
+
+
+uu = %{x: %{y: 5}}
+    update_in(uu[:x][:y], &(&1 + 1)) ---- same as ----- update_in(uu[:x].y, &(&1 + 1))
+        -->   %{x: %{y: 6}}
+uu = %{"x" => %{y: 5}}
+    update_in(uu["x"].y, &(&1 + 1)) ---- same as ----- update_in(uu["x"][:y], &(&1 + 1))
+         --> %{"x" => %{y: 6}}
+z = %{x: MapSet.new()}      --> %{x: #MapSet<[]>}
+        update_in(z.x, &MapSet.put(&1, 5))          --> %{x: #MapSet<[5]>}
+l = %{x: [1, 2, 3]}
+    update_in(l.x, &Enum.concat(&1, [4]))           --> %{x: [1, 2, 3, 4]}
+
+
+double = fn x -> x*2 end    ------ double.(7)                      -> 14
+def fun(x, y) when a > b do   .... end 
+def fun(x, y) when a > b, do: fun2(y, x)
+----
+uppercase = fn p -> Map.put(p, :name, String.upcase(p.name)) end
+uppercase.(%{name: "Slavik"})                                  -> %{name: "SLAVIK"}
+----
+
+
+
+def f(obj), do:  --- obj.x ---       !!! if obj has no x --> error
+def f(%{x: 5}), do: --- x ---
+
+def f(%{x: nil}), do: IO.puts("obj has no x")
+def f(%{x: x}), do: IO.puts(x)
+def f(_), do: IO.puts("invalid data structure")
+
+---------- WITH ------------
+def f(data) do 
+    with pattern_match_output1 <- f1(data),
+         pattern_match_output2 <- f1(pattern_match_output1)
+    do f3(pattern_match_output1, pattern_match_output2)
+    else -> handle_nil()
+----------------------------
+
+
+File.read(filename)         -> {:ok, body}   ------ body
+                            -> {:error, reason} --- IO.puts(~s("#{:file.format_error(reason)}"\n))
+File.write("filename.txt", "lala\ntata")        -> :ok  ------ "saved"
+                                                -> {:error, reason} --- IO.puts(~s("#{:file.format_error(reason)}"\n))
+
+ 
+str = """ lalala\n
+             tata """
+"LALA" |> String.downcase 
+"lala\n" |> String.trim 
+hash = :crypto.hash(:md5, "lala")     -> <<46, 56, 23, 41, 63, 194, 117, 219, 238, 116, 189, 113, 206, 110>>
+Base.encode16(hash)                   -> "2E3817293FC275DBEE74BD71CE6EB056"
+:binary.bin_to_list(hash)             -> [46, 56, 23, 41, 63, 194, 117, 219, 238, 116, 189, 113, 206, 110]
+"lala" |> String.upcase               -> LALA
+Regex.run(~r{str}, "a string")        -> ["str"]
+["a", "b"] |> List.to_string          -> "ab"
+"la" |> String.reverse()              -> "al" 
+
+
+
+~r{....} 
+    except words: [^\w]+   (1 or more, all)
+    (la | ta)    match la or ta or both
+    \\n          match \n 
+    [^\w']+      (1 or more non word chars or apostrophy)  it's 
+
+
+
+PATTERN MATCHING 
+{number, representation} = {3.1415, "pi"}   ---- number --> 3.1415 
+                                                 representation --> "pi"
+[first, second] = ["a", "b"]         ---- first --> "a"
+[_, second] = ["a", "b"]             ---- second --> "b"
+[first | rest] = ["a", "b", "c"]    ---- first  --> "a"
+                                         rest  --> ["b", "c"]
+%{"x" => x, "y" => y} = {"x" => "la", "y" => 5}     ---- x  --> la
+                                                         y  --> 5 
+%{x: 4} = %{x: 4}     --> match
+%{x: a} = %{x: 4}     --> match + assign   ---- a --> 4
+%{x: _} = %{x: 4}     --> match w/o assign
+{:ok, x} = [x: "a"] |> Keyword.fetch(:x)      ---- x --> "a"
+
+
+x = "la"
+     %{x: ^x, y: y} = %{x: "la", y: 1}    --> %{x: "la", y: 1}   !!! matched  (pin used)
+     %{x: ^x, y: y} = %{x: "zz", y: 1}    --> MatchError 
+
+*******************************************************************************************************
+                                FUNCTIONS 
+
+division = fn
+    (_divident, 0) -> :infinity
+    (divident, divisor) -> divident / divisor
+end
+division.(10, 2)            --> 5 
+division.(10, 0)            --> :infinity
+--------------------------------------------------
+f = &(&1 + 1)      -----  f.(10)   --> 11 
+-------------------------------------------------
+def f(str, num \\ 3) do                                         !!! \\ default value
+    "#{str |> String.upcase()}#{String.duplicate("!", num)}"
+end
+f("la", 2)              --> "LA!!" 
+F("la")                 --> "LA!!!"
+-------------------------------------------------
+def palidrome?(term) do
+    foratted_term =
+      term
+      |> String.trim()
+      |> String.downcase()
+
+    foratted_term |> String.reverse() == foratted_term
+end
+palidrome?("la")            --> false 
+palidrome?("laal")          --> true 
+-------------------------------------------------------
+MODULE ATTRIBUTES (like global constants for this module, exist at runtime)  @some_value "la" 
+
+*******************************************************************************************************
+                        LOOPS (recursions)
+
+def double([]), do: []                      !!! will stop recursion when [] passed in end
+def double([head | tail]) do
+    [head * 2 | double(tail)]
+end
+
+double([2, 4, 6])           --> [4, 8, 12]
+
+------
+def double(list), do: list |> Enum.map(&(&1 * 2))
+
+-----COMPREHENSIONS
+def double(list) do
+    for x <- list, do: x * 2
+end
+
+----------------------------------------------------------
+def multiply([]), do: 1                     !!! stopping condition is 1 
+
+def multiply([head | tail]) do
+    head * multiply(tail)                       !!! head is acc 
+end
+multiply([1, 2, 3])             --> 6 
+----
+!!! multiple funs calls --> get into stack (memory usage)
+    Erlang runtie uses tail-call iptimization  --> recursive call -> no stack push 
+                    for this last think must be a tail-call --> tail-call iptimization
+    use tail-optimization if long recursions 
+----
+def multiply(list, acc \\ 1)
+def multiply([], acc), do: acc
+def multiply([head | tail], acc) do
+    multiply(tail, head * acc)
+end
+----
+def multiply(list), do: list |> Enum.reduce(1, &(&1 * &2))
+-----------------------------------------------------------------------
+def even(list), do: list |> Enum.map(&Integer.is_even/1)     !!! require Integer --- on top of module
+even([1, 2, 3])         --> [false, true, false]
+
+------------------------------------------------------------------------
+def f(list1, list2) do
+    for x <- list1, y <- list2, Integer.is_odd(x), do: x * y   !!! require Integer  ---- on top of module
+end
+f([1, 2, 3], [4, 5, 6])       --> [4, 5, 6, 12, 15, 18]   
+
+    !!! comprehensions like mapping but can use nested lists, and filters 
+
+-----------------------------------------COMPREHENSION -> LIST -> MAP  (into)
+def f(list) do
+    for x <- list, into: %{}, do: {x, x + 1}
+end
+f([1, 2, 3])                    -->  %{1 => 2, 2 => 3, 3 => 4}
+
+-----------------------------STREAMS 
+!!! Enum ---- eager  ---- processing list  (ex. iteration) --> loads entire list into memeory
+    streams  --- lazy  --- results produces as needed
+                good for very large data, files or inifinite collections, not loading all data to process
+------
+[1, 2, 3] |> Stream.map(&(&1 + 10)) |> Stream.zip(["a", "b", "c"])
+            --> #Function<68.63880310/2 in Stream.zip/1>
+------TO PRODUCE RESULT: 
+[1, 2, 3] |> Stream.map(&(&1 + 10)) |> Stream.zip(["a", "b", "c"]) |> Enum.take(1)
+        -->  [{11, "a"}]
+------
+[1, 2, 3] |> Stream.map(&(&1 + 10)) |> Stream.zip(["a", "b", "c"]) |> Enum.to_list
+        --> [{11, "a"}, {12, "b"}, {13, "c"}]
+
+********************************************************************************************************
+                                CONTROL FLOW 
+
+prefered: pattern matching
+          multi-clause functions
+          guards 
+-------------------------------          
+(if ... else ...)
+if x > 5 do
+    ....
+else ...                            !!! else is optional, w/o else if false --> nil
+end 
+-----
+if x > 5, do:  ...., else: ....     !!! else is optional, w/o else if false --> nil
+-----------------------------
+(if ... if .... if .... else ....)
+cond do 
+    x > 5 -> ...
+    x < 5 -> ...
+    x == 5 -> ...
+    true -> "none of above"
+end 
+------------------------------
+(if ... if .... if .... else ....)
+case x do 
+    2 -> ...
+    8 -> ...
+    _ -> "none of above"
+end 
+------------------------------
+GET NESTED FROM NESTED KWL 
+
+def f do
+    ops = [x: [y: [z: 5]]]
+    case ops |> Keyword.fetch(:x) do           --> {:ok, [y: [z: 5]]}
+      {:ok, val} ->
+        case val |> Keyword.fetch(:y) do            --> {:ok, [z: 5]}
+          {:ok, val2} ->
+            case val2 |> Keyword.fetch(:z) do           --> 5
+              {:ok, val3} -> val3
+              _ -> "non existing key"
+            end
+          _ ->
+            "non existing key"
+        end
+      _ ->
+        "non existing key"
+    end
+  end
+
+  f()           --> 5
+  -------- SAME AS ABOVE, WITH clause
+  def f do
+    ops = [x: [y: [z: 5]]]
+
+    with {:ok, val} <- ops |> Keyword.fetch(:x),
+         {:ok, val2} <- val |> Keyword.fetch(:y),
+         {:ok, val3} <- val2 |> Keyword.fetch(:z),
+         do: val3
+  end
+  ---------SAME AS ABOVE + ERROR 
+
+  def f do
+    ops = [x: [y: [z: 5]]]
+
+    with {:ok, val} <- ops |> Keyword.fetch(:x),
+         {:ok, val2} <- val |> Keyword.fetch(:y),
+         {:ok, val3} <- val2 |> Keyword.fetch(:z) do
+      val3                                          --> returned if all keys match 
+    else
+      :error -> "non existing key"                  --> returned if one of keys doesn't exist in ops
+      _ -> "some other error"
+    end
+  end
+  f()  --> 5                                        
+    !!! else can have > 1 clause  (all will only run if code above fails)
+
+
+*******************************************************************************************************
+                                EXCEPTIONS 
+
+> raise "some error"                --> (RuntimeError) some error
+> raise ArithmeticError, message: "math error"   --> (ArithmeticError) math error
+
+--------
+try do
+    5/0
+    rescue
+        e in ArithmeticError -> "Tried to divide by 0"
+        _ -> "none of the above matched"
+end
+-------
+    --> Tried to divide by 0
+
+*********************************************************************************************************
+                                TYPESPECS (types)
+
+@spec f?(String.t) :: boolean       !!! boolean is ret type of function
+def f?(str) do   .... end 
  
 
 
 
+
+
+
+
+
+
+  
     
