@@ -158,6 +158,7 @@ ar = [1, 2, 3, 4]  ----------- [h | t] = ar  -------- hd(ar)  ---- tl(ar)  ---- 
 m = %{x => 5}                                   creates map %{x: 5} --- x is atom :x 
 m = %{x: 5}                                     same as above, shortcut to create map, only if atom 
 m[:x]     ---- m.x                              --> 5     !!! only if atom 
+%{a: 5, b: 6} |> Map.get(:a)                    --> 5
 Map.new()       ---- same as ---- %{}         --> %{}
 
 %{a: 5, b: 6} |> Map.fetch(:a)      --> {:ok, 5}

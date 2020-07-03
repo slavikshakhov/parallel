@@ -83,7 +83,7 @@ end
 
 DATA FLOW 
 
-  connection |> phoenis 
+  connection |> phoenix 
                   (layers):
                       |> endpoint()     ---- consists of plugs for each req... last plug is router 
                       |> router()
@@ -273,13 +273,16 @@ CONTEXT --- ACCOUNTS  (lib/rumble/accounts.ex)
   > Accounts.get_user("1")
   > Accounts.get_user_by(name: "Bruce")
 
------------------------------------------------------------------------
+-----------------------------------------------------------------------                          
 ROUTER 
    
     get "/users", UserController, :index
     get "/users/:id", UserController, :show
 
------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------
+        1. INDEX (all users)
+      
 CONTROLLER (lib/rumbl_web/controllers/user_controller.ex)
 
     defmodule RumblWeb.UserController do
@@ -326,13 +329,76 @@ TEMPLATE (lib/rumbl_web/templates/user/index.html.eex)
         >  Phoenix.HTML.Link.link("Home", to: "/")     -->
                 {:safe, [60, "a", [[32, "href", 61, 34, "/", 34]], 62, "Home", 60, 47, "a", 62]}
 
-       !!! :save and I/O list   (ex I/O used to write vals to a socket)
+       !!! :safe and I/O list   (ex I/O used to write vals to a socket)
     ----
     > Phoenix.HTML.Link.link("Home", to: "/") |> Phoenix.HTML.safe_to_string()     --> "<a href=\"/\">Home</a>"
         !!! Phoenix.HTML  --- html fun-ty in views (generate links, working with forms...)
                               protect from cross-site scripting (XSS) attacks
-----------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+                                  SHOW (one user, by id) see above: User model, context, router
 
+CONTROLLER (lib/rumbl_web/controllers/user_controller.ex)
 
-   
+    defmodule RumblWeb.UserController do
+      use RumblWeb, :controller
+
+      alias Rumbl.Accounts      
+
+      def show(conn, %{"id" => id}) do
+        user = Accounts.get_user(id)
+        render(conn, "show.html", user: user)
+      end
+    end
+
+VIEW  ---- same as before 
+
+TEMPLATE (lib/rumbl_web/templates/user/show.html.eex)
+
+    <h1>Showing User</h1>
+    <b><%= first_name(@user) %></b> (<%= @user.id %>)
+----------------------------------------------------------------------------------------------------------------
+          NESTING TEMPLATES  (index.html.eex and show.html.eex refer to user.html.eex)
+
+(lib/rumbl_web/templates/user/user.html.eex)
+
+    <strong><%= first_name(@user) %></strong>  (<%= user.id %>)
+
+(lib/rumbl_web/templates/user/index.html.eex)
+
+    <h1>Listing users</h1>
+    <table>
+        <%= for user <- @users do %> 
+            <tr>
+                <td><%= render "user.html", user: user %></td>
+                <td><%= link "View", to: Routes.user_path(@conn, :show, user.id) %></td>   	
+            </tr>
+        <% end %>
+    </table>
+    
+
+(lib/rumbl_web/templates/user/show.html.eex)
+
+    <h1>Showing User</h1>
+    <%= render "user.html", user: @user %>
+------
+!!! view extracts template (user.html.eex) from file system
+         makes this template a function in the view itself
+------
+> iex -S mix 
+> user = Rumble.Accounts.get_user("2")   -->    %Rumble.Accounts.User{id: "2", name: "Bruce", username: "redrapids"}
+> view = RumbleWeb.UserView.render("user.html", user: user)   --> 
+              {:safe, ["<strong>", "Bruce", "</strong>  (", "2", ")\r\n"]}
+> Phoenix.HTML.safe_to_string(view)   -->    "<strong>Bruce</strong>  (2)\r\n"
+
+    !!! fetch user from repository 
+        render template directly from view 
+            !!! each template is render(template_name, assigns) of the respective view  
+                    assigns ---- []  <-- plugs, controller funs 
+                can render 
+
+--------------------------------------------------------------------------------------------------------
+                    LAYOUTS
+
+controller's render --> view --> template 
 
