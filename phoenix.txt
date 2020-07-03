@@ -76,489 +76,263 @@ end
 !!! socket ------  Phoenix.Socke
 !!! without  :noreply  --> recursive loop of updates
 
-*************************************************************************************************************
-CREATE TABLE with generator  (here app is name of proj)
-     
-    mix phx.gen.html Todo Item items text:string person_id:integer status:integer
-    mix ecto.migrate 
-    
-    !!! Todo is Contexts 
-        items ----- Schema 
 
-    !!! creates:  lib/app_web/controllers/item_controller.ex 
+************************************************************************************************************
+************************************************************************************************************
+                          PROGRAMMING PHOENIX (BOOK)
 
-            defmodule AppWeb.ItemController do
-                use AppWeb, :controller
+DATA FLOW 
 
-                alias App.Todo
-                alias App.Todo.Item
+  connection |> phoenis 
+                  (layers):
+                      |> endpoint()     ---- consists of plugs for each req... last plug is router 
+                      |> router()
+                      |> pipelines()
+                      |> controller() 
+                            has: |> common_services()   ---- implemented with plug 
+                                 |> action()
 
-                ....funs for CRUD  .....
+  connection as req -> conn -> conn -> conn -> as res to front  (plugs)
+  .ex --compiled to .beam files (run on Erlang virtual machine)
+  .eex  -- Elixir scripts (not to .beam files)
 
-                                
-    !!! was also: lib/app_web/controllers/item_controller.ex
+config/config.exs     ----applic wide (logging, endpoints)
+      /dev.exs
+      /prod.exs
+      /test.exs           !!! dev, prod, test --- switch via MIX_ENV
+      /prod.secret.exs
 
-            defmodule AppWeb.PageController do
-                use AppWeb, :controller
+config/config.exs   ---- config: hello, HelloWeb.Endpoint
+lib/hello_web/endpoint.ex --- plugs for applic (for every req)
 
-                def index(conn, _params) do
-                    render(conn, "index.html")
-                end
-            end
+M (accesses data) --- V (present data) --- C (coordination between M, C)
 
-(lib/app_web/router.ex)
+***********************************************************************************************************
+                              HELLP WORLD APP 
+                    load url 
+                    print string 
 
-    scope "/", AppWeb do
-        pipe_through :browser
+> mix phx.new hello
 
-        get "/", PageController, :index
-        resources "/items", ItemController 
+config/dev.ex  ----username: "postgres" ....  password: "gerK..55" .... database: "postgres" ... 
+hello > mix ecto.create  
+> mix phx.server  
+----
+1. ROUTER (router.ex)
+   get "/hello", HelloController, :world 
+
+2. CONTROLLER (controllers/hello_controller.ex)
+
+    defmodule HelloWeb.HelloController do
+      use HelloWeb, :controller
+
+      def world(conn, _params) do
+        render(conn, "world.html")
+      end
     end
-     
-**************************************************************************************************************
-                         ROUTER   !!! see all routes: mix phx.routes
 
-1.  defmodule HelloWeb.Router do  ...... end 
-2.  use HelloWeb, :router
-3.  pipeline :browser do   ..... plugs ..... end 
-3.  (scope)   
-      get "/", PageController, :index         !!! index ---- action     
+3. VIEW (views/hello_view.ex)  ---- helps to render template 
 
-      resources "/users", UserController   !!! without controller defined --> 
-          creates table, after > mix ecto.migrate;
-          creates routes for CRUD
-          creates funs for CRUD in controller
-
-          user_path  GET     /users           HelloWeb.UserController :index
-          user_path  GET     /users/:id/edit  HelloWeb.UserController :edit
-          user_path  GET     /users/new       HelloWeb.UserController :new
-          user_path  GET     /users/:id       HelloWeb.UserController :show
-          user_path  POST    /users           HelloWeb.UserController :create
-          user_path  PATCH   /users/:id       HelloWeb.UserController :update
-                     PUT     /users/:id       HelloWeb.UserController :update
-          user_path  DELETE  /users/:id       HelloWeb.UserController :delete
-
-          !!! PUT, PATCH --> same action 
-
-      resources "/posts", PostController, only: [:index, :show]  --> only creates these routes 
-      resources "/comments", CommentController, except: [:delete]  --> all routes except delete 
-
-      (in controllers, views, templates) !!! alias included by default
-        <%= link "Welcome Page!", to: Routes.page_path(@conn, :index) %>  
-      (elsewhere) !!! need to include aliases
-        iex> alias HelloWeb.Router.Helpers, as: Routes
-        iex>  alias HelloWeb.Endpoint
-        iex>  Routes.user_path(Endpoint, :index)    --> "/users
-        iex>  Routes.user_path(Endpoint, :show, 17)  --> "/users/17"
-        iex> Routes.user_path(Endpoint, :new)    --> "/users/new"
-        iex> Routes.user_path(Endpoint, :create)   --> "/users"
-        iex> Routes.user_path(Endpoint, :edit, 37)  --> "/users/37/edit"
-        iex> Routes.user_path(Endpoint, :update, 37) --> "/users/37"
-        iex> Routes.user_path(Endpoint, :delete, 17) --> "/users/17"
-        iex> Routes.user_path(Endpoint, :show, 17, admin: true, active: false)  --> "/users/17?admin=true&active=false"
-        iex> Routes.user_url(Endpoint, :index)  --> "http://localhost:4000/users"  .... see config/dev.exs
-
-      NESTED ROUTES 
-        resources "/users", UserController do
-          resources "/posts", PostController
-        end
-        --> 
-          user_post_path  GET     /users/:user_id/posts           HelloWeb.PostController :index
-          user_post_path  GET     /users/:user_id/posts/:id/edit  HelloWeb.PostController :edit
-          user_post_path  GET     /users/:user_id/posts/new       HelloWeb.PostController :new
-          user_post_path  GET     /users/:user_id/posts/:id       HelloWeb.PostController :show
-          user_post_path  POST    /users/:user_id/posts           HelloWeb.PostController :create
-          user_post_path  PATCH   /users/:user_id/posts/:id       HelloWeb.PostController :update
-                          PUT     /users/:user_id/posts/:id       HelloWeb.PostController :update
-          user_post_path  DELETE  /users/:user_id/posts/:id       HelloWeb.PostController :delete
-          
-          iex> alias HelloWeb.Endpoint
-          iex> HelloWeb.Router.Helpers.user_post_path(Endpoint, :show, 42, 17)  -->  "/users/42/posts/17"
-          iex> HelloWeb.Router.Helpers.user_post_path(Endpoint, :index, 42, active: true)  --> "/users/42/posts?active=true"
-------------------------------------------------------------
-      COMMON PATH  
-
-          scope "/admin", HelloWeb.Admin do
-            pipe_through :browser
-
-            resources "/reviews", ReviewController
-            scope "/admin", HelloWeb.Admin do
-              resources "/reviews", ReviewController
-            end
-          end
-          !!! in ReviewController define routes as usual .... mix phx.routes --> 
-
-              review_path  GET     /reviews                 HelloWeb.ReviewController :index
-              review_path  GET     /reviews/:id/edit        HelloWeb.ReviewController :edit
-              review_path  GET     /reviews/new             HelloWeb.ReviewController :new
-              review_path  GET     /reviews/:id             HelloWeb.ReviewController :show
-              review_path  POST    /reviews                 HelloWeb.ReviewController :create
-              review_path  PATCH   /reviews/:id             HelloWeb.ReviewController :update
-                           PUT     /reviews/:id             HelloWeb.ReviewController :update
-              review_path  DELETE  /reviews/:id             HelloWeb.ReviewController :delete
-              ......
-              review_path  GET     /admin/reviews           HelloWeb.Admin.ReviewController :index
-              review_path  GET     /admin/reviews/:id/edit  HelloWeb.Admin.ReviewController :edit
-              review_path  GET     /admin/reviews/new       HelloWeb.Admin.ReviewController :new
-              review_path  GET     /admin/reviews/:id       HelloWeb.Admin.ReviewController :show
-              review_path  POST    /admin/reviews           HelloWeb.Admin.ReviewController :create
-              review_path  PATCH   /admin/reviews/:id       HelloWeb.Admin.ReviewController :update
-                           PUT     /admin/reviews/:id       HelloWeb.Admin.ReviewController :update
-              review_path  DELETE  /admin/reviews/:id       HelloWeb.Admin.ReviewController :delete
-
-          iex> HelloWeb.Router.Helpers.review_path(HelloWeb.Endpoint, :index)  --> "/reviews"
-          iex> HelloWeb.Router.Helpers.admin_review_path(HelloWeb.Endpoint, :show, 1234)  --> "/admin/reviews/1234"
----------------------------------------------
-      PIPELINES  ---- attatch plugs to specific scopes, all plugs for this scope invoked once route in this scope matches 
-
-          pipeline :browser do
-            plug :accepts, ["html"]                   !!! req format accepted 
-            plug :fetch_session                       !!! fetches the session data and makes it available in the connection
-            plug :fetch_flash                         !!! which retrieves any flash messages which may have been set
-            plug :protect_from_forgery
-            plug :put_secure_browser_headers
-          end
-          scope "/", AppWeb do
-            pipe_through :browser
-            .... routes here ...
-          end 
-
-          !!! custom pipelines  ---- see docs 
-
-    REDIRECT 
-
-    (in router)
-
-      get "/", PageController, :index
-      get "/redirect_test", PageController, :redirect_test
-    
-    (in controller)
-
-    REDIRECT CONTROLLER -> ROUTER -> CONTROLLER
-
-      def index(conn, _params) do
-        redirect(conn, to: "/redirect_test")              
-      end
-      def redirect_test(conn, _params) do
-        render(conn, "index.html")
-      end
-      
-    REDIRECT DIRECTLY CONTROLLER -> CONTROLLER,  without calling first router 
-
-          def index(conn, _params) do
-            redirect(conn, to: Routes.page_path(conn, :redirect_test))
-          end
-
-      !!!  TO REDIRECT OUSIDE APP: 
-
-          redirect(conn, external: "https://elixir-lang.org/")
-
-*******************************************************************************************************
-                              CONTROLLERS 
-
-    NAMING: index, show, new, create, edit, update, delete 
-        !!! new  --> renders a form 
-        !!! create --> receives params for one new item and saves it in a datastore
-
-        !!! edit --> retrieves an individual item by id and displays it in a form for editing
-        !!! update --> receives params for one edited item and saves it to a datastore
-      
-    def test(conn, _params) do ... end   ------- (args provided behind the scenes)
-
-        !!! conn --- information about the request:  host, path elements, port, query string, .... 
-        !!! params ---- a map which holds any parameters passed along in the HTTP request
-                  %{"item" => item_params}    --- "item" was passed in req 
-            !!! if params not used ---- _params 
-
-    RENDERING 
-      NO VIEW REQUIRED: 
-
-      1.  TEXT 
-
-          def show(conn, %{"messenger" => messenger}) do
-            text(conn, "From messenger #{messenger}")
-          end
-          !!! /hello/Frank  --> From messenger Frank 
-      2. JSON 
-
-          json(conn, %{id: messenger})  -->      {"id": "Frank"}
-        
-      3. html without a view 
-
-          html(conn, """
-            <html>
-              <head>
-                  <title>Passing a Messenger</title>
-              </head>
-              <body>
-                <p>From messenger #{messenger}</p>
-              </body>
-            </html>
-            """)
-      4 RENDER TEMPLATE 
-
-        render(conn, "show.html", messenger: messenger) 
-
-        defmodule AppWeb.ItemController do ..... end   ------ (templates/item/show.html.eex)   !!! matching names 
-
-        !!! to manipulate req before rendering: 
-
-        def show(conn, %{"messenger" => messenger}) do
-          conn
-          |> Plug.Conn.assign(:messenger, messenger)
-          |> render("show.html")
-        end
-
-        --------
-        conn
-        |> assign(:messenger, messenger)
-        |> assign(:receiver, "Dweezil")
-        |> render("show.html")
-
-  ----------------------------------------------------------------
-  SEND RES STATUS, WITHOUT body
-
-          def index(conn, _params) do
-            conn
-            |> send_resp(201, "")
-          end
-
-          ------------
-          conn
-          |> put_resp_content_type("text/plain")
-          |> send_resp(201, "")
-          ------------
-          conn
-          |> put_status(202)
-          |> render("index.html")
-          -----------
-
-    LAYOUT  (emplates/layout/app.html.eex)
-        !!! has no controller, so need view to be rendered (views/layout_view.ex)
-
-        IGNORE LAYOUT 
-
-            def index(conn, _params) do
-              conn
-              |> put_layout(false)
-              |> render("index.html")
-            end
-        
-        USE CUSTOM LAYOUT 
-           lib/hello_web/templates/layout/app.html.eex  (by default)
-                                         /new_layout.html.eex 
-
-
-          (controller)
-
-            def index(conn, _params) do
-              conn
-              |> put_layout("new_layout.html")
-              |> render("index.html")
-            end
-
-  -----------------------------
-    FLASH MESSAGES 
-
-      def index(conn, _params) do
-        conn
-        |> put_flash(:info, "Welcome to Phoenix, from flash info!")
-        |> put_flash(:error, "Let's pretend we have an error.")
-        |> render("index.html")
-      end
-    (in layout template, by default)
-
-      <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
-      <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>   
-
-    -----------
-    REDIRECT -> MESSAGE IF SUCCESS OR ERROR 
-
-        def index(conn, _params) do
-          conn
-          |> put_flash(:info, "Welcome to Phoenix, from flash info!")
-          |> put_flash(:error, "Let's pretend we have an error.")
-          |> redirect(to: Routes.page_path(conn, :redirect_test))
-        end
-
------------------------------------
-
-ACTION FALLBACK 
-
-    A. 
-
-      defmodule HelloWeb.MyController do
-        use Phoenix.Controller
-
-        def show(conn, %{"id" => id}, current_user) do
-          with {:ok, post} <- fetch_post(id),
-              :ok <- authorize_user(current_user, :view, post) do
-            render(conn, "show.json", post: post)
-          else
-            {:error, :not_found} ->
-              conn
-              |> put_status(:not_found)
-              |> put_view(HelloWeb.ErrorView)
-              |> render(:"404")
-
-            {:error, :unauthorized} ->
-              conn
-              |> put_status(403)
-              |> put_view(HelloWeb.ErrorView)
-              |> render(:"403")
-          end
-        end
-      end
-
-    B. refactor 
-
-        defmodule HelloWeb.MyFallbackController do
-          use Phoenix.Controller
-
-          def call(conn, {:error, :not_found}) do
-            conn
-            |> put_status(:not_found)
-            |> put_view(HelloWeb.ErrorView)
-            |> render(:"404")
-          end
-
-          def call(conn, {:error, :unauthorized}) do
-            conn
-            |> put_status(403)
-            |> put_view(HelloWeb.ErrorView)
-            |> render(:"403")
-          end
-        end
-        -----------
-        defmodule HelloWeb.MyController do
-          use Phoenix.Controller
-
-          action_fallback HelloWeb.MyFallbackController
-
-          def show(conn, %{"id" => id}, current_user) do
-            with {:ok, post} <- fetch_post(id),
-                :ok <- authorize_user(current_user, :view, post) do
-              render(conn, "show.json", post: post)
-            end
-          end
-        end
-    ************************************************************************************************************
-                                      TEMPLATES  --- rendered from controller 
-                                                     call funs in view (view is action)
-
-    !!! templates rendered by controller, if no controller, template needs view to be rendered
-
-    new proj ---->  ErrorView, LayoutView, PageView
-
-    defmodule HelloWeb.LayoutView do
+    defmodule HelloWeb.HelloView do
       use HelloWeb, :view
     end
-    !!! templates are compiled into functions inside their respective views
-          --> All of the imports and aliases in view will also be available in corresponding templates
-              (can call view's funs from template):
 
-              defmodule HelloWeb.LayoutView do
-                use HelloWeb, :view
+4. TEMPLATE (templates/hello/world.html.eex)    !!! .eex 
 
-                def title() do
-                  "Awesome New Title!"
-                end
-              end
-              ------
-              (lib/hello_web/templates/layout/app.html.eex)
+      <h1>Hello World!</h1>
+  -----
+  --> live reloading (see 4000 port)
 
-                <title><%= title() %></title>       !!! same as <title><%= HelloWeb.LayoutView.title() %></title> 
+---------------------------------------------------------------------------------
+          + PARAMS 
 
-    RENDER TEMPLATE FROM VIEW 
+get "/hello/:name", HelloController, :world
+----
+def world(conn, %{"name" => name}) do
+  render(conn, "world.html", name:name)     ----    render(conn, "world.html", [name:name]) 
+end
+----!!! name:name  ---  :name => name   ---- [name: name]  ---- [{:name, name}]   (shorthand)
+        [{:name, name}]  --> name:name    (if last arg in func, omit brackets)   kwl
+-----
+defmodule HelloWeb.HelloView do
+  use HelloWeb, :view
+end    
+-------
+<h1>Hello <%= String.capitalize(@name) %>!</h1>
+----
+  b: 4000/Slavik      --> Hello Slavik
 
-        def render("index.html", assigns) do
-          "rendering with assigns #{inspect Map.keys(assigns)}"
-        end
+************************************************************
+      ROUTER PIPELINE OF PLUGS (takes conn -> conn -> conn ->)
 
-        -->  rendering with assigns [:conn, :view_module, :view_template]
+defmodule HelloWeb.Router do
+  use HelloWeb, :router
 
+  pipeline :browser do
+    plug :accepts, ["html"]                 ---services: fetching session, flash (user messages), security 
+    plug :fetch_session
+    plug :fetch_flash
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+  end
 
-    TEMPLATE SYNTAX 
+  pipeline :api do
+    plug :accepts, ["json"]
+  end
+  scope "/", HelloWeb do
+    pipe_through :browser                             --- this appl uses browser pipleline 
+    get "/hello/:name", HelloController, :world
+    get "/", PageController, :index
+  end
+end 
+*******************************************************************************************************
+                      RUMBLE PROJECT 
 
-          <%= if some_condition? do %>
-            <p>lala: <%= @user.name %></p>
-          <% else %>
-            <p>tata: <%= @user.name %></p>
-          <% end %>
+                  takes video from user 
+                  attaches commet to video from user in real time 
+                  plays video with all comments (from all users)
 
-          ------------------------
+connection 
+    |> endpoint()                           ---lib/rumble_web/endpoint.ex
+    |> router()                             ---lib/rumble_web/router.ex
+      |> browser_pipleline()                      part of router, dispatches connection
+    |> UserController.index()               ---returns all users 
+    |> UserView.render("index.html")
 
-          <table>
+!!! business logic in controller or better in Context layer
+        to be able to interact with busines logic from controller, channels, remote APIs
+        changing context does not require chaning controller
+------------------
+mix phx.new rumble 
+...configure db in config/dev.ex
+mix ecto.create           
+mix phx.server  
+
+-------------------------
+lib/rumble_web/templates/page/index.html.eex 
+
+    <%= gettext "Welcome to %{name}!", name: "Rumbl.io" %>
+
+-----
+  --> Welcome to Rumbl.io 
+
+----------------------------
+USER MODEL  (lib/rumble/accounts/user.ex) ----- id, name, username 
+
+    defmodule Rumbl.Accounts.User do              ---- Rumble.Accounts.User struct
+      defstruct [:id, :name, :username]
+    end
+    ---------
+    !!! struct (eval atcompilation time) vs map (eval at runtime)
+      w/o server running, > iex -S mix         !!! -S mix gives access to all modules 
+        iex> alias Rumbl.Accounts.User
+            > user = %{un: "Slavik"}      --> %{un: "Slavik"}
+            > user.username               -->  (KeyError) key :username not found in: %{un: "Slavik"}
+        ------
+            >  user1 = %User{un: "Slavik"}  --> compilation error 
+            > slavik = %User{name: "Slavik"}   --> 
+                      %Rumbl.Accounts.User{id: nil, name: "Slavik", username: nil}
+                      !!! undefinded keys ---- default vals 
+            > slavik.name     --> "Slavik"
+            > slavik.__struct__     --> Rumbl.Accounts.User       !!! the only dif with maps
+----------------------------
+CONTEXT --- ACCOUNTS  (lib/rumble/accounts.ex)
+                to get list of users (hard coded)
+                to get user by id 
+                to get users by one of the keys as params
+
+  defmodule Rumbl.Accounts do
+    @moduledoc """
+    The Accounts context.
+    """
+
+    alias Rumbl.Accounts.User 
+
+    def list_users do
+      [
+        %User{id: "1", name: "JosÃ©", username: "josevalim"},
+        %User{id: "2", name: "Bruce", username: "redrapids"},
+        %User{id: "3", name: "Chris", username: "chrismccord"}
+      ]
+    end
+
+    def get_user(id) do
+      Enum.find(list_users(), fn map -> map.id == id end)
+    end
+
+    def get_user_by(params) do
+      Enum.find(list_users(), fn map ->
+        Enum.all?(params, fn {key, val} -> Map.get(map, key) == val end)
+      end)
+    end
+  end
+  ----- > iex -S mix 
+  > alias Rumbl.Accounts
+  > alias Rumbl.Accounts.User
+  > Accounts.list_users()
+  > Accounts.get_user("1")
+  > Accounts.get_user_by(name: "Bruce")
+
+-----------------------------------------------------------------------
+ROUTER 
+   
+    get "/users", UserController, :index
+    get "/users/:id", UserController, :show
+
+-----------------------------------------------------------------------
+CONTROLLER (lib/rumbl_web/controllers/user_controller.ex)
+
+    defmodule RumblWeb.UserController do
+      use RumblWeb, :controller
+
+      alias Rumbl.Accounts
+
+      def index(conn, _params) do
+        users = Accounts.list_users()
+        render(conn, "index.html", users: users)
+      end
+    end
+
+---------------------------------------------------------------------
+VIEW (lib/rumbl_web/views/user_view.ex)
+
+    defmodule RumblWeb.UserView do
+      use RumblWeb, :view
+
+      alias Rumbl.Accounts
+
+      def first_name(%Accounts.User{name: name}) do
+        name
+        |> String.split(" ")
+        |> Enum.at(0)
+      end
+    end
+
+-----------------------------------------------------------------------
+TEMPLATE (lib/rumbl_web/templates/user/index.html.eex)
+
+    <h1>Listing users</h1>
+    <table>
+        <%= for user <- @users do %> 
             <tr>
-              <th>Number</th>
-              <th>Power</th>
+                <td><b><%= first_name(user) %></b>  (<%= user.id %>)</td>
+                <td><%= link "View", to: Routes.user_path(@conn, :show, user.id) %></td>   	
             </tr>
-          <%= for x <- 1..10 do %>
-            <tr>
-              <td><%= x %></td>
-              <td><%= x * x %></td>
-            </tr>
-          <% end %>
-          </table>
+        <% end %>
+    </table>
+    -----
+    !!! Link --> fun     --> "<a href=\"/show/\">View</a>"  --> <a href="/show/">View</a>
+        > iex -S mix 
+        >  Phoenix.HTML.Link.link("Home", to: "/")     -->
+                {:safe, [60, "a", [[32, "href", 61, 34, "/", 34]], 62, "Home", 60, 47, "a", 62]}
 
-    DATA FLOW 
-       
-       CONTROLLER: 
+       !!! :save and I/O list   (ex I/O used to write vals to a socket)
+    ----
+    > Phoenix.HTML.Link.link("Home", to: "/") |> Phoenix.HTML.safe_to_string()     --> "<a href=\"/\">Home</a>"
+        !!! Phoenix.HTML  --- html fun-ty in views (generate links, working with forms...)
+                              protect from cross-site scripting (XSS) attacks
+----------------------------------------------------------------------
 
-          def show(conn, %{"id" => id}) do
-            item = Todo.get_item!(id)
-            render(conn, "show.html", item: item)
-          end
-       
-       VIEW 
 
-          def pluralise(items) do
-            # items where status < 1 is equal to Zero or Greater than One:
-            case remaining_items(items) == 0 || remaining_items(items) > 1 do
-              true -> "items"
-              false -> "item"
-            end
-          end
+   
 
-      TEMPLATE (html)
-
-          <p><%= remaining_items(@items) %> <%= pluralise(@items) %> Item</p>
-          <ul>
-            <li>              
-              <%= @item.text %>
-            </li>
-            <li>              
-              <%= @item.person_id %>
-            </li>           
-          </ul>
-
-          
-      show 
-
-************************************************************************************************************
-************************************************************************************************************
-> mix phx.new app 
-config/dev.ex  ----username: "postgres" ....  password: "gerK..55" .... database: "postgres" ... 
-
--->   (controllers)   --- page_controller.ex
-      (router)        --- get "/", PageController, :index
-      (views)         --- error_view.ex 
-                          layout_view.ex
-                          page_view.ex 
-      (templates)     ---
-
-----------------------------------------------------------
-> mix ecto.create  --> creates db 
-
------------------------------------------------------------
-> mix phx.gen.html Proj El els title:string  num:integer
-> mix ecto.migrate 
-
--->  (controllers)   ---  el_controller.ex  (CRUD funs)
-     (router)        ---  
-     (views)         ---  el_view  (no funs)
-     (templates)     ---  el Folder (htmls for CRUD)
-----------------------------------------------------------
-(router, in scope)   resources "/els", ElController
-
---> creates routes for CRUD (not in code)

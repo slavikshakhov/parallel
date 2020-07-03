@@ -41,7 +41,8 @@ new file ----- a.exs
 
 > mix new proj --sup          
         sup ---generate an OTP application skeleton including a supervision tree
----------------------------------------------------------------------
+-------------creates (proj/lib/proj/application.ex)  
+
 
 *********************************************************************************************************
 ALIAS 
@@ -173,7 +174,7 @@ m = %{"x" =>  %{y: 5}} ----- m["x"]
     mm |> Map.put(:y, 8)       --> %{:y => 8, "x" => %{y: 5}}
 
 %{x: val} =  %{x: 5, y: 8}    ----------  val ---  -> 5
-
+m = %{x: [1, 2]}  --- %{m | x: [8, 9 | m.x]}  --> %{x: [8, 9, 1, 2]}    !!! updating nested dt 
 
 kwl = [x: 5, y: "la"]           --- kwl[:x]   --> 5
     !!! in kwl vs map: key can have > 1 val, order of keys can be controlled
@@ -474,7 +475,84 @@ end
 
 @spec f?(String.t) :: boolean       !!! boolean is ret type of function
 def f?(str) do   .... end 
- 
+
+********************************************************************************************************
+                                BEHAVIOURS 
+set of funs, must be implemented by module 
+-----
+defmodule A do
+  @callback f(String.t()) :: atom
+end
+------
+defmodule APresenter do
+  @behaviour A
+  @impl true
+  def f(str) do
+    IO.puts(str)
+  end
+end
+>APresenter.f("lala")          --> lala
+                                   :ok 
+
+---------------------------------------------------------------
+                                PROTOCOLS (like polimorphism in OOP)
+defprotocol Size do
+  @doc "Calculates the size of a data structure"
+  def size(data)
+end
+
+defimpl Size, for: BitString do
+  def size(string), do: byte_size(string)
+end
+
+defimpl Size, for: Map do
+  def size(map), do: map_size(map)
+end
+
+defimpl Size, for: Tuple do
+  def size(tuple), do: tuple_size(tuple)
+end
+
+defimpl Size, for: File.Stat do
+  def size(file_stat), do: file_stat.size
+end
+
+
+defimpl Size, for: Any do
+  def size(_), do: 0
+end
+> Size.size(%{a: "a", b: "b"})  --> 2
+> Size.size("lala")            --> 4
+> Sise.size([1, 2, 3])          --> 
+        (Protocol.UndefinedError) protocol Size not implemented for [1, 2, 3] of type List
+
+******************************************************************************************************
+                                STRUCTS 
+
+!!! 1 struct per 1 module 
+
+defmodule Folder do  
+  defstruct name: "new folder", files_info: [], path: nil
+end
+
+>  %Folder{}        -->  %Folder{files_info: [], name: "new folder", path: nil}
+>  %Folder{}.name       --> "new folder"
+> folder = %Folder{files_info: [File.stat!("info.ex")]}  --> info about info.ex file, placed in struct's field
+
+!!! File.stat  --> {:ok, result} 
+    File.stat! --> result 
+    File.stat/2   ---- returns %File.stat{} struct 
+
+----------------------------
+defmodule Folder do
+  @inforce_keys: path
+  defstruct name: "new folder", files_info: [], path: nil
+end
+
+!!! inforce_keys: path    --- makes path field required 
+> %Folder{}    --> error
+> %Folder{path: "a/b/c/"}     --> ok
+--------------------
 
 
 
