@@ -396,9 +396,108 @@ TEMPLATE (lib/rumbl_web/templates/user/show.html.eex)
             !!! each template is render(template_name, assigns) of the respective view  
                     assigns ---- []  <-- plugs, controller funs 
                 can render 
+!!! Rumble.UserController  
+          show ---- render ---"show.html"
+    Rumble.UserView 
+    ../templates/user/......     (all templates in this F turned into funs by view inside view) 
 
 --------------------------------------------------------------------------------------------------------
                     LAYOUTS
 
 controller's render --> view --> template 
+    Rumble.UserController  ---- render Rumble.LayoutView ---- .../templates/layout/app.html.eex
+                                render Rumble.UserView  ----- .../templates/user/....
+    .../templates/layout/app.html.eex
+              <%= @inner_content %>           ----- embed controller's action's html 
 
+*********************************************************************************************************
+                              ECTO REPOSITORY BACKED BY PostgreSQL db 
+
+(ecto/rumble/lib/rumble/repo.ex)    ---- ecto repository, created when proj was created
+
+    defmodule Rumble.Repo do
+      use Ecto.Repo,
+        otp_app: :rumble,
+        adapter: Ecto.Adapters.Postgres
+    end
+
+------------------------------------------------
+USER MODULE  ----- SCHEMA 
+
+  (lib/rumble/accounts/user.ex)
+
+      defmodule Rumbl.Accounts.User do
+        use Ecto.Schema
+        import Ecto.Changeset
+
+        schema "users" do
+          field :name, :string
+          field :username, :string
+
+          timestamps()
+        end
+      end
+  !!! DSL uses Schema and field macros
+      primary key :id  ---- automatically
+      from schema, ecto defines Elixir struct, as before.... %Accounts.User{}
+
+---------------
+MIGRATION 
+
+    > mix ecto.gen.migration create_user
+    (rumble/priv/repo/migrations/(timestamp)_create_user.exs)   ---- generated file 
+
+          defmodule Rumble.Repo.Migrations.CreateUser do
+            use Ecto.Migration
+
+            def change do
+
+            end
+          end
+
+          --------------- (add in change fun):
+          def change do
+            create table(:users) do
+              add :name, :string
+              add :username, :string, null: false
+              add :password_hash, :string
+
+              timestamps()
+            end
+
+            create unique_index(:users, [:username])
+          end
+          -------
+          !!! create, add, timestamps (-> fields: inserted_at, updated_at) macros
+              match fields with User schema 
+              --> table ---id, name, username (unique), password_hash, inserted_at, updated_at
+                          !!! password_hash not in schema, will be added later when authentication
+MIGRATE TO DB 
+   > mix ecto.migrate         !!! for this envoronment (dev, prod, test)
+                                  to switch env: MIX_EVN
+----------
+!!! OTP manages services: Ecto repositories... supervised in case Phoenix or Ecto crash
+    automaticall... Rumble.Repo addid in children arr in supervision tree: 
+        (lib/rumble/application.ex)
+            ....
+            def start(_type, _args) do
+              children = [Rumble.Repo, .....]
+            end
+----------------
+INSERT NEW USER INTO DB 
+  > eix -S mix 
+  > alias Rumble.Repo
+  > alias Rumble.Accounts.User
+  > Repo.insert(%User{name: "Slavik", username: "slav"})      -->
+          {:ok,
+            %Rumble.Accounts.User{
+              __meta__: #Ecto.Schema.Metadata<:loaded, "users">,
+              id: 1,
+              inserted_at: ~N[2020-07-04 10:35:39],
+              name: "Slavik",
+              updated_at: ~N[2020-07-04 10:35:39],
+              username: "slav"
+            }}
+    (create a few)
+  > Repo.all(User)    --> [.....]
+  > Repo.get(User, 1)     --> returns user with id 1
