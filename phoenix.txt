@@ -186,6 +186,8 @@ defmodule HelloWeb.Router do
   end
 end 
 *******************************************************************************************************
+*******************************************************************************************************
+
                       RUMBLE PROJECT 
 
                   takes video from user 
@@ -676,3 +678,76 @@ CONTEXT --- ACCOUNTS  (lib/rumble/accounts.ex)   ---- get data from form
         |> Repo.insert()
       end
     end
+
+---------------------------------------------------------------------------
+CONTROLLER (lib/rumbl_web/controllers/user_controller.ex)  --- add create fun
+
+    def create(conn, %{"user" => user_params}) do
+      {:ok, user} = Accounts.create_user(user_params)
+
+      conn
+      |> put_flash(:info, "#{user.name} created!")
+      |> redirect(to: Routes.user_path(conn, :index))
+    end
+-----
+!!! access to routes in appl: RumbleWeb.Router.Helpers
+    (/lib/rumble_web.ex) 
+    ...
+    alias RumbleWeb.Router.Helpers, as: Routes   
+            --> allows to use Routes.user_path(...)
+
+------
+> mix phx.server   -->   /users/new 
+
+--------------------------------------------------------------------------
+ERROR MESSAGE ... ex username too long --> 
+
+    instead of --- {:ok, user}
+    error -------- {:error, %Ecto.Changeset{}}
+
+CONTROLLER (lib/rumbl_web/controllers/user_controller.ex)  ---- change to react to invalid changeset 
+
+      def create(conn, %{"user" => user_params}) do
+        case Accounts.create_user(user_params) do
+          {:ok, user} ->
+            conn
+            |> put_flash(:info, "#{user.name} created!")
+            |> redirect(to: Routes.user_path(conn, :index))
+
+          {:error, %Ecto.Changeset{} = changeset} ->
+            render(conn, "new.html", changeset: changeset)        ----!!! changeset - failed validations
+        end
+      end
+---------------------------------------------------------------------------
+TEMPLATE (lib/rumbl_web/templates/user/new.html.eex) --- show specific errors for each input field 
+
+    <h1>New User</h1>
+    <%= form_for @changeset, Routes.user_path(@conn, :create), fn f -> %>
+        <%= if @changeset.action do %>
+            <div class="alert alert-danger">
+                <p>Oops, something went wrong! Please check the errors below.</p>
+            </div>
+        <% end %>
+        <div>
+            <%= text_input f, :name, placeholder: "Name" %>
+            <%= error_tag f, :name %>
+        </div>
+        <div>
+            <%= text_input f, :username, placeholder: "Username" %>
+            <%= error_tag f, :username %>
+        </div>
+        <%= submit "Create User" %> 
+    <% end %>
+------
+@changeset.action   ---- action is :insert here (for new changeset :action is nil)
+changeset track db changes and stores validation errors 
+error_tag fun defined in (lib/rumble_web/views/error_helpers.ex)
+      def error_tag(form, field) do
+        Enum.map(Keyword.get_values(form.errors, field), fn error ->
+          content_tag(:span, translate_error(error),
+            class: "invalid-feedback",
+            phx_feedback_for: input_id(form, field)
+          )
+        end)
+      end
+-------------------------------------------------------------------------------------
