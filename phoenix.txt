@@ -500,4 +500,179 @@ INSERT NEW USER INTO DB
             }}
     (create a few)
   > Repo.all(User)    --> [.....]
-  > Repo.get(User, 1)     --> returns user with id 1
+  > Repo.get(User, 1)     --> 
+
+        %Rumble.Accounts.User{
+          __meta__: #Ecto.Schema.Metadata<:loaded, "users">,
+          id: 1,
+          inserted_at: ~N[2020-07-04 10:35:39],
+          name: "Slavik",
+          updated_at: ~N[2020-07-04 10:35:39],
+          username: "slav"
+        }
+
+--------------------------
+DB ACCESS TO ACCOUNTS CONTEXT 
+
+    CONTEXT --- ACCOUNTS  (lib/rumble/accounts.ex)
+
+        defmodule Rumble.Accounts do
+          @moduledoc """
+          The Accounts context.
+          """
+
+          alias Rumble.Repo
+          alias Rumble.Accounts.User
+
+          def get_user(id) do
+            Repo.get(User, id)
+          end
+
+          def get_user!(id) do
+            Repo.get!(User, id)                 !!! if no user --> Ecto.NotFoundError
+          end
+
+          def get_user_by(params) do
+            Repo.get_by(User, params)
+          end
+
+          def list_users do
+            Repo.all(User)
+          end
+        end
+---------
+!!! no change in controller, only in context
+> mix phx.server  
+
+**************************************************************************************************
+                      NEW  ---- with form, db....
+
+CONTROLLER (lib/rumbl_web/controllers/user_controller.ex)  --- add new fun
+
+    defmodule RumbleWeb.UserController do
+      use RumbleWeb, :controller
+
+      alias Rumble.Accounts
+      alias Rumbl.Accounts.User
+
+      def new(conn, _params) do
+        changeset = Accounts.change_user(%User{})       ---- %Rumble.Accounts.User will have changeset fun 
+        render(conn, "new.html", changeset: changeset)
+      end
+    end
+    ---------
+    !!! change_user --> Ecto.Changeset --- manage records changes
+                                           cast params
+                                           validations
+----------------------------------
+USER MODULE  ----- SCHEMA   ----add changeset fun: 
+
+  (lib/rumble/accounts/user.ex)   ---- add changeset fun 
+
+      defmodule Rumbl.Accounts.User do
+        use Ecto.Schema
+        import Ecto.Changeset
+
+        schema "users" do
+          field :name, :string
+          field :username, :string
+
+          timestamps()
+        end
+        def changeset(user, attrs) do                   !!! user is %Accounts.User{...}
+          user
+          |> cast(attrs, [:name, :username])            !!! to be cast as inputs to schema types, rest rejected
+          |> validate_required([:name, :username])         --> Echto.Changeset 
+          |> validate_length(:username, min: 1, max: 20)
+        end
+      end
+
+----------------------------------------
+CONTEXT --- ACCOUNTS  (lib/rumble/accounts.ex)    ----add change_user fun 
+
+    defmodule Rumble.Accounts do
+      @moduledoc """
+      The Accounts context.
+      """
+      alias Rumbl.Accounts.User
+      alias Rumbl.Repo      
+
+      def change_user(%User{} = user) do
+        User.changeset(user, %{})
+      end
+    end
+-----------------
+!!! controller communicates with public (Accounts, Accounts.User) and private (rest) APIs
+    Accounts.change_user is private (via layers)
+    update policies (validations, error reporting, ...) decouple from User schema via changeset 
+
+----------------------------------------------------------------------------------------
+RESOURCES (CRUD)
+ROUTER 
+
+  scope "/", RumbleWeb do
+    pipe_through :browser
+
+    get "/", PageController, :index
+    resources "/users", UserController, only: [:index, :show, :new, :create]
+  end
+  ------
+  w/o only: [......]   --> 
+        get "/users", UserController, :index
+        get "/users/:id/edit", UserController, :edit
+        get "/users/new", UserController, :new
+        get "/users/:id", UserController, :show
+
+        post "/users", UserController, :create
+
+        put "/users/:id", UserController, :update
+        patch "/users/:id", UserController, :update
+
+        delete "/users/:id", UserController, :delete
+  
+  ------
+  > mix phx.routes     --> shows all routes 
+  ------------------------------------------------------------
+  TEMPLATE (lib/rumbl_web/templates/user/new.html.eex)
+
+      <h1>New User</h1>
+      <%= form_for @changeset, Routes.user_path(@conn, :create), fn f -> %>
+        <%= text_input f, :name, placeholder: "Name" %>
+        <%= text_input f, :username, placeholder: "Username" %>
+        <%= submit "Create User" %> 
+      <% end %>
+
+    -----
+    !!! form_for   --> security, UTF-8 encoding, ...
+        form_for(changeset, path, anon-fun)
+        fn f ->        ---- f is form-data 
+------
+!!! see Phoenix.HTML 
+> mix phx.server    -->  /4000/users/new     --> displays form    --- see devtools ---html
+
+      <input id="user_name" name="user[name]" ....>     ---- pulled from changeset 
+      ...
+      !!! Ecto passes changeset to form_for fun 
+          could pass hard-coded Echto.Changeset to form, but when form tightly coupled with changeset --> 
+                cannot change data abstraction if needed 
+          Phoenix.HTML.FormData protocol used; separates interface from implementation
+                                implemented by Ecto.Changeset --> (intermal data to structure digestible by form)
+          form send data to post "/users"
+---------------------------------------------------------------------------
+CONTEXT --- ACCOUNTS  (lib/rumble/accounts.ex)   ---- get data from form 
+
+    defmodule Rumbl.Accounts do
+      @moduledoc """
+      The Accounts context.
+      """
+
+      alias Rumbl.Accounts.User
+
+      alias Rumbl.Repo      
+
+      def create_user(attrs \\ %{}) do
+        %User{}
+        |> User.changeset(attrs)
+        |> Repo.insert()
+      end
+    end
