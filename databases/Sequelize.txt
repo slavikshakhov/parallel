@@ -1,0 +1,317 @@
+1. install MySql with installer, full (gerK...55    localhost:3306)
+2. in MySql command line client >>
+    CREATE USER 'slavik'@'localhost' IDENTIFIED BY 'great';          //creates new user
+    SELECT user, host FROM mysql.user;                                //shows all users
+    GRANT ALL PRIVILEGES ON *.* 'slavik'@'localhost';                 //give user admin privileges
+    FLUSH PRIVILEGES;
+    SHOW GRANTS FOR 'slavik'@'localhost';                             //show user's privileges
+    REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'someuser'@'localhost';
+    DROP USER 'someuser'@'localhost';
+    exit;                           //to start with my privileges: >>mysgl -u slavik -p
+
+-----------------------------------------------------
+>> npm install --save express body-parser cors sequelize sequelize-cli mysql2 
+!!! nodemon installed globally 
+---------------------------------------------------
+proj >> npx sequelize-cli init        
+    -> creates  config/config.json
+       !!! configure, change:  "operatorsAliases": 0
+    !!! also creates models F
+
+--------------------------------------------------
+CONNECTION 
+    const Sequelize = require('sequelize');
+
+    const connection = new Sequelize('tandem', 'root', 'gerKanuk55', {
+        host: 'localhost',
+        dialect: 'mysql'
+    });
+    connection
+    .authenticate()
+    .then(() => {
+        console.log('Connection has been established successfully.');
+    })
+    .catch(err => {  
+        console.error('Unable to connect to the database:', err);
+    });
+
+    module.exports = connection;
+---------------------------------------------------
+MODELS 
+    const Sequelize = require('sequelize');
+    const sequelize = require('../connection');
+
+    const User = sequelize.define('user', {
+        name: {
+            type: Sequelize.STRING,
+            allowNull: false
+        },
+        password: {
+            type: Sequelize.STRING      
+        },
+        city: {
+            type: Sequelize.STRING
+        },
+        country: {
+            type: Sequelize.STRING
+        }
+    },
+    { timestamps: false }
+    );
+
+    module.exports = User;
+    ----------------------------------
+    const Sequelize = require('sequelize');
+    const sequelize = require('../connection');
+
+    const OfferedLg = sequelize.define('offeredlg', {    
+        name: {
+            type: Sequelize.STRING,
+            allowNull: false
+        }    
+    }, { timestamps: false});
+
+    module.exports = OfferedLg;
+-------------------------------------------------------
+SERVER 
+        require('dotenv').config();
+        const express = require('express');
+        //const mongoose = require('mongoose');
+        const bodyParser = require('body-parser');
+        var cors = require('cors');
+
+        const port = 4000;
+        const app = express();
+
+        const connection = require('./connection');
+
+        const seq = require('sequelize');
+        const Op = seq.Op;
+
+        const User = require('./models/User');
+        const OfferedLg = require('./models/OfferedLg');
+        const WantedLg = require('./models/WantedLg');
+
+        const dataUsers = [
+            {"name": "Slavik", "password": "sl", "city": "Valencia", "country": "Spain"},
+            {"name": "Carlos", "password": "ca", "city": "Valencia", "country": "Spain"},
+            {"name": "Adrian", "password": "ad", "city": "Hamburg", "country": "Germany"},
+            {"name": "Robert", "password": "ro", "city": "Toronto", "country": "Canada"},
+            {"name": "Lena", "password": "le", "city": "Kremenchug", "country": "Ukraine"}];
+
+        const dataLgs = [
+            {"name": "english"},
+            {"name": "french"},
+            {"name": "spanish"}, 
+            {"name": "german"},
+            {"name": "italian"},
+            {"name": "chinese"},
+            {"name": "turkish"},
+            {"name": "russian"},
+        ]
+        User.belongsToMany(OfferedLg, {through: 'UserOfferedLg', timestamps: false});    
+        User.belongsToMany(WantedLg, {through: 'UserWantedLg', timestamps: false}); 
+
+        OfferedLg.belongsToMany(User, {through: 'UserOfferedLg', timestamps: false});    
+        WantedLg.belongsToMany(User, {through: 'UserWantedLg', timestamps: false});
+
+        /*
+        connection.sync({force: true}).then(() => {
+            User.bulkCreate(dataUsers)
+            .catch(err => console.log(err)); 
+        }) 
+        .then(() => {
+            OfferedLg.bulkCreate(dataLgs)
+            .catch(err => console.log(err));
+        })
+        .then(() => {
+            WantedLg.bulkCreate(dataLgs)
+            .catch(err => console.log(err));
+        });
+        */
+        app.use(bodyParser.urlencoded({ extended: false }));
+        app.use(bodyParser.json());
+        app.use(cors());
+
+        const users = require('./routes/users');
+        app.use('/auth', users);
+
+        app.listen(port, () => {
+            console.log(`server running on port ${port}`)
+        });
+-------------------------------------------------------------------
+ROUTES 
+        const express = require('express');
+        const app = express();
+        const jwt = require('jsonwebtoken');
+        const { check, validationResult } = require('express-validator');
+        const router = express.Router();
+
+        const db = require('../mysql');
+        const seq = require('sequelize');
+        const Op = seq.Op;
+        const bcrypt = require('bcrypt');
+        const saltRounds = 10;
+
+        let _ = require('lodash');
+
+        const User = require('../models/User');
+        const OfferedLg = require('../models/OfferedLg');
+        const WantedLg = require('../models/WantedLg');
+
+        router.post('/register', [
+            check('password').isLength({ min: 4, max: 8 }).withMessage('Must be between 4 and 8 characters long')
+            ], async (req, res) => {
+                const errors = validationResult(req);
+                if (!errors.isEmpty()) {
+                    return res.status(422).json({ errors: errors.array() })
+        }
+
+        let {name, password, city, country} = req.body;
+        name = name.toLowerCase();
+
+        var user = await User.findOne({where: {name: name}});
+        if(user){
+            res.status(400).json('user with this name already exists');
+        } else {
+            bcrypt.hash(password, saltRounds, function(err, hash) {
+            //save hash as pw in db
+            if(err){
+                res.json('password could not be hashed');
+            } else {
+                User.create({name, password: hash, city, country});
+                res.status(200).json({message: 'Successfully registered!'});
+                }
+            });
+        }
+        });
+
+
+        router.post('/login', async (req, res) => {
+            let {name, password} = req.body;
+            name = name.toLowerCase();
+            var user = await User.findOne({where: {name: name}});
+            if(!user){
+                res.status(401).json({message: 'No user with this name!'});
+            } else {
+                
+                bcrypt.compare(password, user.password, (error, isMatch) => {
+                if(!isMatch){
+                    res.status(403).json('password is incorrect!');
+                } else {
+                    jwt.sign({id: user.id, name: user.name}, 'secretkey', { expiresIn: '300s' }, (err, token) => { 
+                    delete user.password;
+                    res.json({
+                        token,
+                        user
+                    });
+                    });
+                }      
+                });
+            }
+        });
+        
+
+        router.post('/addUserOfferedLgs', async (req, res) => { 
+            var user = await User.findOne({where: {id: req.body.id}, include: OfferedLg});
+            var lgs = await OfferedLg.findAll({where: {name: { [Op.or]: [...req.body.offeredLgs, '']} }});  
+            
+            await user.setOfferedlgs(lgs); 
+            var updatedUser = await User.findOne({where: {id: req.body.id}, include: OfferedLg});
+            res.status(200).json(updatedUser);
+        });
+
+        router.post('/addUserWantedLgs', async (req, res) => { 
+            var user = await User.findOne({where: {id: req.body.id}, include: WantedLg});
+            var lgs = await WantedLg.findAll({where: {name: { [Op.or]: [...req.body.wantedLgs, '']} }});  
+            await user.setWantedlgs(lgs); 
+            var updatedUser = await User.findOne({where: {id: req.body.id}, include: WantedLg});
+            res.status(200).json(updatedUser);
+        });
+
+        router.post('/thisUserofferedlgs', async (req, res) => {  
+            var userOfferedLgs = await User.findOne({
+                where : { id: req.body.id },
+                attributes: ['name', 'city', 'country'],    
+                include: [{
+                    model: OfferedLg,
+                    attributes: ['name']
+                    }]         
+                });
+                res.json(userOfferedLgs);
+        });
+        router.post('/thisUserwantedlgs', async (req, res) => {  
+        var userWantedLgs = await User.findOne({
+            where : { id: req.body.id },
+            attributes: ['name', 'city', 'country'],    
+            include: [{
+                model: WantedLg,
+                attributes: ['name']
+                }]         
+            });
+            res.json(userWantedLgs);
+        });
+
+        router.post('/filterUsers', async (req, res) => {
+            //const {offeredLgs, wantedLgs} = req.body;
+            var usersOfferedLgs = await User.findAll({
+                attributes: ['name', 'city', 'country'],
+                include: [{
+                    model: OfferedLg,
+                    where: {name: { [Op.or]: req.body.wantedLgs}},
+                    attributes: ['name']
+                }]
+        });
+        var usersWantedLgs = await User.findAll({
+            attributes: ['name', 'city', 'country'],
+            include: [{
+                model: WantedLg,
+                where: {name: { [Op.or]: req.body.offeredLgs}},
+                attributes: ['name']
+            }]
+        }); 
+        let filteredUsers = [];
+        for(const offeredLg of usersOfferedLgs){
+            for(const wantedLg of usersWantedLgs){
+                if(offeredLg.name === wantedLg.name){
+                    let newObj = {};
+                    filteredUsers.push({
+                        ...newObj,
+                        name: offeredLg.name,
+                        city: offeredLg.city,
+                        country: offeredLg.country,
+                        offeredLgs: offeredLg.offeredlgs.map(({name}) => ({name})).map(Object.values).reduce((a, b) => a.concat(b)),
+                        wantedLgs: wantedLg.wantedlgs.map(({name}) => ({name})).map(Object.values).reduce((a, b) => a.concat(b))
+                    })
+
+                }
+            }
+        }
+        res.json({filteredUsers});
+        });
+
+        router.get('/allUsersofferedlgs', async (req, res) => {
+        var users = await User.findAll({
+            attributes: ['name', 'city', 'country'],
+            include: [{
+                model: OfferedLg,
+                attributes: ['name']
+                }]    
+            });
+            res.json(users);
+        });
+        router.get('/allUserswantedlgs', async (req, res) => {
+        var users = await User.findAll({
+            attributes: ['name', 'city', 'country'],
+            include: [{
+                model: WantedLg,
+                attributes: ['name']
+                }]    
+            });
+            res.json(users);
+        });
+
+        module.exports = router;
+---------------------------------------------------------------------------------------------------------
+
+       

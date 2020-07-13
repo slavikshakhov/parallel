@@ -1,0 +1,124 @@
+
+                                SETUP 
+
+install: composer php package manager;  need node, npm 
+        > composer -v 
+        > download laravel (see docs) with composer 
+> laravel new proj 
+proj> php artisan  ---> all artisan commands 
+                        !!! > php artisan <command> 
+> php artisan serve     ---- open browser in given port  --> dev server
+
+
+********************************************************************************************************
+1. create project                                   SETUP
+2. start server in cmd1  (template running?)        TEMPLATES --- ROOT DEFALT TEMPLATE
+3. add auth                                         AUTH  --- ADD AUTH 
+4. npm install and compile                          FA -- INSTALL/COMPILE ASSETS 
+5. configure db (to use sqlite), migrate            DB -- FIRST MIGRATION 
+6. (b) -- register .... logout .... login -> 8000/home
+
+
+*********************************************************************************************************
+                            php artisan 
+
+> php artisan           --> all commands 
+> php artisan help make:controller      --> all options for this command 
+                                                !!! < ... >  -- required 
+********************************************************************************************************
+                            TESTING 
+ex. from controller  ---- dd(....)   --> executes and displays in browser page
+
+********************************************************************************************************
+                            TEMPLATES 
+
+ROOT DEFAULT TEMPLATE: 
+    resources/views/welcome.blade.php      <--  php artisan serve 
+
+PAGE DISPLAYED AFTER LOGGED IN:     views/home.blade.php 
+LINKS 
+    <a href="{{ url('/') }}">{{ config('app.name', 'Laravel') }} </a>
+SVG LOGO 
+    div -> img src="/la/la.svg">          !!! public/la/la.svg, public accessed by default 
+PAGE: TOP --- navbar  --- views/layouts/app.blade.php
+              rest    --- views/home.blade.php    (created by auth)    --- 8000/home  if auth
+                                    !!! has container -> (dashboard) --- replace dashboard
+
+ACCESS AUTH USER  ----  {{ Auth::user()-> username }} 
+
+*******************************************************************************************************
+                                DB  (sqlite)
+FIRST MIGRATION (sqlite) 
+    database/database.sqlite 
+    .env  ---- DB_CONNECTION=sqlite    (rest of DB lines delete)  
+        !!! all changes in .env ---- stop server, reboot again
+    > php artisan migrate     --> (tables created) ---  users
+                                                        password_resets
+                                                        create_failed_jobs
+    
+    (restart server) --> register 
+********************************************************************************************************
+                            AUTH
+ADD AUTH:
+
+> composer require laravel/ui
+> php artisan ui vue --auth   
+                              --> views/auth
+                                  views/layout
+                                  views/home.blade.php 
+                              --> 8000 -> login, register 
+
+ADD FIELD TO USER MODEL 
+    
+    1. (app/Http/controllers/Auth/RegisterController.php)
+
+        validator fun ---- 'username' => [ ... (validation rules) ... ]    !!! unique:users 
+        create fun ------- add 'username' 
+
+    2. (database/migrations/..._create_users_table)  
+
+        up fun  --- add 'username' 
+    
+    3. > php artisan migrate:frech        ---- erases data and recreates db 
+    4. (app/User.php)       -------   add 'username' 
+    5. (views/auth/register.blade.php)  ----- add input for 'username'
+    6. > php artisan tinker --> 
+            >> User::all(); 
+    -----
+    (b)  /8000/   ---- register link   or /8000/register 
+----------------------------------------------------------------------------------
+!!! if in home page no need for auth, replace HomeController with another controller 
+      routes/web.php   ----- controller? action? 
+      controller       ----- is there __construct fun with auth middleware? --> 
+                                then all actions require auth 
+                             returns view  ----> see views/viewName.blade.php 
+    ------REPLACE HomeController (with auth) with ProfilesController (without auth):
+    > php artisan make:controller ProfilesController 
+    
+    in routes ---- replace HomeController with ProfilesController
+        Route::get('/profile/{user}', 'ProfilesController@index')->name('profile.show');
+    in ProfilesController ---- paste index fun (copy from HomeController)
+        public function index($user)
+        {
+            $user = \App\User::find($user);
+            return view('home', ['user' => $user]);
+        }
+    in (views/home.blade.php)
+        <p>{{ $user -> username }}</p>          !!! now accessed without auth
+
+
+*******************************************************************************************************
+                                    FRONTEND -- FA
+*******************************************************************************************************
+INSTALL/COMPILE ASSETS
+    > npm install && npm run dev     --> all frontend assets compiled by webpack to 
+                                                public/css/app.css    
+                                                public/js/app.js
+------------------------------------------------------------------------------------------------------
+CSS --- bootstrap 
+    sass/variables.scss   --- ex. $body-bg  for page bg-color 
+    resources/sass/app.scss   ---- @import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+        > npm run dev  ---> recompiles into public/css/app.css
+                !!! (public/css/_variables.scss)  
+                        $font-family-sans-serif: 'Open Sans', sans-serif;
+        !!! to use <strong></strong>  --> need to import 400, 700 --- in app.scss

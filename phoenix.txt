@@ -231,7 +231,7 @@ USER MODEL  (lib/rumble/accounts/user.ex) ----- id, name, username
             > user = %{un: "Slavik"}      --> %{un: "Slavik"}
             > user.username               -->  (KeyError) key :username not found in: %{un: "Slavik"}
         ------
-            >  user1 = %User{un: "Slavik"}  --> compilation error 
+            > user1 = %User{un: "Slavik"}  --> compilation error 
             > slavik = %User{name: "Slavik"}   --> 
                       %Rumbl.Accounts.User{id: nil, name: "Slavik", username: nil}
                       !!! undefinded keys ---- default vals 
@@ -750,4 +750,524 @@ error_tag fun defined in (lib/rumble_web/views/error_helpers.ex)
           )
         end)
       end
--------------------------------------------------------------------------------------
+*******************************************************************************************************
+                AUTHENTICATION 
+                CREATE USERS ---- DB LAYER 
+
+DEPS: using Comeonin (for pw hashing) ---- Pbkdf2 technique of hashing 
+
+  (mix.exs)
+
+    defp deps do
+      [
+        .........................,
+        {:pbkdf2_elixir, "~> 1.0"}
+      ]
+    end
+  >> mix deps.get 
+
+----------------------------------------------------
+USER MODULE  ------ add changesets for registration
+(lib/rumble/accounts/user.ex)
+
+
+    defmodule Rumbl.Accounts.User do
+      use Ecto.Schema
+      import Ecto.Changeset
+
+      schema "users" do
+        field :name, :string
+        field :username, :string
+        
+        field :password, :string, virtual: true
+        field :password_hash, :string
+
+        timestamps()
+      end
+
+      def registration_changeset(user, params) do
+        user
+        |> changeset(params)
+        |> cast(params, [:password])
+        |> validate_required([:password])
+        |> validate_length(:password, min: 6, max: 100)
+        |> put_pass_hash()
+      end
+
+      defp put_pass_hash(changeset) do
+        case changeset do
+          %Ecto.Changeset{valid?: true, changes: %{password: pass}} ->
+            put_change(changeset, :password_hash, Pbkdf2.hash_pwd_salt(pass))
+
+          _ ->
+            changeset
+        end
+      end
+
+      def changeset(user, attrs) do
+        user
+        |> cast(attrs, [:name, :username])
+        |> validate_required([:name, :username])
+        |> validate_length(:username, min: 1, max: 20)
+      end
+    end
+
+------------
+>> iex -S mix 
+>  alias Rumble.Accounts.Use
+> alias Rumble.Router.Helpers, as: Routes
+> changeset = User.registration_changeset(%User{}, %{username: "max", name: "Max", password: "lalala"})
+        --> 
+          #Ecto.Changeset<
+            action: nil,
+            changes: %{
+              name: "Max",
+              password: "lalala",
+              password_hash: "$pbkdf2-sha512$160000$p43KoMgO6mcwaxWswXuq2Q$HjqnvMLcwalY9eYLXhwGHTia/7HDYUz1O2lMOU.sX9vMDiPO8OCZAy8O1ZW/igsYNSShSzpF.bE.B30.WiDrAA",
+              username: "max"
+            },
+            errors: [],
+            data: #Rumble.Accounts.User<>,
+            valid?: true
+          >
+
+----------------- (earlier created users w/o password)
+add tepmpass to all users for now
+
+    > alias Rumble.Repo
+
+    > for u <- Repo.all(User) do
+    ...> Repo.update!(User.registration_changeset(u, %{password: "temppass"}))
+    ...> end
+
+--------------------------------------------------------------------------------------------------------
+                    CREATING USERS ---WEB LAYER 
+
+CONTEXT --- ACCOUNTS  (lib/rumble/accounts.ex)   ---- add register_user fun 
+
+    defmodule Rumbl.Accounts do
+      @moduledoc """
+      The Accounts context.
+      """
+
+      alias Rumbl.Accounts.User
+      alias Rumbl.Repo
+
+      .......
+
+      def change_user(%User{} = user) do
+        User.changeset(user, %{})
+      end
+      
+      def create_user(attrs \\ %{}) do
+        %User{}
+        |> User.changeset(attrs)
+        |> Repo.insert()
+      end
+
+      def change_registration(%User{} = user, params) do
+        User.registration_changeset(user, params)
+      end
+
+      def register_user(attrs \\ %{}) do
+        %User{}
+        |> User.registration_changeset(attrs)
+        |> Repo.insert()
+      end
+    end
+    ------
+    !!! could put all in create_user fun, but better to separate 
+        create_user ---- for seeding, sending user invitations, ...
+        register_user  ----- with password hashing 
+
+------------------------------------------------------------------------------
+CONTROLLER (lib/rumbl_web/controllers/user_controller.ex)   ----- change create action 
+
+    def create(conn, %{"user" => user_params}) do
+      case Accounts.register_user(user_params) do      ----- was:  case Accounts.create_user(user_params) do
+        {:ok, user} ->
+          conn
+          |> put_flash(:info, "#{user.name} created!")
+          |> redirect(to: Routes.user_path(conn, :index))
+
+        {:error, %Ecto.Changeset{} = changeset} ->
+          render(conn, "new.html", changeset: changeset)
+      end
+    end
+
+--------------------------------------------------------------------------------
+TEMPLATE (lib/rumbl_web/templates/user/new.html.eex) --- add password field to form:  
+
+    <h1>New User</h1>
+    <%= form_for @changeset, Routes.user_path(@conn, :create), fn f -> %>
+        <%= if @changeset.action do %>
+            <div class="alert alert-danger">
+                <p>Oops, something went wrong! Please check the errors below.</p>
+            </div>
+        <% end %>
+        <div>
+            <%= text_input f, :name, placeholder: "Name" %>
+            <%= error_tag f, :name %>
+        </div>
+        <div>
+            <%= text_input f, :username, placeholder: "Username" %>
+            <%= error_tag f, :username %>
+        </div>
+        <div>
+            <%= password_input f, :password, placeholder: "Password" %> <%= error_tag f, :password %>
+            <%= error_tag f, :password %>
+        </div>
+        <%= submit "Create User" %> 
+    <% end %>
+
+-------
+> mix phx.server    ---- 4000/users/new 
+-----------------------------------------------------------------------------------------------------
+                    AUTHENTICATION SERVICE 
+                    available throughout system
+                    need to implement authentication as a plugs   
+                      add it to router to be used by other routes 
+                    (ex. after registration --> automatically logged in)
+-----------------------------------
+PLUG STRUCTURE 
+  module plugs (init fun, call fun) vs function plugs
+  ---------MODULE PLUG 
+      defmodule APlug do
+        def init(opts) do
+          opts
+        end
+        def call(conn, _opts) do
+          conn
+        end
+      end
+      --------
+      init ---- validate, transform opts
+                result is _opts in call
+                called in dev mode at runtime
+                       in prod mode at compile time
+      conn ----- data passed through every plug
+                 has details for ev req  ---> until res 
+      !!! all plugs:  conn --> conn --> conn    (Plug.Conn construct)
+      ---------------------------
+      Plug.Conn fields: 
+          strings: 
+                req fields: parsed by adapter for web server used (Cowboy by default in Phoenix)
+                host ---- ex. www.lala.com
+                method --- GET, POST, ...
+                path_info ---  ex.  ["admin", "users"]
+                scheme  ----- req protocol --- ex. :https 
+          fetchable fields:
+                cookies  ---- req cookies 
+                params ------- req params parsed from query string
+                                                 from req body 
+          fields to process web reqs:
+                assigns 
+                halted  ----- to halt connection (ex. if auth failed)
+          response fields: 
+                resp_body  ---- initially empty, later ex. http res string
+                resp_headers --- info about res type, caching rules, ...
+                status --------- 200-299  --- success
+                                 300-399 ---- redirects
+                                 400-499 ---- bad client req (not found...)
+                                 500+    ---- server errors 
+          private fields (for adaptor, frameworks)
+                adaptor  ----- info about underlying server 
+                private -----  for private use of frameworks 
+
+  ------------------------------------------------------------------------------------
+  AUTHENTICATION PLUG 
+
+  1. AUTH CONTROLLER (lib/rumble_web/controllers/auth.ex)
+
+      defmodule RumblWeb.Auth do
+        import Plug.Conn                                          !!! has assign fun 
+
+        def init(opts), do: opts
+
+        def call(conn, _opts) do
+          user_id = get_session(conn, :user_id)                   !!! :user_id stored in session?
+          user = user_id && Rumbl.Accounts.get_user(user_id)
+          assign(conn, :current_user, user)                       !!! store result in nil or in conn.assign
+        end
+      end
+      -----
+      now :current_user accessed in all downstream funs (controllers, views, ...)
+  ----------------------------
+  2. ADD PLUG TO ROUTER (to end of pileline)
+
+      defmodule RumbleWeb.Router do
+        use RumbleWeb, :router
+
+        pipeline :browser do
+          plug :accepts, ["html"]
+          plug :fetch_session
+          plug :fetch_flash
+          plug :protect_from_forgery
+          plug :put_secure_browser_headers
+          plug RumbleWeb.Auth                  ----- added 
+        end
+      ----
+      plug Rumble.Auth    ---> adds :current_user to conn.assigns  in conn 
+  -----------------------------
+  3. access to :index, :show only if logged in: 
+      USER CONTROLLER    ---- change index fun to be accessed for authenticated users only: 
+         
+        defmodule RumblWeb.UserController do
+          use RumblWeb, :controller
+
+          alias Rumbl.Accounts
+          alias Rumbl.Accounts.User
+
+          def index(conn, _params) do
+            case authenticate(conn) do
+              %Plug.Conn{halted: true} = conn ->
+                conn
+
+              conn ->
+                users = Accounts.list_users()
+                render(conn, "index.html", users: users)
+            end
+          end
+
+          def show(conn, %{"id" => id}) do
+            user = Accounts.get_user(id)
+            render(conn, "show.html", user: user)
+          end
+
+          def new(conn, _params) do
+            changeset = Accounts.change_registration(%User{}, %{})
+            render(conn, "new.html", changeset: changeset)
+          end
+
+          def create(conn, %{"user" => user_params}) do
+            case Accounts.register_user(user_params) do
+              {:ok, user} ->
+                conn
+                |> RumblWeb.Auth.login(user)
+                |> put_flash(:info, "#{user.name} created!")
+                |> redirect(to: Routes.user_path(conn, :index))
+
+              {:error, %Ecto.Changeset{} = changeset} ->
+                render(conn, "new.html", changeset: changeset)
+            end
+          end
+
+          defp authenticate(conn) do
+            if conn.assigns.current_user do
+              conn
+            else
+              conn
+              |> put_flash(:error, "You must be logged in to access that page")
+              |> redirect(to: Routes.page_path(conn, :index))
+              |> halt()
+            end
+          end
+        end 
+          ------
+          !!! if :current_user  --> returns conn unchanged
+              if not            --> error message 
+                                    redirect to root 
+                                    halt.conn  --> stops all downstream transformations 
+
+-------
+4000/users    --> message -- must be logged in to access this page 
+--------------------------------------------------------------
+AVOID DRY (not to use same authenticate code for each action)  --- use pipeline 
+    !!! change authenticate fun into function plug: 
+
+    USER CONTROLLER    --- add 
+
+       defmodule RumblWeb.UserController do
+          use RumblWeb, :controller
+
+          alias Rumbl.Accounts
+          alias Rumbl.Accounts.User
+
+          plug :authenticate when action in [:index, :show]
+
+          def index(conn, _params) do
+            users = Accounts.list_users()
+            render(conn, "index.html", users: users)
+          end
+
+          def show(conn, %{"id" => id}) do
+            user = Accounts.get_user(id)
+            render(conn, "show.html", user: user)
+          end
+
+          def new(conn, _params) do
+            changeset = Accounts.change_registration(%User{}, %{})
+            render(conn, "new.html", changeset: changeset)
+          end
+
+          def create(conn, %{"user" => user_params}) do
+            case Accounts.register_user(user_params) do
+              {:ok, user} ->
+                conn
+                |> RumblWeb.Auth.login(user)
+                |> put_flash(:info, "#{user.name} created!")
+                |> redirect(to: Routes.user_path(conn, :index))
+
+              {:error, %Ecto.Changeset{} = changeset} ->
+                render(conn, "new.html", changeset: changeset)
+            end
+          end
+
+          defp authenticate(conn, _opts) do
+            if conn.assigns.current_user do
+              conn
+            else
+              conn
+              |> put_flash(:error, "You must be logged in to access that page")
+              |> redirect(to: Routes.page_path(conn, :index))
+              |> halt()
+            end
+          end
+        end
+        ----
+        !!! plug explicitely checkes for halted: true 
+------------------------------------------------------------
+LOG IN USERS 
+AUTH CONTROLLER       ---- add login fun 
+
+    defmodule RumblWeb.Auth do
+      import Plug.Conn
+
+      def init(opts), do: opts
+
+      def call(conn, _opts) do
+        user_id = get_session(conn, :user_id)
+        user = user_id && Rumbl.Accounts.get_user(user_id)
+        assign(conn, :current_user, user)
+      end
+
+      def login(conn, user) do
+        conn
+        |> assign(:current_user, user)
+        |> put_session(:user_id, user.id)       !!! puts current user.id into session
+        |> configure_session(renew: true)       !!! configures session 
+      end
+    end
+    -----
+    Plug.Conn --- has field --- assigns 
+                    setting a value --- assign 
+    configure_session   ---- protects from session fixation attacks 
+                             talls Plug to send session cookie back to client with dif identifier 
+----------
+4000/users/new  
+
+---------------------------------------------------------------------------------------
+IMPLEMENTING LOGIN, LOGOUT 
+CONTEXT  --- ACCOUNTS 
+
+    def authenticate_by_username_and_pass(username, given_pass) do
+      user = get_user_by(username: username)
+
+      cond do
+        user && Pbkdf2.verify_pass(given_pass, user.password_hash) ->
+          {:ok, user}                                                         !!! username + pw match
+
+        user ->
+          {:error, :unauthorized}                                             !!! wrong password 
+
+        true ->
+          Pbkdf2.no_user_verify()
+          {:error, :not_found}                                                !!! no user with this username
+      end
+    end
+    def get_user_by(params) do
+      Repo.get_by(User, params)
+    end
+    -------
+    !!! if user not found --> Comeonin's no_user_verify  
+                                --> simulates password check with variable timing 
+                                        against timing attacks
+------------------------------------------------------------------------------------
+ROUTER  ------ add sessioins routes 
+
+    scope "/", RumblWeb do
+      pipe_through :browser # Use the default browser stack
+
+      get "/", PageController, :index
+      resources "/users", UserController, only: [:index, :show, :new, :create]
+      resources "/sessions", SessionController, only: [:new, :create, :delete]
+    end
+
+---------------------------------------------------------------------------------
+CONTROLLER ---- SESSION  (lib/rumbl_web/controllers/session_controller.ex)
+
+    defmodule RumblWeb.SessionController do
+      use RumblWeb, :controller
+
+      def new(conn, _) do
+        render(conn, "new.html")
+      end
+    end
+--------------------------------------------------------------------------------
+VIEW (lib/rumbl_web/views/session_view.ex)
+
+    defmodule RumblWeb.SessionView do
+      use RumblWeb, :view
+    end
+
+------------------------------------------------------------------------------
+TEMPLATE (lib/rumbl_web/templates/session/new.html.eex)
+
+<h1>Login</h1>
+<%= form_for @conn, Routes.session_path(@conn, :create), [as: :session], fn f -> %>
+    <div><%= text_input f, :username, placeholder: "Username" %></div>
+    <div><%= password_input f, :password, placeholder: "Password" %></div>
+    <%= submit "Log in" %> 
+<% end %>
+
+------------
+4000/sessions/new
+
+----------------------------------------------------------------------------
+USER ACCOUND LINKS IN LAYOUT 
+(lib/rumbl_web/templates/layout/app.html.eex)
+
+      <body>
+        <header>
+          <section class="container">
+            <nav role="navigation">
+              <ul>
+                <%= if @current_user do %>
+                  <li><%= @current_user.username %></li>
+                  <li><%= link "Log out", to: Routes.session_path(@conn, :delete, @current_user), method: "delete" %></li>
+                <% else %>
+                  <li><%= link "Register", to: Routes.user_path(@conn, :new) %></li>
+                  <li><%= link "Log in", to: Routes.session_path(@conn, :new) %></li>
+                <% end %>
+              </ul>
+            </nav>
+            
+          </section>
+        </header>
+        <main role="main" class="container">
+          <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
+          <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+          <%= @inner_content %>
+        </main>
+      </body>
+
+--------------------------------------------------------------------------------------------
+DELETE SESSION (LOGOUT)    
+(lib/rumbl_web/controllers/auth.ex)    ---- add logout action 
+
+    def logout(conn) do
+      configure_session(conn, drop: true)
+    end
+--------------------------------------------------------------------
+CONTROLLER ---- SESSION  (lib/rumbl_web/controllers/session_controller.ex)   --- add delete fun
+
+    def delete(conn, _) do
+      conn
+      |> RumblWeb.Auth.logout()
+      |> redirect(to: Routes.page_path(conn, :index))
+    end
+
+
+
+
+              

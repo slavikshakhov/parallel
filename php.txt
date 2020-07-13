@@ -1,0 +1,374 @@
+                            XAMPP 
+
+download   --- uncheck "to start control panel now"
+open XAMPP as administator 
+        unckeck services: Apache, MySQL 
+        activate actions 
+    ---
+    !!! if problem with port: MySql change 3306 to 3307 (config --- my.uni )
+                              xampp/phpMyAdmin/config.inc.php   ---- 127.0.0.1: 3307
+                                                                    
+                               Apache change 80 to 8080, 443 to 4433
+                                        apache httpd.conf  --- 8080
+                                        apache httpd-ssl.conf  --- 4433
+                               config - service and port settings -- 8080, 4433
+localhost:8080/phpmyadmin  ---- user acconts -- root localhost --> Edit privileges --> change pw .... Go 
+      (F)  xampp/phpMyAdmin/config.inc.php    ---- password ...  (gerK..55)
+VSCode: php intelisense
+        bracket pair colorizer 
+add C:\xampp\php  to path (system env vars)
+*********************************************************************************************************
+xampp/htdocs/     accessed via  localhost:8080/
+xampp/htdocs/phpsandbox/variables.php    ---- localhost:8080/phpsandbox/variables.php 
+
+------------------------------------------------------
+<?php
+    ...code here ...
+?>
+---------
+// comment here 
+# comment here
+/*  multiline comment */
+--------------
+$x = 'lala';
+echo $x;
+--------------
+$str1 . str2 
+$str1 .' '. str2 . '!';
+"$str1 $str2";
+-------------
+'it\'s time'     ----- "it's time" 
+------------
+$ar = array('a', 'b', 'c');        ---- $ar = ['a', 'b', 'c'];
+    $ar[1]                                  --> b
+    $ar[3] = 'd';
+    $ar[] = 'e'                         --> pushes to last 
+    count($ar)                          --> 5
+    print_r($ar)                        --> prints array 
+    var_dump($ar)                       --> prints array with dt of els
+-------------
+$obj = array('a' => 25, 'b' => 65);         ----assiciative array
+    $obj['a']                           --> 25
+    $ar['b'] = 55
+-------------
+$ar = array(
+    array('a', 10, 20),
+    array('b', 15, 25)
+    );
+    $ar[1][0]                           --> b 
+---------------------------------
+substr('hello', 1);    --> ello  
+substr('hello', -2);         --> lo
+substr('hello', 1, 3);           --> ell 
+------
+strlen('lalala');               --> 6
+strpos('hello world', 'o');     --> 4   !!! first match -> index
+                                        !!! strrpos -- last match
+trim('la la     ');         --> 'la la'
+strtoupper('lala');         --> LALA     !!! strtolower
+ucwords('la ta da');        --> La Ta Da
+str_replace('World', 'Everyone', 'Hello World');        --> Hello Everyone
+is_string('lala');              --> 1  (true)
+----
+$ar = array(true, false, null, 'abc', 33, 22.4, '22.4', ' ', 0, '0');
+foreach($ar as $val){
+    if(is_string($val)){
+        echo "{$val} is a string<br>";
+    }
+}
+-----
+gzcompress($longString);        !!! gzuncompress($compressedString);
+------------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------------
+SUPERGLOBALS (system vars)  --- $_SERVER
+
+(index.php)
+<?php 
+    $server = [
+        'Host Server Name' => $_SERVER['SERVER_NAME'],          //localhost
+        'Host Header' => $_SERVER['HTTP_HOST'],                 //localhost:8080
+        'Server Software' => $_SERVER['SERVER_SOFTWARE'],       // Apache/2.4.43 (Win64) OpenSSL/1.1.1g PHP/7.4.7
+        'Document Root' => $_SERVER['DOCUMENT_ROOT'],           //C:/xampp/htdocs
+        'Current Page' => $_SERVER['PHP_SELF'],                 //phpsandbox/index.php
+        'Script Name' => $_SERVER['SCRIPT_NAME'],               ///phpsandbox/index.php
+        'Absolute Path' => $_SERVER['SCRIPT_FILENAME'],         // C:/xampp/htdocs/phpsandbox/index.php
+    ];
+    $client = [
+        'Client System info' => $_SERVER['HTTP_USER_AGENT'],
+        'Client IP' => $_SERVER['REMOTE_ADDR'],
+        'Remote Port' => $_SERVER['REMOTE_PORT'],
+    ];
+?>
+----
+(server-info.php)  ----- head link to bootstrap CDN 
+<?php include 'index.php'; ?>
+...
+<body>
+	<div class="container">
+		<h1>Server & File Info</h1>
+		<?php if ($server): ?>
+			<ul class="list-group">
+				<?php foreach ($server as $key => $value): ?>
+					<li class="list-group-item">
+						<strong><?php echo $key; ?>: </strong>
+						<?php echo $value; ?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		<?php endif; ?>
+
+		<h1>Client Info</h1>
+		<?php if ($client): ?>
+			<ul class="list-group">
+				<?php foreach ($client as $key => $value): ?>
+					<li class="list-group-item">
+						<strong><?php echo $key; ?>: </strong>
+						<?php echo $value; ?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		<?php endif; ?>
+	</div>
+</body>
+----------------------------------------------------------------------------------------
+                            GET ---- data visible in url
+                            POST --- data not visible in url 
+-----
+(get_post.php)
+
+<?php
+    if (isset($_GET['name'])) {
+        //better use $_POST
+        //echo $_GET['name'];
+        //echo htmlentities($_GET['name'])       // if <script></script> entered into input --> not inserted in code
+        //print_r($_GET);                 // --> Array ( [name] => Slavik [email] => lala@lala.la )
+        //echo $_SERVER['QUERY_STRING'];    // --> name=Slavik&email=lala%40yahoo.ca
+    }
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+    <body>
+        <form method="GET" action="get_post.php">          !!! action="<?php echo $_SERVER['PHP_SELF']; ?>"
+            <div>
+                <label for="">Name</label><br>
+                <input type="text" name="name"> 
+            </div>
+            <div>
+                <label for="">Email</label><br>
+                <input type="text" name="email"> 
+            </div>
+            <input type="submit" value="Submit">
+        </form>
+        <ul>
+            <li>
+                <a href="get_post.php?name=Slavik">Slavik</a>                   !!! directly submits data w/o form
+            </li>
+            <li>
+                <a href="get_post.php?name=Carlos">Carlos</a>
+            </li>
+        </ul>
+    </body>
+</html>
+
+-----------------------------------------------------------------------------------------------------------------------
+                                FILTERS AND VALIDATORS 
+
+<?php
+if (filter_has_var(INPUT_POST, 'data')) {
+    echo 'Data found';                          // shown when data input has value af submit
+} else {
+    echo 'No data';
+}
+if (filter_has_var(INPUT_POST, 'data')) {
+    $email = $_POST['data'];
+    $email = filter_var($email, FILTER_SANITIZE_EMAIL);
+    echo $email.'<br>';                         //la<>\\@la.com  --> la@la.com
+
+    if(filter_var($email, FILTER_VALIDATE_EMAIL)){
+        echo 'Email is valid';                        //if email has correct format 
+    } else {
+        echo 'Email is invalid';
+    }
+    //if(filter_input(INPUT_POST, 'data', FILTER_VALIDATE_EMAIL)){} 
+                //checks email format without stripping wrong chars
+}
+
+?>
+
+<form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+    <input type="text" name="data">
+    <button type="submit">Submit</button>
+</form>
+------
+!!! FILTER_VALIDATE_EMAIL   // _BOOLEAN  / _INT / _FLOAT / _IP / _REGEXP / _URL
+    FILTER_SANITIZE_EMAIL   //_ENCODED / _NUMBER_FLOAT / _NUMBER_INT / _SPECIAL_CHARS /
+                               _STRING / _URL 
+
+-------
+$x = 23;
+if(filter_var($x, FILTER_VALIDATE_INT)){
+    echo $x. ' is a number';
+} else {
+    echo $x. ' is not a number';
+}
+-------
+$n = 33kkll55;
+var_dump(filter_var($n, FILTER_SANITIZE_NUMBER_INT));   --> 3355
+        !!! strips <script></script> in attacks
+------------
+$filters = array(
+    "data" => FILTER_VALIDATE_EMAIL, 
+    "data2" => array(
+        "filter" => FILTER_VALIDATE_INT,
+        "options" => array(
+            "min_range" => 1,
+            "max_range" => 100
+        )
+        ))
+                    
+print_r(filter_input_array(INPUT_POST, $filters))    !!! in html form with post 
+-------------
+$obj = array(
+    "name" => "slavik",
+    "age" => "44"
+);
+$filters = array(
+    "name" => array(
+        "filter" => FILTER_CALLBACK, 
+        "options" => "ucwords"              !!! ucwords is my custom fun 
+    ),
+    "age" => array(
+        "filter" => FILTER_VALIDATE_INT,
+        "options" => array(
+            "min_range" => 1,
+            "max_range" => 120
+        )
+    )
+);
+print_r(filter_var_array($obj, $filters));
+-----------
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------
+for($i = 0; $i < 10; i++){
+    echo 'Number '. $i;
+    echo '<br>';
+}
+----------
+$i = 0;
+while($i < 10){
+    echo 'Number '. $i;
+    echo '<br>';
+    $i++;
+}
+----------
+foreach($ar as $el){
+    echo $el;
+    echo '<br>';
+}
+----
+foreach($obj as $person => $age){
+    echo $person . ': '.$age;
+}
+---------------------------------------------------
+function f($x){ echo "Hello $x<br>" }                        ---- $x passed by value, default
+function f($x = 'World')       ----- f1() vs f1('Slavik')
+function f($x, $y){ return $x + $y; }
+-------------
+$x = 10;
+    function f1($num){                                            ---- &$num passed by value, default
+        $num += 5;
+    }
+    function f2(&$num){                                            ---- &$num passed by reference
+        $num += 5;
+    }
+    f1($x);
+    echo $x;                                                      --> 10
+    f2($x); 
+    echo $x;                                                      --> 15
+----------------------------------------------------
+if($x == 5){ .... }                                        !!! if $x = 5 or $x = '5'
+if($x === 5){ ... }                                        !!! failes if $x = '5'  ---- checkes val and dt
+if(cond){}  elseif {} else {}
+if($x < 5 AND $x != 0){}                        && ... OR --- ||
+------------------
+echo ($z > 5) ? 'lala' : 'tata';
+$x = ($z > 5) ? true : false; 
+------------------
+switch($x){
+    case 5: 
+        echo 'lala';
+        break;
+    ....
+    default:
+        echo 'nothing';        
+}
+------------
+!!! in html: 
+        <?php if(...): ?>
+            ...
+        <?php else:   ?>
+            ...
+        <?php endif; ?>
+    -----
+
+        <?php foreach($arr as $val): ?>
+            <?php echo $val; ?>
+        <?php endforeach; ?>
+---------------------------------------------------
+date('d');                                      --> 03      ex. 3rd of this month
+date('m');                                      --> 07      july
+date('Y');                                      --> 2020
+date('l');                                      --> Friday
+date('Y/m/d');                                  --> 2020/07/10
+---
+date('h');                                      --> 02  --- hour 
+date('i');                                      --> 15  --- minutes
+date('s');                                      --> 54  --- seconds
+date('a');                                      --> AM or PM 
+date('h:i:sa')                                  --> 02:06:24pm 
+date_default_timezone_set('.......');           !!! see docs; this sets this php program to this time zone
+$timestamp = mktime(10, 25, 55, 10, 03, 1975);      !!! hr, min, sec, mon, day, year 
+echo date('m/d/Y', $timestamp);                     --> 03/10/1975
+echo date('m/d/Y h:i:sa', $timestamp);              --> 03/10/1975 10:25:55am
+$timestamp2 = strtotime('7:00pm March 20 1016');     
+    date('m/d/Y h:i:sa', $timestamp2)               ---- formatted timestamp 
+strtotime('tomorrow');            --- 'next Sunday'
+                                      '+2 Months'   // Days // Years ...
+
+----------------------------------------------------------------------------------------------------
+INCLUDE, REQUIRE     (require same as include, but stops script if file not found)
+
+inc/header.php 
+   /footer.php 
+index.php    -----  <?php include 'inc/header.php'; ?>
+                            (some index html here)
+                    <?php include 'inc/footer.php'; ?>
+about.php    -----  <?php include 'inc/header.php'; ?>
+                            (some about html here)
+                    <?php include 'inc/footer.php'; ?>
+
+                           
+
+
+
+
+

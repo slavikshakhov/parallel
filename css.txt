@@ -1,0 +1,5 @@
+svg logo size:              <img src="/lala/la.svg" style="height:25px;">
+logo (.svg)  <<<<<<<<<<<<<<< REF   freelogodesign.org
+
+----------
+|     ---  border-right: 1px solid #333     (gray)
