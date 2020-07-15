@@ -5,3 +5,6 @@ div - div  in one line:              par d-flex -> block chs
 
 ----------
 .rounded-circle
+
+----------
+img gallery: row -> col-3 mb-4 -> img 
