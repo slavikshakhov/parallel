@@ -53,9 +53,9 @@ ex. from controller  ---- dd(....)   --> executes and displays in browser page
 
 ORDER:  '/el/create'   then '/el/{el}'
 *******************************************************************************************************
-                            CONTROLLERS  (El here is Profile, one User has one El)
+                            CONTROLLERS  (one User has one Profile)
 
->> php artisan create:controller ElsController 
+>> php artisan create:controller ProfilesController 
 
 public function index($user) { ... }        !!!! $user <- routes as param
          return view('profiles.index', ['user' => $user]);     
@@ -487,3 +487,356 @@ FollowsController ---- has middleware for 'auth'  (unlogged users cannot follow 
         (in template):
             <img src="/storage/{{ $el->img }}>           !!! el passed from controller
 -----------------------------------------------------------------------
+*****************************************************************************************************************
+                                1 User - 1 Profile
+                                CREATE PROFILE WHEN USER CREATED (REGISTERED)
+
+> php artisan mak:model Profile -m      
+    (database/migrations/...create_profiles_table.php) --- up fun, Schema::create fun ---
+        $table->bigIncrements('id');
+        $table->unsignedBigInteger('user_id');                  !!! FK (profile-user)
+        $table->string('title')->nullable();
+        $table->text('description')->nullable();
+        $table->string('url')->nullable();
+        $table->string('image')->nullable();
+        $table->timestamps();
+
+        $table->index('user_id');                               !!! cascading 
+
+    (app/Profile.php) --- in class 
+        public function user()
+        {
+            return $this->belongsTo(User::class);
+        }
+    (app/User.php) --- in class 
+        public function profile()
+        {
+            return $this->hasOne(Profile::class);
+        }
+        protected static function boot()                        
+        {
+            parent::boot();
+
+            static::created(function ($user) {                  !!! runs when user created
+                $user->profile()->create([                      !!! profile with this user's id created
+                    'title' => $user->username,
+                ]);                
+            });
+        }
+
+---------------------------------------------------------------------------------------------------------------
+                                    AFTER REGISTER OR LOGIN --> SHOW ASSOCIATED FOLLOYING USER'S POSTS 
+(app/Http/Controllers/Auth/RegisterController.php)
+(app/Http/Controllers/Auth/LoginController.php) 
+    protected $redirectTo = '/';
+Route::get('/', 'PostsController@index');      ----- see below
+
+
+---------------------------------------------------------------------------------------------------------------
+                                UPDATE PROFILE OF AUTH-D USER 
+
+Route::get('/profile/{user}/edit', 'ProfilesController@edit')->name('profile.edit');
+>> php artisan make:policy ProfilePolicy -m Profile     --> app/Policies/ProfilePolicy.php 
+    (ProfilePolicy) ----- all actions for profile, with empty bodies 
+                public function update(User $user, Profile $profile)
+                {
+                    return $user->id == $profile->user_id;                   true if passed $user is this profile's user_id
+                }    
+
+(ProfilesController)  ---- use App\User;
+    public function edit(User $user)
+    {
+        $this->authorize('update', $user->profile);
+        return view('profiles.edit', compact('user'));
+    }
+(views/profiles/index.blade.php)  ---- link to editting profile 
+        @can('update', $user->profile)
+            <a href="/profile/{{ $user->id }}/edit">Edit Profile</a>
+        @endcan
+
+(views/profiles/edit.blade.php)
+    @extends('layouts.app')
+    @section('content')
+
+    <div class="container">
+        <form action="/profile/{{ $user->id }}" enctype="multipart/form-data" method="post">
+            @csrf
+            @method('PATCH')
+            ....(take inputs format from register.blade.php)
+        </form>
+    </div>
+
+Route::patch('/profile/{user}', 'ProfilesController@update')->name('profile.update');
+(ProfilesController) --- 
+        public function update(User $user)
+        {
+            $this->authorize('update', $user->profile);
+
+            $data = request()->validate([
+                'title' => 'required',
+                'description' => 'required',
+                'url' => 'url',
+                'image' => '',
+            ]);
+
+            if (request('image')) {
+                $imagePath = request('image')->store('profile', 'public');
+                $image = Image::make(public_path("storage/{$imagePath}"))->fit(1000, 1000);
+                $image->save();
+                $imageArray = ['image' => $imagePath];
+            }
+            auth()->user()->profile->update(array_merge(
+                $data,
+                $imageArray ?? []
+            ));
+            return redirect("/profile/{$user->id}");
+        }
+Route::get('/profile/{user}', 'ProfilesController@index')->name('profile.show');
+(ProfilesController)
+    public function index(User $user)
+    {        
+        return view('profiles.index', compact('user'));
+    }
+(views/profiles/index.blade.php)
+    <img src="{{ $user->profile->profileImage() }}" class="rounded-circle w-100">
+    ...
+    @can('update', $user->profile)
+        <a href="/profile/{{ $user->id }}/edit">Edit Profile</a>
+    @endcan
+
+------------------------------------------------------------------------------------------------------
+                                1 User - many Posts 
+
+> php artisan mak:model Post -m 
+(database/migrations/...create_posts_table.php) --- up fun, Schema::create fun ---
+    $table->bigIncrements('id');
+    $table->unsignedBigInteger('user_id');
+    $table->string('caption');
+    $table->string('image');
+    $table->timestamps();
+
+    $table->index('user_id');
+
+(app/Post.php) --- in class 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+(app/User.php) ---- in class 
+    public function posts()
+    {
+        return $this->hasMany(Post::class)->orderBy('created_at', 'DESC');
+    }
+(views/profiles/index.blade.php)
+    @can('update', $user->profile)
+        <a href="/p/create">Add New Post</a>
+    @endcan
+
+Route::get('/p/create', 'PostsController@create');
+(PostsController)
+    public function create()
+    {
+        return view('posts.create');
+    }
+(views/posts/create.blade.php)
+    @extends('layouts.app')
+    @section('content')
+
+    <div class="container">
+        <form action="/p" enctype="multipart/form-data" method="post">
+            @csrf
+            ... (use inputs format from register) ...
+        </form>
+    </div>
+Route::post('/p', 'PostsController@store');
+(PostsController)
+    public function store()
+    {
+        $data = request()->validate([
+            'caption' => 'required',
+            'image' => ['required', 'image'],
+        ]);
+
+        $imagePath = request('image')->store('uploads', 'public');
+
+        $image = Image::make(public_path("storage/{$imagePath}"))->fit(1200, 1200);
+        $image->save();
+
+        auth()->user()->posts()->create([
+            'caption' => $data['caption'],
+            'image' => $imagePath,
+        ]);
+
+        return redirect('/profile/' . auth()->user()->id);
+    }
+-----------------
+Route::get('/', 'PostsController@index');
+(PostsController)
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+    public function index()
+    {
+        $users = auth()->user()->following()->pluck('profiles.user_id');
+        $posts = Post::whereIn('user_id', $users)->with('user')->latest()->paginate(5);
+        return view('posts.index', compact('posts'));
+    }
+(views/posts/index.blade.php)
+    <div class="row pt-5">
+        @foreach($user->posts as $post)
+            <div class="col-4 pb-4">
+                <a href="/p/{{ $post->id }}">
+                    <img src="/storage/{{ $post->image }}" class="w-100">
+                </a>
+            </div>
+        @endforeach
+    </div>
+Route::get('/p/{post}', 'PostsController@show');
+(PostsController)
+    public function show(\App\Post $post)
+    {
+        return view('posts.show', compact('post'));
+    }
+(views/posts/show.blade.php)
+    <img src="/storage/{{ $post->image }}" class="w-100">
+    ...
+    <img src="{{ $post->user->profile->profileImage() }}" class="rounded-circle w-100" style="max-width: 40px;">
+    ...
+    <a href="/profile/{{ $post->user->id }}">
+        <span class="text-dark">{{ $post->user->username }}</span>
+    </a>
+--------------------------------------------------------------------------------------------
+                            many Users --- many Following (profiles)
+
+>> php artisan create_el_user_pivot_table --create profile_user       
+    (migration  --- up -- create) --- 
+            $table->unsignedBigInteger('profile_id');
+            $table->unsignedBigInteger('user_id');
+    >> php artisan migrate 
+    (User.php)
+            public function following()
+            {
+                return $this->belongsToMany(Profile::class);
+            }
+    (Profile.php) 
+            public function followers()
+            {
+                return $this->belongsToMany(User::class);
+            }
+(ProfilesController)
+    public function index(User $user)
+    {
+        $follows = (auth()->user()) ? auth()->user()->following->contains($user->id) : false;
+
+        $postCount = Cache::remember(
+            'count.posts.' . $user->id,
+            now()->addSeconds(30),
+            function () use ($user) {
+                return $user->posts->count();
+            });
+
+        $followersCount = Cache::remember(
+            'count.followers.' . $user->id,
+            now()->addSeconds(30),
+            function () use ($user) {
+                return $user->profile->followers->count();
+            });
+
+        $followingCount = Cache::remember(
+            'count.following.' . $user->id,
+            now()->addSeconds(30),
+            function () use ($user) {
+                return $user->following->count();
+            });
+
+        return view('profiles.index', compact('user', 'follows', 'postCount', 'followersCount', 'followingCount'));
+    }
+
+(views/profiles/index.blade.php)
+    <div class="d-flex">
+        <div class="pr-5"><strong>{{ $postCount }}</strong> posts</div>
+        <div class="pr-5"><strong>{{ $followersCount }}</strong> followers</div>
+        <div class="pr-5"><strong>{{ $followingCount }}</strong> following</div>
+    </div>
+    ......
+    <div class="d-flex justify-content-between align-items-baseline">
+        <div class="d-flex align-items-center pb-3">
+            <div class="h4">{{ $user->username }}</div>
+            <follow-button user-id="{{ $user->id }}" follows="{{ $follows }}"></follow-button>
+        </div>
+        @can('update', $user->profile)
+            <a href="/p/create">Add New Post</a>
+        @endcan
+
+    </div>
+    .....
+    <div class="row pt-5">
+        @foreach($user->posts as $post)
+            <div class="col-4 pb-4">
+                <a href="/p/{{ $post->id }}">
+                    <img src="/storage/{{ $post->image }}" class="w-100">
+                </a>
+            </div>
+        @endforeach
+    </div>
+------------
+VUE.js
+________
+!!! after changes: > npm run dev     ------or ---- > npm run watch
+(resources/js/components/FollowBtnComponent.vue) ----- 
+change in (app.js)  --- Vue.component('follow-btn', require('./components/FollowBtnComponent.vue').default);
+!!! include in template:  <follow-btn></follow-btn> ---- see above (views/profiles/index.blade.php)
+---------------
+<template>
+    <div>
+        <button class="btn btn-primary ml-4" @click="followUser" v-text="buttonText"></button>
+    </div>
+</template>
+        !!! v-text   --- to dynamically show text ---- calls vue's computed -- buttonText()
+<script>
+    export default {
+        props: ['userId', 'follows'],           
+        mounted() {
+            console.log('Component mounted.')
+        },
+        data: function () {
+            return {
+                status: this.follows,
+            }
+        },
+        methods: {
+            followUser() {
+                axios.post('/follow/' + this.userId)                !!!axios installed.. see app.js
+                    .then(response => {
+                        this.status = ! this.status;
+                        console.log(response.data);
+                    })
+                    .catch(errors => {
+                        if (errors.response.status == 401) {          !!! 401 -- unauthorized
+                            window.location = '/login';
+                        }
+                    });
+            }
+        },
+        computed: {
+            buttonText() {
+                return (this.status) ? 'Unfollow' : 'Follow';
+            }
+        }
+    }
+-----------------------------------------------------------------------------------------------
+                        MY FOLLOWYING (PFOFILES) -> POSTS 
+
+Route::get('/', 'PostsController@index');
+(PostsController)
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+    public function index()
+    {
+        $users = auth()->user()->following()->pluck('profiles.user_id');
+        $posts = Post::whereIn('user_id', $users)->with('user')->latest()->paginate(5);
+        return view('posts.index', compact('posts'));
+    }
