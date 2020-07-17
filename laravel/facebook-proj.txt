@@ -1,0 +1,6 @@
+1. setups (new proj, db, passport, +UI)
+2. routes:  all auth route group
+            route that accepts wildcard (any) route,
+                       AppController@index
+                       adds 'auth' middleware 
+                       

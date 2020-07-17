@@ -1,0 +1,9 @@
+install: composer php package manager;  need node, npm         
+        > download laravel (see docs) with composer 
+> laravel new proj 
+create schema (db) in MySql (workbench)
+.env  ----- configure db 
+> php artisan migrate 
+> composer require laravel/passport 
+> php artisan migrate   (auth_ ... tables added)
+> php artisan passport:install  (creates 2 clients)

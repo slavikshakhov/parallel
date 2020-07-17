@@ -1,0 +1,239 @@
+****************************************************************************************************                   
+                     SETUP 
+LARAVEL                    
+    install: composer php package manager;  need node, npm         
+            > download laravel (see docs) with composer 
+    > laravel new proj 
+DB 
+    create schema (db) in MySql (workbench)
+    .env  ----- configure db 
+    > php artisan migrate                     
+            --> users
+                password_resets 
+                
+PASSPORT 
+    see laravel docs -- passport -- installation 
+            + (Kernel --- for http -- 'web')
+                \Laravel\Passport\Http\Middleware\CreateFreshApiToken::class,
+                (to consume this API from inside of this application)
++ UI (View.js)
+    > composer require laravel/ui
+    > php artisan ui vue
+    > npm install && npm run dev" 
+            --> adds resources/js/components/ExampleComponent.vue
+            !!! ckeck js/app.js, js/bootstrap.js, views/welcome.blade.php 
+    > php artisan ui:auth       --> added:  auth dir 
+                                            layouts dir
+                                            home.blade.php 
+        home.blade.php --- @extends('layout.app')
+        layout/app.blade.php  ---- in body --- <div id="app"> ... </div>
+        js/app.js       ----------  const app = new Vue({
+                                        el: '#app',
+                                    });
+    > npm run watch  (run in the background)
+-------------------------------------------------------------------------------------------
+API ROUTING  (one route other than auth routes group)
+
+    Auth::routes();
+    Route::get('{any}', 'AppController@index')
+        ->where('any', '.*')
+        ->middleware('auth')
+        ->name('home');
+    AppController --- index --- return view('home')
+
+    --------------------
+    (vies/home.blade.php)
+        @extends('layouts.app')      !!! contains navbar (laravel layer)
+        @section('content')
+            <App></App>              !!! vue layer 
+        @endsection
+
+    -------------------
+    (js/components/App.vue)
+        <template>
+            <div>Start                              !!! any route (front)
+                <router-view></router-view>         !!! route in router.js
+            </div>
+        </template>
+        ...
+    ------------------- ADD VIEW ROUTING TO backend 
+    
+    (resources/js/app.js) 
+        import Vue from 'vue';
+        import router from './router';
+        import App from './components/App';
+
+        require('./bootstrap');          !!! was aut 
+        const app = new Vue({
+            el: '#app',                  !!! was aut 
+            components: { App },         !!! sg entry for appl 
+            router,
+        });
+    -----------------
+    > npm install vue-router --save-dev 
+
+    (resources/js/router.js)
+    import Vue from 'vue';
+    import VueRouter from 'vue-router';
+    import Start from './views/Start';
+
+    Vue.use(VueRouter);                     !!! use as plugin
+
+    export default new VueRouter({
+        mode: 'history',
+        routes: [
+            {
+                path: '/', name: 'home', component: Start,  !!! replacing -- <router-view></router-view>
+            }
+        ]
+    });
+    ----------------
+    (js/resources/views/Start.vue)
+        <template>
+            <div>sdflksjdflkjsd</div>                  !!! only route "/"
+        </template>
+
+        <script>
+            export default {
+                name: "Start"
+            }
+        </script>
+        <style scoped>
+        </style>
+    --------
+    > npm run watch   
+    > php artisan serve   (another terminal)
+    /8000     --> login page .... register --> displays  --- Start
+                                                             sdflksjdflkjsd
+------------------------------------------------------------------------------------------
+                TAILWIND.CSS (see tailwindcss.com/docs/installation)
+
+> npm install --save-dev tailwindcss
+(resources/sass/app.scss)
+
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+--- docs-- installation --- Laravel Mix --- (sass, copy)
+    (webpack.mix.js)
+        replace .sass section:
+             mix.js("resources/js/app.js", "public/js")
+                .sass("resources/sass/app.scss", "public/css")
+                .options({
+                    processCssUrls: false,
+                    postCss: [tailwindcss("./path/to/your/tailwind.config.js")]
+                });
+    ------
+    > npx tailwind init   ---> creates tailwind.confit.js
+--------
+> npm run watch     (test tailwind, ex in app.blade.php)
+
+
+
+***************************************************************************
+                    TOOLS 
+GigHub Desktop (to view github projs commits) ---- install -- add repository 
+                Git (shakhovslavik, v.sh...@yahoo.ca, gerK...55)
+
+
+***************************************************************************
+                    php artisan 
+
+make:controller AppController 
+php artisan make:test PostintPostTest
+****************************************************************************
+                    JSON API SPECIFICATION (https://jsonapi.org/format/)
+
+> php artisan make:test PostintPostTest
+(PostintPostTest.php --- in class)
+    use RefreshDatabase;    
+    public function a_user_can_post_a_text_post()
+    {
+        $this->withoutExceptionHandling();
+        $this->actingAs($user = factory(User::class)->create(), 'api');
+
+        $response = $this->post('/api/posts', [
+            'data' => [
+                'type' => 'posts',
+                'attributes' => [
+                    'body' => 'Testing Body',
+                ]
+            ]
+        ]);
+
+        $post = Post::first();                    !!! generates new Post 
+
+        $this->assertCount(1, Post::all());             !! 0 if in controller no fetching
+        $this->assertEquals($user->id, $post->user_id);   !!! was post created?
+        $this->assertEquals('Testing Body', $post->body);
+        $response->assertStatus(201)
+            ->assertJson([
+                'data' => [
+                    'type' => 'posts',
+                    'post_id' => $post->id,
+                    'attributes' => [
+                        'body' => 'Testing Body',
+                    ]
+                ],
+                'links' => [
+                    'self' => url('/posts/'.$post->id),
+                ]
+            ]);
+    }
+    -----
+    CREATE Post.php and migration: 
+        >> php artisan make:model Post -m
+        (migrations/create_posts_table.php) -- up -- create ... add:
+                $table->unsignedBigInteger('user_id');
+                $table->text('body');
+
+    -----
+    ADD RELATIONSHIPS TO User to get many Posts
+        (User.php)
+            public function posts()
+            {
+                return $this->hasMany(Post::class);
+            }
+        
+
+    CREATE ROUTE FOR Post model ---- in routes/api.php   (change A -> B)
+        A.
+            Route::middleware('auth:api')->get('/user', function (Request $request) {
+                return $request->user();
+            });
+        B.             
+            Route::middleware('auth:api')->group(function () {
+                Route::get('/user', function (Request $request) {
+                    return $request->user();
+                });
+                Route::post('/posts', 'PostController@store');
+            });
+    -------
+    CREATE PostController: 
+        > php artisan make:controller PostController 
+        (PostController, in class)
+            public function store()
+            {
+                $data = request()->validate([
+                    'data.attributes.body' => '',
+                ]);
+
+                $post = request()->user()->posts()->create($data['data']['attributes']);
+                                        !!! Post::create(....) --> integrity constraint violation
+                return response([
+                    'data' => [
+                        'type' => 'posts',
+                        'post_id' => $post->id,
+                        'attributes' => [
+                            'body' => $post->body,
+                        ]
+                    ],
+                    'links' => [
+                        'self' => url('/posts/'.$post->id),
+                    ]
+                ], 201);
+
+    --------------------------------------------
+    !!! db for testing: (phpunit.xml) --- add 
+            <server name="DB_CONNECTION" value="sqlite"/>
+            <server name="DB_DATABASE" value=":memory:"/>
