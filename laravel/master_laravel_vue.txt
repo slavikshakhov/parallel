@@ -1,0 +1,487 @@
+PHP, node, npm, Vue.js
+MySql -- XAMPP -- MySql Workbench
+--------------------------------------
+XAMPP (PHP...)               
+
+    download   --- uncheck "to start control panel now"
+    open XAMPP as administator 
+            unckeck services: Apache, MySQL 
+            activate actions 
+        ---
+        !!! if problem with port: MySql change 3306 to 3307 (config --- my.uni )
+                                xampp/phpMyAdmin/config.inc.php   ---- 127.0.0.1: 3307
+                                                                        
+                                Apache change 80 to 8080, 443 to 4433
+                                            apache httpd.conf  --- 8080
+                                            apache httpd-ssl.conf  --- 4433
+                                config - service and port settings -- 8080, 4433
+    localhost:8080/phpmyadmin  ---- user acconts -- root localhost --> Edit privileges 
+                                --> change pw .... Go 
+        (F)  xampp/phpMyAdmin/config.inc.php    ---- password ...  (gerK..55)
+    VSCode: php intelisense
+            bracket pair colorizer 
+    add C:\xampp\php  to path (system env vars)
+    ----------
+    xampp/htdocs/     accessed via  localhost:8080/
+    xampp/htdocs/phpsandbox/variables.php    ---- localhost:8080/phpsandbox/variables.php 
+-------------------------------
+COMPOSER  ---- install --- in dir of C:\xampp\php\php.exe 
+-------------------------------
+LARAVEL 
+    install: composer php package manager;  need node, npm 
+        > composer -v 
+        > composer global require laravel/installer 
+------------------------------
+MySQL
+     install MySql with installer, full (gerK...55    localhost:3306)
+-------------------------------
+VSCode extensions: 
+    Bracket pair colorizer 
+    Eslint
+    Laravel blade snippets  ---- Laravel blade spacer 
+    npm INtellisense  ---- path INtellisense --- php intellisense 
+    php namespace resolver 
+    (vue) Vetur --- vue 2 snippets 
+**********************************************************************************************
+                                NEW PROJECT 
+> laravel new booking_app 
+    !!! composer.json  (like package.json)
+        composer.lock  (like package.json.lock)  > composer install  --> (like npm install)
+        vendor (like node_modules)
+-------
+DATA FLOW 
+    (web.php)  
+        Route::get('/', function () {          !!! anon. fun --- closure 
+            return view('welcome');            !!! views/welcome.blade.php
+        });
+    (views/welcome.blade.php)  ---- remove style, change title         
+        <body>
+            <div id="app"></div>
+        </body>
+ADD FRONTENT (VUE) --- laravel docs --- Frontend scaffolding 
+    > composer require laravel/ui
+    > php artisan ui vue                    !!! vue added to js/app.js 
+    > npm install                           !!! from package.json 
+    > npm run dev                           !!! bundles all libraries and stylesheets into sg file
+    ----
+    > php artisan serve   
+    > npm run watch    (2nd terminal)
+    -----------
+    (views/welcome.blade.php)  ---- add script  
+        <head>
+            ...
+            <script src="{{ asset('js/app.js') }}" defer></script>    
+        </head>
+        <body>
+            <div id="app"></div>
+        </body>
+        ------
+        !!!defer -----  defers running script till after page loaded
+    (resources/js/app.js)  --- aut <--php artisan ui vue 
+        window.Vue = require('vue');       
+        Vue.component('example-component', require('./components/ExampleComponent.vue').default);        
+        const app = new Vue({
+            el: '#app',
+        });
+        !!! ExampleComponent not hooked up yet, 
+                <example-component></example-component> must be in template, routing
+    ------- 
+    /8000/   --> devTools --- console --- Vue running in dev mode 
+                              Vue   ----- <Root>   ---- but no components rendered yet 
+-------------------------------------------------------------------------------------------
+                            ROUTING 
+LARAVEL LAYER  (web.php)   --- change A -> B
+    A.
+        Route::get('/', function () {
+            return view('welcome');
+        });
+    B. 
+        Route::get('/{any?}', function () {               !!! router -> view (closure)
+            return view('welcome');                       !!! this view connects with Vue 
+        })->where('any', '^(?!api\/)[\/\w\.\,-]*');
+    -----
+    8000/api/lala    --> 404 Not Found 
+    8000/lalala/lala   --> renders Vue (see devTools)
+--------------------------------------------------
+VUE LAYER  --- takes over routing from laravel 
+    > npm install vue-router 
+    (resources/js/routes.js)
+        import VueRouter from "vue-router";
+        import ExampleComponent from "./components/ExampleComponent";
+
+        const routes = [
+            { path: "/", component: ExampleComponent, name: "home" },
+        ];
+        const router = new VueRouter({
+            routes, 
+        });
+        export default router;
+    (resources/app.js) --- change 
+
+        import VueRouter from "vue-router";       ++
+        import router from "./routes";            ++
+        Vue.use(VueRouter);                       ++
+        window.Vue = require("vue");
+        Vue.component("example-component", require("./components/ExampleComponent.vue").default);        
+        const app = new Vue({
+            el: "#app",
+            router,
+        });
+        ----
+        !!! Vue.component( ... )    --- for Component1 with its route 
+            Vue.component(....)     --- for Component2 with its route 
+                !!! globally registered components 
+    (views/welcome.blade.php)  --- add --- in body 
+
+        <div id="app">
+            <router-view></router-view>      ++   (here if "/" --> ExampleComponent)
+        </div>
+----------------------------------------------------------------
+HTTP5 HISTORY MODE IN VUE ROUTER 
+    /  --> /#     ----- was used to indicate that router is from front, remove it: 
+        (resources/js/routes.js)   ---- add
+            const router = new VueRouter({
+            routes, 
+            mode: "history"                 ++
+        });
+--------------------------------------------------------------
+LOCALLY USE VUE ROUTES (SHARED BW VUE) ---- still server reloads 
+    LOCALLY REGISTER COMPONENTS  --- in Index.vue
+    (resources/js/Index.vue) 
+        <template>
+            <div>                
+                <router-view></router-view>                 !!! remove it from welcome view 
+            </div>
+        </template>
+    ------
+    (resources/js/app.js)   --- remove  globally registered components 
+        import VueRouter from "vue-router";
+        import Index from "./Index";               ++
+        import router from "./routes";
+        Vue.use(VueRouter);
+        const app = new Vue({
+            el: "#app",
+            router,
+            components: { index: Index },          ++
+        });
+    ------
+    (views/welcome.blade.php)  ---- remove <router-view></router-view>  
+        <body>
+            <div id="app">                        
+                <index></index>                     ++
+            </div>
+        </body>
+    -------
+    Root -> Index -> Comp1 (or Comp2)
+-----------------------------------------------------------------------
+LINKS IN VUE  --- to navigate between vue routes w/o connecting to server 
+    (resources/js/Index.vue) 
+        <template>
+            <div>
+                <router-link to="/">Home</router-link>              ++ 
+                <router-link to="/second">Second</router-link>      ++
+                <router-view></router-view>                 !!! remove it from welcome view 
+            </div>
+        </template>
+        -------
+        depending on which link clicked --> router-view calls corresponding router -> comp (template)
+
+-------------------------------------------------------------------------
+NAMED ROUTES 
+    (resources/js/Index.vue)  --- replace links 
+        <template>
+            <div>                
+                <router-link :to="{name: 'home'}">Home</router-link>          -+
+                <router-link :to="{name: 'second'}">Second</router-link>      -+
+                <router-view></router-view>
+            </div>
+        </template>
+    (resources/js/routes.js)
+        const routes = [
+            { path: "/", component: HomeComponent, name: "home" },
+            { path: "/second", component: SecondComponent, name: "second" },
+        ];
+    --------
+    !!! <router-link v-bind:to="{{ .... }}>   --> v-bind:to  --- eveluates js expression
+        <router-link :to="{{ .... }}>                !!! shorthand
+
+        <a v-on:click="doSomething"> ... </a>
+        <a @click="doSomething"> ... </a>            !!! shorthand
+
+    (vs) router.push({name: 'user', params: { userId: 1 }});
+
+*****************************************************************************************************
+                                STYLING (BOOSTRAP)
+(resources/welcome.blade.php)
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+(resources/sass/app.scss) aut 
+    @import url('https://fonts.googleapis.com/css?family=Nunito');
+    @import 'variables';  
+    @import '~bootstrap/scss/bootstrap';
+(resources/sass/_variable.scss)   ---- body--bg
+                                       colors
+                                       fonts (size, family) --- defined in app.scss 
+
+(public/css/app.css) --- compiled from app.scss  (via webpack, see webpack.mix.js)
+--------------------------------------------------------------------------------------------
+                                ADD NAVBAR TO LINKS 
+(resources/js/Index.vue)
+    <template>
+        <div>            
+            <nav class="navbar bg-white border-bottom navbar-light">
+                <router-link class="navbar-brand mr-auto" :to="{name: 'home'}">LaravelBnb</router-link>
+                <router-link class="btn nav-button" :to="{name: 'second'}">Second</router-link>
+            </nav>
+
+            <div class="container mt-4 mb-4 pr-4 pl-4">
+                <router-view></router-view> 
+            </div>
+        </div>
+    </template>
+    !!! mr-auto --- pushes next block max away to right 
+--------------------------------------------------------------------------------------------
+************************************************************************************************
+                                VUE.JS 
+CHILD COMPONENTS 
+    (resources/js/bookables/Bookables.vue)
+    <template>
+        <div>
+            <bookable-list-item></bookable-list-item>
+            <bookable-list-item></bookable-list-item>
+            <bookable-list-item></bookable-list-item>
+            <bookable-list-item></bookable-list-item>
+            <bookable-list-item></bookable-list-item>
+        </div>
+    </template>
+    <script>
+        import BookableListItem from "./BookableListItem";
+        export default {
+            components: {
+                BookableListItem            !!! register locally 
+            }
+        };
+    </script>
+    ------------
+    (resources/js/bookables/BookableListItem.vue)
+        template>
+            <div>
+                <h1>Title</h1>
+                <p>Content</p>
+            </div>
+        </template>
+    
+    -----
+    !!! globally register if often reusable, otherwise -- locally register 
+        if comp registered as BookableListItem --> in template: <BookableListItem> 
+                                                            or: <bookable-list-item> 
+                           as bookable-list-item  --> in template only: <bookable-list-item>
+                                components: {
+                                    "bookable-list-item": BookableListItem           
+                                }
+                                -----
+                                     "item": BookableListItem     --> <item></item>
+    ---------------
+    (resources/js/routes.js)  ---- remove ExampleComponent
+    const routes = [
+    {
+        path: "/",        
+        component: Bookables,           !!! import
+        name: "home",
+    },
+    --------
+    8000/    --> list of items 
+-----------------------------------------------
+PROPS 
+    (resources/js/bookables/Bookables.vue)
+        <template>
+            <div>                
+                <bookable-list-item item-title="Cheap Villa" item-content="A very cheap villa"      
+                                    :price="1000"></bookable-list-item>
+                <bookable-list-item item-title="Cheap Villa 2" item-content="A very cheap villa 2"
+                                    :price="1500"></bookable-list-item>
+            </div>
+        </template>
+        <script>
+            import BookableListItem from "./BookableListItem";
+            export default {
+                components: {
+                    BookableListItem            !!! register locally 
+                }
+            };
+        </script>
+
+    (resources/js/bookables/BookableListItem.vue)
+        <template>
+            <div>                
+                <h1>{{ itemTitle }}</h1>
+                <p>{{ itemContent }}</p>
+            </div>           
+        </template>
+
+        <script>
+            export default {
+                props: { itemTitle: String, itemContent: String, price: Number },
+                mounted() { console.log(this.itemTitle); }        
+            };
+        </script>
+        ------
+        !!! same as props: ['itemTitle', 'itemContent', 'price'] --> item-title ...
+            price="1000"  --> as String   
+            :price="1000" --> if expacted as Number --- :  preserves type passed 
+        !!! props can be read, but not modified 
+--------------------------------------------------------------------------------
+LIFECYCLE HOOKS 
+    beforeCreate --> create --> beforeMount --> mounted --> (beforeUpdate --> updated) -->
+        --> beforeDestroy --> destroyed 
+    !!! fetching date from server: created 
+----------------------------------------------------------------------------------
+STATE 
+    (resources/js/bookables/Bookables.vue)
+
+        <template>
+            <div>
+                <bookable-list-item v-if="bookable1" :item-title="bookable1.title" :item-content="bookable1.content"
+                                    :price="1000"></bookable-list-item>
+                <bookable-list-item v-if="bookable2" :item-title="bookable2.title" :item-content="bookable2.content"
+                                    :price="1500"></bookable-list-item>
+            </div>
+                       !!! v-if  --- not showing html el if item: null, wait till rerenders and value assigned when fetching 
+                           w/o this condition --> initial render with empty values --> error, then in 5s --> ok re-rendering 
+                       !!! v-if="bookable1"  ---- same as ---- v-if="bookable1 !== null"
+        <script>
+            export default {
+                components: {
+                    BookableListItem
+                },
+                data() {                                !!! like state 
+                    return {
+                        bookable1: {                            !!! change: bookable1: null
+                            title: "Cheap Villa !!!",
+                            content: "A very cheap villa"
+                        },
+                        bookable2: {                            !!! change: bookable2: null
+                            title: "Cheap Villa 2",
+                            content: "A very cheap villa 2"
+                        }
+                    };
+                },           
+                created() {
+                    console.log("created");         
+                    console.log(this.bookable1);        --> is function, not object
+                    console.log(this.bookable2);
+
+                    setTimeout(() => {                              !!! mimic fetching from server
+                        this.bookable1.title = "Expensive Villa";
+                        this.bookable2.title = "Very Expensive Villa";
+                    }, 5000);
+                }            
+        </script>
+        -----
+        !!! better practice: initial value of data obj --- null: 
+                                                                    bookable1: null,
+                                                                    bookable2: null
+                                           assigned value when getting data (here setTimeout)7
+        !!! only rerenders updated values if declared first in data (reactive)  
+        !!! only modify state via data, not via props      
+        8000/  --> first displays original data, in 5s --> rerendered with updated data 
+
+------------------------------------------------------------------------------
+ITERATION IN TEMPLATE (in Bookables)
+    (resources/js/bookables/Bookables.vue)
+    (template) 
+        <div v-if="loading">Data is loading...</div>
+        <div v-else>
+            <bookable-list-item
+                v-for="(bookable, index) in bookables"     !!! v-for="bookable in bookables"
+                :item-title="bookable.title"
+                :item-content="bookable.content"
+                :price="1000"                
+                :key="index"
+            ></bookable-list-item>
+        </div>
+    -------
+    (script)
+        data --- bookables: null, loading: false
+        created(){ 
+            this.loading = true; 
+            setTimeout(() => { 
+                this.bookables = [{ .... }, {......}], 
+                this.loading = false }, 5000);
+            }    
+        }
+        ------
+        !!! v-for, v-if -- cannot together, v-for higher priority than f-if
+        !!! even w/o condition, initial rendering ignores for-block if list is null
+    ------------------
+    (resources/js/bookables/BookableListItem.vue)
+        <template>           
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ itemTitle }}</h5>
+                    <p class="card-text">{{ itemContent }}</p>
+                </div>
+            </div>
+        </template>
+        <script>
+            export default {            
+                props: { itemTitle: String, itemContent: String, price: Number }
+            };
+        </script>
+
+-------------------------------------------------------------------------------------
+ADD ROWS/COLS DYNAMICALLY based on available els in array 
+    (resources/js/bookables/Bookables.vue)
+        ---in template
+            <template>
+                <div>                    
+                    <div v-if="loading">Data is loading...</div>
+                    <div v-else>                    
+                        <div class="row mb-4" v-for="row in rows" :key="'row' + row">
+                            <div class="col" v-for="(bookable, column) in bookablesInRow(row)"
+                                            :key="'row' + row + column">
+                                <bookable-list-item
+                                    :item-title="bookable.title"
+                                    :item-content="bookable.content"
+                                    :price="1000"
+                                ></bookable-list-item>
+                            </div>
+                            <div class="col" v-for="p in placeholdersInRow(row)" :key="'placeholder' + row + p"></div>
+                        </div>
+                    </div>
+                </div>
+                </template>
+        --------
+        ---in script: 
+                data() {
+                    return {
+                    bookables: null,                       
+                    loading: false,
+                    columns: 3                                      ++
+                    };
+                },
+                 methods: {
+                    bookablesInRow(row) {
+                        return this.bookables.slice((row - 1) * this.columns, row * this.columns);
+                    },
+                    placeholdersInRow(row) {
+                        return this.columns - this.bookablesInRow(row).length;
+                    }
+                },
+                computed: {                                         ++
+                    rows() {
+                        return this.bookables === null
+                            ? 0
+                            : Math.ceil(this.bookables.length / this.columns);
+                    }
+                },
+                created(){ 
+                    this.loading = true; 
+                    setTimeout(() => { 
+                        this.bookables = [{ .... }, {......}], 
+                        this.loading = false }, 5000);
+                    }    
+                }
+                --------
+                !!! computed watches for changes in data, reruns after data changes 
+                !!! rows() return value accessed from template as {{ rows }}
+*******************************************************************************************************

@@ -152,7 +152,7 @@ php artisan make:test PostintPostTest
         $this->withoutExceptionHandling();
         $this->actingAs($user = factory(User::class)->create(), 'api');
 
-        $response = $this->post('/api/posts', [
+        $response = $this->post('/api/posts', [             !!! generates new Post 
             'data' => [
                 'type' => 'posts',
                 'attributes' => [
@@ -161,13 +161,13 @@ php artisan make:test PostintPostTest
             ]
         ]);
 
-        $post = Post::first();                    !!! generates new Post 
+        $post = Post::first();                              !!! get 1st post 
 
         $this->assertCount(1, Post::all());             !! 0 if in controller no fetching
         $this->assertEquals($user->id, $post->user_id);   !!! was post created?
         $this->assertEquals('Testing Body', $post->body);
         $response->assertStatus(201)
-            ->assertJson([
+            ->assertJson([                              !!! is it returned from controller?
                 'data' => [
                     'type' => 'posts',
                     'post_id' => $post->id,
@@ -237,3 +237,29 @@ php artisan make:test PostintPostTest
     !!! db for testing: (phpunit.xml) --- add 
             <server name="DB_CONNECTION" value="sqlite"/>
             <server name="DB_DATABASE" value=":memory:"/>
+-----------------------------------------------------------------------------
+                    RESOURCES 
+
+> php artisan make:resource Post 
+(Http/Resources/Post.php) ---- wraps around Post model 
+    public function toArray($request)
+    {
+        return [
+            'data' => [
+                'type' => 'posts',
+                'post_id' => $this->id,                 !!! $his is post
+                'attributes' => [
+                    'posted_by' => new UserResource($this->user),
+                    'body' => $this->body,
+                ]
+            ],
+            'links' => [
+                'self' => url('/posts/'.$this->id),
+            ]
+        ];
+    }
+(PostController) ---- use App\Http\Resources\Post as PostResource;
+    $post = request()->user()->posts()->create($data['data']['attributes']);        
+        return new PostResource($post);             
+    }
+        !!! ----> will return 201
