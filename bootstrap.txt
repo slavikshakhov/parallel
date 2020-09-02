@@ -1,8 +1,8 @@
 POSITIONING / SPACING
 
 div - div  in one line:              par d-flex -> block chs
-
-
+in row, diff heights of each el --> same height:   (par) d-flex alignt-items-stretch 
+in row, if el's content less than width -- width small -->  (ch) w-100
 ----------
 .rounded-circle
 

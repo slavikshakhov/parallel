@@ -1,36 +1,135 @@
 
                                 SETUP 
 
-install: composer php package manager;  need node, npm 
+
+XAMPP (PHP...)               
+
+    download   --- uncheck "to start control panel now"
+    open XAMPP as administator 
+            unckeck services: Apache, MySQL 
+            activate actions 
+        ---
+        !!! if problem with port: MySql change 3306 to 3307 (config --- my.uni )
+                                xampp/phpMyAdmin/config.inc.php   ---- 127.0.0.1: 3307
+                                                                        
+                                Apache change 80 to 8080, 443 to 4433
+                                            apache httpd.conf  --- 8080
+                                            apache httpd-ssl.conf  --- 4433
+                                config - service and port settings -- 8080, 4433
+    localhost:8080/phpmyadmin  ---- user acconts -- root localhost --> Edit privileges 
+                                --> change pw .... Go 
+        (F)  xampp/phpMyAdmin/config.inc.php    ---- password ...  (gerK..55)
+    VSCode: php intelisense
+            bracket pair colorizer 
+    add C:\xampp\php  to path (system env vars)
+    ----------
+    xampp/htdocs/     accessed via  localhost:8080/
+    xampp/htdocs/phpsandbox/variables.php    ---- localhost:8080/phpsandbox/variables.php 
+-------------------------------
+COMPOSER  ---- install --- in dir of C:\xampp\php\php.exe 
+-------------------------------
+LARAVEL 
+    install: composer php package manager;  need node, npm 
         > composer -v 
-        > download laravel (see docs) with composer 
-> laravel new proj 
-proj> php artisan  ---> all artisan commands 
-                        !!! > php artisan <command> 
-> php artisan serve     ---- open browser in given port  --> dev server
+        > composer global require laravel/installer 
+------------------------------
+MySQL
+     install MySql with installer, full (gerK...55    localhost:3306)
+-------------------------------
+VSCode extensions: 
+    Bracket pair colorizer 
+    Eslint
+    Laravel blade snippets  ---- Laravel blade spacer 
+    npm INtellisense  ---- path INtellisense --- php intellisense 
+    php namespace resolver 
+    (vue) Vetur --- vue 2 snippets 
+**********************************************************************************************
+                                NEW PROJECT 
+> laravel new booking_app 
+    !!! composer.json  (like package.json)
+        composer.lock  (like package.json.lock)  > composer install  --> (like npm install)
+        vendor (like node_modules)
+-------
 
-*******************************************************************************************************
-                            CONVENTIONS 
-Route::get('/a', 'Acontroller@index)
-AController ----- index fun  ---- 'as.index' 
-views/as/index.blade.php 
+ADD FRONTENT (VUE) --- laravel docs --- Frontend scaffolding 
+Vue, router, store, root component 
 
-********************************************************************************************************
-1. create project                                   SETUP
-2. start server in cmd1  (template running?)        TEMPLATES --- ROOT DEFALT TEMPLATE
-3. add auth                                         AUTH  --- ADD AUTH 
-4. npm install and compile                          FA -- INSTALL/COMPILE ASSETS 
-5. configure db (to use sqlite), migrate            DB -- FIRST MIGRATION 
-6. (b) -- register .... logout .... login -> 8000/home
-7. add 'username' field to User, registration       AUTH - ADD FIELD TO USER MODEL 
-8. login --> /home  (HomeController)  -->|| change to login --> /profile/1 
-                                                              !!! no auth needed 
-            !!! access user from /profile/1  --- without auth 
-9. User(one) -- Profile(one) .... create Profile model, migration, add title, description, url fields
-            -- MODELS 
+    > composer require laravel/ui
+    > php artisan ui vue                    !!! vue added to js/app.js 
+    > npm install                           !!! from package.json 
+    > npm run dev                           !!! bundles all libraries and stylesheets into sg file
+    ----
+    > php artisan serve   
+    > npm run watch    (2nd terminal)
+    -----------
+    (views/welcome.blade.php)  ---- add script  
+        <head>
+            ...
+            <script src="{{ asset('js/app.js') }}" defer></script>    
+        </head>
+        <body>
+            <div id="app"></div>
+        </body>
+        ------
+        !!!defer -----  defers running script till after page loaded
 
+    (resources/js/app.js)  --- aut <--php artisan ui vue 
+        
+        import VueRouter from "vue-router";
+        import Vuex from 'vuex';
+        import Index from "./Index";
+        import router from "./routes";        
+        import storeDefinition from "./store";
 
+        window.Vue = require("vue");
+        Vue.use(VueRouter);
+        Vue.use(Vuex);        
 
+        const store = new Vuex.Store(storeDefinition);
+
+        const app = new Vue({
+            el: "#app",
+            router,
+            store,
+            components: {
+                index: Index
+            },
+            beforeCreate() {
+                this.$store.dispatch("loadStoredState");
+            },
+        });
+    ------- 
+    (resources/js/routes.js)
+        import VueRouter from "vue-router";       
+
+        const routes = [                   
+            {
+                path: "/a/:id",
+                component: A,
+                name: "a"
+            }
+        ];
+
+        const router = new VueRouter({
+            routes, 
+            mode: "history"
+        });
+
+        export default router;
+-------------------------------------------------------------------------------------------
+                            ROUTING 
++ LARAVEL LAYER  (web.php)   --- change A -> B
+    A.
+        Route::get('/', function () {
+            return view('welcome');
+        });
+    B. 
+        Route::get('/{any?}', function () {               !!! router -> view (closure)
+            return view('welcome');                       !!! this view connects with Vue 
+        })->where('any', '^(?!api\/)[\/\w\.\,-]*');
+    -----
+    8000/api/lala    --> 404 Not Found 
+    8000/lalala/lala   --> renders Vue (see devTools) ---- still no Vue routing 
 
 *********************************************************************************************************
                             php artisan 
@@ -48,211 +147,8 @@ TINKER
                             TESTING 
 ex. from controller  ---- dd(....)   --> executes and displays in browser page
 
-*******************************************************************************************************
-                            ROUTES
 
-ORDER:  '/el/create'   then '/el/{el}'
-*******************************************************************************************************
-                            CONTROLLERS  (one User has one Profile)
 
->> php artisan create:controller ProfilesController 
-
-public function index($user) { ... }        !!!! $user <- routes as param
-         return view('profiles.index', ['user' => $user]);     
-                    !!! $user is var defined in this fun 
-                    !!! views/profiles/index.blade.php  --- {{ $user->name}}
-                    !!! return view('profiles.index', compact('user'));    
-POSTING NEW EL (see docs, controllers):
-    GET	    /profiles/create	    create	profiles.create       !!! /profile/create      
-    POST	/profiles	        store	profiles.store        !!! /profile                 
-
-    --------------corresponding to routes:
-    Route::get('/profile/create', 'ProfilesController@create')->name('profiles.create');   ---- see CONVENTIONS (naming)
-        (create fun): controller just returns view
-        !!! views/profiles/create.blade.php  ----- (take form from register)
-                (form) ---  <form actino="/profile" enctype="multipart/form-data" method="post">
-                                @csfr                           
-                                .....
-                            </form>
-
-                        !!! @csfr  --> adds token to form, w/o it --> 419 page expired error 
-                        ------
-    Route::post('/profile', 'ProfilesController@store')->name('profiles.store'); 
-            (store fun): 
-                        $data = request()->validate(['name' => 'required', 'image' => ['required', 'image'], 'other' => ''])
-                                !!! see docs, validation rules 
-                        auth()->user()->posts()->create($data);     !!! have to be auth-d (adds FK)
-                            !!! \App\Post::create($data)      --> integrity constraint violation  (FK)
-                                create(['name' => $date['name'], .......])           !!! same as create($data)
-                                !!! if manipulate data's profiles, use full version, if not --> use create($data)
-        !!! fillable fields error --> in model's body: 
-                                                protected $guarded = [];  
-        !!! data accessed via: request()->all()
-        !!! make controller's every action run only if auth-d: if not auth-d --> redirect to login page 
-                public function __construct() { $this->middleware('auth'); }
-        !!! if img loaded from file --> request() returns instance of UploadedFile class 
-                $imgPath = request('img')->store('uploads', 's3)     --> uploads -- will be created in storage dir 
-                                                                    s3 is amazon driver, can use others 
-                                                                --> returns path where pic saved :
-                                                                        (storage/app/public/uploads/......)
-                                                                    for appl only public dir accessible, not storage/app/...
-                                    !!! ... ->create([....., 'img' => $imgPath,])
-                >> php artisan storage:link       --> creates link bw 'public/storage and 'storage/app/public'
-                !!! to use stored img in templates: <img src="/storage/{{ $post->img }}">
-        !!! redirecting from controller:   return redirect('/profile/'. auth()->user()->id);     ...8000/profile/1
-SHOW EL  (if one-one, then index, if many --> show)
-    Route::get('/profile/{user}', 'ProfilesController@index')->name('profiles.show'); 
-            index($user):   ----- $user  -------                     !!! 8000/profile/5   -> 5   (user is id)
-            index(\App\User $user)      ----- $user -----                                 -> User fetched 
-                                                                !!! naming --- model vs param
-                                                                !!! if wrong id -> no El found --> same as findOrFail
-EDIT, UPDATE 
-
-    GET	        /profiles/{user}/edit	    edit	    profiles.edit        !!! /profile/{user}/edit 
-    PUT/PATCH	/profiles/{user}	            update	    profiles.update      !!! /profile/{user}
-    --------
-    Route::get('/profile/{user}/edit', 'ProfilesController@edit')->name('profiles.edit');             
-    (link from template):
-        <a href="/profile/{{$user->id}}/edit">Edit</a>
-    (ProfilesController)  ---- edit($user) ----- $user = User::findOrFail($user) 
-                                       same as: 
-                       edit(\App\User $user)   ---- $user ---is already full user 
-                !!! use App\User    ---- then ---> edit(User $user)
-    (views/profiles/edit.blade.php) ---- 
-            <form action="/profile/{{ $user->id }}" enctype="multipart/form-data" method="post">
-                @csrf
-                @method('PATCH')                                               !!! browser only accepts get, post
-                    ...
-                <input ..... value="{{ old('title') ?? $user->profile->title }}">    !!! populate form 
-                ...
-            </form>
-            ----
-            !!! old('title')  --> if validation failed --> back to form, keep values already entered 
-
-    ------------
-    Route::get('/profile/{user}', 'ProfilesController@update')->name('profiles.update');
-    (ProfilesController) ---- update(User $user)  ----
-                                $data = request()->validate([
-                                    'title' => 'required',              !!! if '' --> will delete old title 
-                                    'description' => 'required',
-                                    'url' => 'url',                     !!! see validation rules for url 
-                                    'image' => '',                      !!! no validation, but need to mention to save in db
-                                ]);
-                                $user->profile->update($data);               !!! auth()->user()->profile->update($data);  
-                                return redirect("/profile/{$user->id}");
-                                ----------------
-                    !!! auth()->user()->profile->update($data);  --> extra layer of protection, need to be auth-d
-            ---------
-            !!! if user skips adding image ---> leave the old one... not required
-
-                    $this->authorize('update', $user->profile); 
-                    $data = request()->validate([ ....., 'image' => '' ])
-                    if (request('image')) {
-                        $imagePath = request('image')->store('profile', 'public');
-
-                        $image = Image::make(public_path("storage/{$imagePath}"))->fit(1000, 1000);
-                        $image->save();
-
-                        $imageArray = ['image' => $imagePath];
-                    }
-                    auth()->user()->profile->update(array_merge(           !!! ar1 + ar2, overrides profiles 
-                        $data,
-                        $imageArray ?? []                             !!! overrides or not (if empty arr)
-                    ));
-            (template)  <img src="/storage/{{ $user->profile->image }}">
-            ----------
-            always add image (real or temp)... ex. when user created -> blank profile created with some img:
-                (Profile.php) 
-                    public function profileImage()
-                    {
-                        $imagePath = ($this->image) ? $this->image : 'profile/JNiNHZYPax0bk1mZWBDuZbvKfghk7OsZRJjsTrXO.png';
-                        return '/storage/' . $imagePath;
-                    }
-
-                (template)  <img src="{{ $user->profile->profileImage() }}">
---------------------------------------
-SHOW ALL POSTS OF PROFILES/ELS OF USERS I FOLLOW after login(in PostsController---index)
-
-    ---from user's profile page to following users' posts 
-    ---user (one) -- post (many)
-    ---user (one) -- profile (one)
-    ---user (many) --- followying (profile) (many)
-
-    $users = auth()->user()->following()->pluck('els.user_id');
-    $posts = Post::whereIn('user_id', $users)->with('user')->latest()->paginate(5);      
-    return view('posts.index', compact('posts'));  
-    --------
-            !!! PostsController has auth (in __construct)
-            !!! user (many) to following (many)  --- following is Profile
-                pluck ---- extracts only certain fields 
-                !!! ->get()  vs ->paginate(5)
-
-    (posts/index.blade.php) -- pagination on bottom
-        <div class="row">
-            <div class="col-12 d-flex justify-content-center">
-                {{ $posts->links() }}                               
-            </div>
-        </div>
-
-****************************************************************************************************************
-                            POLICIES (tied to model)
-
-if in non-auth show page link to edit profile (only for auth-d user), hide it if non-auth-d user 
->> php artisan make:policy ElPolicy -m Profile     --> app/Policies/ProfilePolicy.php 
-    ProfilePolicy ----- all actions for profile, with empty bodies 
-                public function update(User $user, Profile $profile)
-                {
-                    return $user->id == $profile->user_id;                   true if passed $user is this profile's user_id
-                }
-    (ProfilesController) in edit, update funs: 
-            $this->authorize('update', $user->profile);              !!! now this route protected
-                                                                8000/profile/3/edit  -->  403 unauthorized if not correct user 
-    (template)  @can('update', $user->el) 
-                    ...(code to show or hide) ...           !!! ex. add new / edit post link
-                @endcan 
-
-     
-****************************************************************************************************************
-                                BOOT (ex. on creating new user --> create blank profile) --- hook up events
-(User.php)
-protected static function boot()
-    {
-        parent::boot();
-
-        static::created(function ($user) {                  execured when new User created 
-            $user->profile()->create([                      rest of profile's fields nullable
-                'title' => $user->username,
-            ]);
-
-            Mail::to($user->email)->send(new NewUserWelcomeMail());
-        });
-    }
-****************************************************************************************************************
-                            TEMPLATES 
-
-ROOT DEFAULT TEMPLATE: 
-    resources/views/welcome.blade.php      <--  php artisan serve 
-
-PAGE DISPLAYED AFTER LOGGED IN:     views/home.blade.php 
-LINKS 
-    <a href="{{ url('/') }}">{{ config('app.name', 'Laravel') }} </a>
-SVG LOGO 
-    div -> img src="/la/la.svg">          !!! public/la/la.svg, public accessed by default 
-PAGE: TOP --- navbar  --- views/layouts/app.blade.php
-              rest    --- views/home.blade.php    (created by auth)    --- 8000/home  if auth
-                                    !!! has container -> (dashboard) --- replace dashboard
-                          !!! any view that @extends('layouts.app')
-
-ACCESS AUTH USER  ----  {{ Auth::user()-> username }} 
-ACCESS USER FROM CONTROLLER as param {{ $user->username }}
-ACCESS PROFILE OF USER FROM CONTROLLER as user param {{ $user->profile->title}}    !!! one to one 
-DEFAULT VALUE IF NOT AVAILABLE FROM CONTROLLER/DB  (nullable) -->
-         {{ $user->profile->url ?? 'lala' }}
-iterate list:  
-        @foreach($user->posts as $post)
-            {{ $post->title }}
-        @endforeach
-COUNT RELATED ELS     {{ $user->posts->count() }}
 *******************************************************************************************************
                                 DB SETUP (sqlite)
 
@@ -267,576 +163,10 @@ FIRST MIGRATION (sqlite)
     (restart server) --> register 
 
 ********************************************************************************************************
-                            DB QUERIES (from controller)
+STARTUP 
 
-$user = \App\User::find($user);     --> if none --> breaks appl
-$user = \App\User::findOrFail($user);   --> if none --> 404 error message
-
-********************************************************************************************************
-                            MIGRATIONS, TABLE FIELDS, RELATIONSHIPS 
-
-!!! after any change --> > php artisan migrate   
-                         > php artisan migrate:fresh     ---- to re-create db (data lost, recreated)
-> php artisan mak:model Profile -m       ---> Profile model 
-                                         ---> create_profiles_table 
-(in migration, up fun - Schema::create ---): 
-      $table->string('title')->nullable();         --- field, nullable if not required 
-            !!! string, text
-      ------IF RELATIONSHIP:
-      $table->unsignedBigInteger('user_id');       --- FK 
-      $table->index('user_id');                    --- CASCADING (delete if related Model deleted)
-
-*******************************************************************************************************
-******************************************************************************************************
-                            MODELS 
-
-!!! first db layer with migrations, then models 
-!!! db layer:
-        1. create model with migration
-        2. add FK + cascading in migration 
-        3. migrate 
-    ------
-    laravel layer:
-        1. relationships in models 
-        2. router 
-        3. controller
-        4. view 
-
-
-> php artisan mak:model Profile -m       ---> Profile model 
-                                         ---> create_profiles_table 
-(in migration) ---- see MIGRATIONS 
-        
-(in Profile model)
-    
-        public function user()
-        {
-            return $this->belongsTo(User::class);
-        }
-
-(in User model)
-        public function profile()                          !!! profiles --- if one to many 
-        {
-            return $this->hasOne(Profile::class);          !!! ...hasMany(Post::class)->orderBy('created_at', 'DESC');
-        }
-
-    !!! naming!  user_id, user fun, User::class
-    !!! one to one: hasONe .... belongsTo
-        one to many: hasMany .... belongsTo 
-
-!!! test in tinker (php artisan tinker):
-    >> $profile = new \App\Profile();
-    >> $profile->description = "my first profile";
-    >> $profile->user_id = 1;
-    >> $profile->save();
-    >> $profile->user;                       --> returns user with user_id=1
-    ----
-    >> $user = \App\User::find(1);
-    >> $user->profile                        --> returns profile with this user_id
-    -------
-    !!! if $user->profile->url = 'lala';   to save all (user with profile's changes):
-             >> $user->push();
--------------------------------------------------------------------------
-MANY TO MANY (models already exist) 
-User (one) has Profile (one) but User follows many Profiles, one Profile followed by many Users
-
-    >> php artisan create_el_user_pivot_table --create profile_user       (1st arg -- migration name)
-                                                                          profile_user --- alphab order
-    (migration  --- up -- create) --- 
-            $table->unsignedBigInteger('profile_id');
-            $table->unsignedBigInteger('user_id');
-    >> php artisan migrate 
-    (User.php)
-            public function following()
-            {
-                return $this->belongsToMany(Profile::class);
-            }
-    (Profile.php) 
-            public function followers()
-            {
-                return $this->belongsToMany(User::class);
-            }
-    --------- (access from template) 
-            {{ $user->profile->followers->count() }}
-            {{ $user->following->count() }}
----------------
-
-**********************************************************************************************************
-                            AUTH
-ADD AUTH: !!! in beginning of appl
-
-> composer require laravel/ui
-> php artisan ui vue --auth   
-                              --> views/auth
-                                  views/layout
-                                  views/home.blade.php 
-                              --> 8000 -> login, register 
-
-ADD FIELD TO USER MODEL 
-    
-    1. (app/Http/controllers/Auth/RegisterController.php)
-
-        validator fun ---- 'username' => [ ... (validation rules) ... ]    !!! unique:users 
-        create fun ------- add 'username' 
-
-    2. (database/migrations/..._create_users_table)  
-
-        up fun  --- add 'username' 
-    
-    3. > php artisan migrate:fresh        ---- erases data and recreates db 
-    4. (app/User.php)       -------   add 'username' 
-    5. (views/auth/register.blade.php)  ----- add input for 'username'
-    6. > php artisan tinker --> 
-            >> User::all(); 
-    -----
-    (b)  /8000/   ---- register link   or /8000/register 
-----------------------------------------------------------------------------------
-!!! if in home page no need for auth, replace HomeController with another controller 
-      routes/web.php   ----- controller? action? 
-      controller       ----- is there __construct fun with auth middleware? (ex. in home) --> 
-                                then all actions require auth 
-                             returns view  ----> see views/viewName.blade.php 
-    
-
-
-
-*******************************************************************************************************
-                                    FRONTEND -- FA
-*******************************************************************************************************
-INSTALL/COMPILE ASSETS
-    > npm install && npm run dev     --> all frontend assets compiled by webpack to 
-                                                public/css/app.css    
-                                                public/js/app.js
-------------------------------------------------------------------------------------------------------
-CSS --- bootstrap 
-    sass/variables.scss   --- ex. $body-bg  for page bg-color 
-    resources/sass/app.scss   ---- @import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
-        > npm run dev  ---> recompiles into public/css/app.css
-                !!! (public/css/_variables.scss)  
-                        $font-family-sans-serif: 'Open Sans', sans-serif;
-        !!! to use <strong></strong>  --> need to import 400, 700 --- in app.scss
------------------------------------------------------------------------------------------------
-VUE.js
-________
-!!! after changes: > npm run dev     ------or ---- > npm run watch
-(resources/js/components/FollowBtnComponent.vue) ----- 
-change in (app.js)  --- Vue.component('follow-btn', require('./components/FollowBtnComponent.vue').default);
-!!! include in template:  <follow-btn></follow-btn>  
----------------
-<template>
-    <div>
-        <button class="btn btn-primary ml-4" @click="followUser" v-text="buttonText"></button>
-    </div>
-</template>
-        !!! v-text   --- to dynamically show text ---- calls vue's computed -- buttonText()
-<script>
-    export default {
-        props: ['userId', 'follows'],           
-        mounted() {
-            console.log('Component mounted.')
-        },
-        data: function () {
-            return {
-                status: this.follows,
-            }
-        },
-        methods: {
-            followUser() {
-                axios.post('/follow/' + this.userId)                !!!axios installed.. see app.js
-                    .then(response => {
-                        this.status = ! this.status;
-                        console.log(response.data);
-                    })
-                    .catch(errors => {
-                        if (errors.response.status == 401) {          !!! 401 -- unauthorized
-                            window.location = '/login';
-                        }
-                    });
-            }
-        },
-        computed: {
-            buttonText() {
-                return (this.status) ? 'Unfollow' : 'Follow';
-            }
-        }
-    }
-</script>
-!!! props: ['userId'],       --- comes from template:
-                                 <follow-btn user-id="{{ $user->id }} follows={{ $follows }}" ></follow-btn> 
-        !!! $follows comes from ElsController:
-                (index fun) $follows = (auth()->user()) ? auth()->user()->following->contains($user->id) : false;
---------------------
-(routes)   Route::post('follow/{user}', 'FollowsController@store');   
-FollowsController ---- has middleware for 'auth'  (unlogged users cannot follow other Els)
-...store(User $user)  ---- return auth()->user()->following()->toggle($user->profile);  
-            toggle --- second press undo (unfollow)
-**********************************************************************************************************
-**********************************************************************************************************
-                                TOOLS 
-
-1. IMAGE RESIZE 
-    >> composer require intervention/image   ---- php library integrated with laravel
-                !!! integrated libs discovered, no need to configure in laravel 
-
-        (in controller):
-            use Intervention\Image\Facades\Image;    ---- automatically placed 
-            ------------
-            $img = Image::(public_path("storage/{$imgPath}"))->fit(1200, 1200);
-            $img->save();
-            .... $img as one of fields to create new El...and pass to view as el --- see controllers 
-        (in template):
-            <img src="/storage/{{ $el->img }}>           !!! el passed from controller
------------------------------------------------------------------------
-*****************************************************************************************************************
-                                1 User - 1 Profile
-                                CREATE PROFILE WHEN USER CREATED (REGISTERED)
-
-> php artisan mak:model Profile -m      
-    (database/migrations/...create_profiles_table.php) --- up fun, Schema::create fun ---
-        $table->bigIncrements('id');
-        $table->unsignedBigInteger('user_id');                  !!! FK (profile-user)
-        $table->string('title')->nullable();
-        $table->text('description')->nullable();
-        $table->string('url')->nullable();
-        $table->string('image')->nullable();
-        $table->timestamps();
-
-        $table->index('user_id');                               !!! cascading 
-
-    (app/Profile.php) --- in class 
-        public function user()
-        {
-            return $this->belongsTo(User::class);
-        }
-    (app/User.php) --- in class 
-        public function profile()
-        {
-            return $this->hasOne(Profile::class);
-        }
-        protected static function boot()                        
-        {
-            parent::boot();
-
-            static::created(function ($user) {                  !!! runs when user created
-                $user->profile()->create([                      !!! profile with this user's id created
-                    'title' => $user->username,
-                ]);                
-            });
-        }
-
----------------------------------------------------------------------------------------------------------------
-                                    AFTER REGISTER OR LOGIN --> SHOW ASSOCIATED FOLLOYING USER'S POSTS 
-(app/Http/Controllers/Auth/RegisterController.php)
-(app/Http/Controllers/Auth/LoginController.php) 
-    protected $redirectTo = '/';
-Route::get('/', 'PostsController@index');      ----- see below
-
-
----------------------------------------------------------------------------------------------------------------
-                                UPDATE PROFILE OF AUTH-D USER 
-
-Route::get('/profile/{user}/edit', 'ProfilesController@edit')->name('profile.edit');
->> php artisan make:policy ProfilePolicy -m Profile     --> app/Policies/ProfilePolicy.php 
-    (ProfilePolicy) ----- all actions for profile, with empty bodies 
-                public function update(User $user, Profile $profile)
-                {
-                    return $user->id == $profile->user_id;                   true if passed $user is this profile's user_id
-                }    
-
-(ProfilesController)  ---- use App\User;
-    public function edit(User $user)
-    {
-        $this->authorize('update', $user->profile);
-        return view('profiles.edit', compact('user'));
-    }
-(views/profiles/index.blade.php)  ---- link to editting profile 
-        @can('update', $user->profile)
-            <a href="/profile/{{ $user->id }}/edit">Edit Profile</a>
-        @endcan
-
-(views/profiles/edit.blade.php)
-    @extends('layouts.app')
-    @section('content')
-
-    <div class="container">
-        <form action="/profile/{{ $user->id }}" enctype="multipart/form-data" method="post">
-            @csrf
-            @method('PATCH')
-            ....(take inputs format from register.blade.php)
-        </form>
-    </div>
-
-Route::patch('/profile/{user}', 'ProfilesController@update')->name('profile.update');
-(ProfilesController) --- 
-        public function update(User $user)
-        {
-            $this->authorize('update', $user->profile);
-
-            $data = request()->validate([
-                'title' => 'required',
-                'description' => 'required',
-                'url' => 'url',
-                'image' => '',
-            ]);
-
-            if (request('image')) {
-                $imagePath = request('image')->store('profile', 'public');
-                $image = Image::make(public_path("storage/{$imagePath}"))->fit(1000, 1000);
-                $image->save();
-                $imageArray = ['image' => $imagePath];
-            }
-            auth()->user()->profile->update(array_merge(
-                $data,
-                $imageArray ?? []
-            ));
-            return redirect("/profile/{$user->id}");
-        }
-Route::get('/profile/{user}', 'ProfilesController@index')->name('profile.show');
-(ProfilesController)
-    public function index(User $user)
-    {        
-        return view('profiles.index', compact('user'));
-    }
-(views/profiles/index.blade.php)
-    <img src="{{ $user->profile->profileImage() }}" class="rounded-circle w-100">
-    ...
-    @can('update', $user->profile)
-        <a href="/profile/{{ $user->id }}/edit">Edit Profile</a>
-    @endcan
-
-------------------------------------------------------------------------------------------------------
-                                1 User - many Posts 
-
-> php artisan mak:model Post -m 
-(database/migrations/...create_posts_table.php) --- up fun, Schema::create fun ---
-    $table->bigIncrements('id');
-    $table->unsignedBigInteger('user_id');
-    $table->string('caption');
-    $table->string('image');
-    $table->timestamps();
-
-    $table->index('user_id');
-
-(app/Post.php) --- in class 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-(app/User.php) ---- in class 
-    public function posts()
-    {
-        return $this->hasMany(Post::class)->orderBy('created_at', 'DESC');
-    }
-(views/profiles/index.blade.php)
-    @can('update', $user->profile)
-        <a href="/p/create">Add New Post</a>
-    @endcan
-
-Route::get('/p/create', 'PostsController@create');
-(PostsController)
-    public function create()
-    {
-        return view('posts.create');
-    }
-(views/posts/create.blade.php)
-    @extends('layouts.app')
-    @section('content')
-
-    <div class="container">
-        <form action="/p" enctype="multipart/form-data" method="post">
-            @csrf
-            ... (use inputs format from register) ...
-        </form>
-    </div>
-Route::post('/p', 'PostsController@store');
-(PostsController)
-    public function store()
-    {
-        $data = request()->validate([
-            'caption' => 'required',
-            'image' => ['required', 'image'],
-        ]);
-
-        $imagePath = request('image')->store('uploads', 'public');
-
-        $image = Image::make(public_path("storage/{$imagePath}"))->fit(1200, 1200);
-        $image->save();
-
-        auth()->user()->posts()->create([
-            'caption' => $data['caption'],
-            'image' => $imagePath,
-        ]);
-
-        return redirect('/profile/' . auth()->user()->id);
-    }
------------------
-Route::get('/', 'PostsController@index');
-(PostsController)
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-    public function index()
-    {
-        $users = auth()->user()->following()->pluck('profiles.user_id');
-        $posts = Post::whereIn('user_id', $users)->with('user')->latest()->paginate(5);
-        return view('posts.index', compact('posts'));
-    }
-(views/posts/index.blade.php)
-    <div class="row pt-5">
-        @foreach($user->posts as $post)
-            <div class="col-4 pb-4">
-                <a href="/p/{{ $post->id }}">
-                    <img src="/storage/{{ $post->image }}" class="w-100">
-                </a>
-            </div>
-        @endforeach
-    </div>
-Route::get('/p/{post}', 'PostsController@show');
-(PostsController)
-    public function show(\App\Post $post)
-    {
-        return view('posts.show', compact('post'));
-    }
-(views/posts/show.blade.php)
-    <img src="/storage/{{ $post->image }}" class="w-100">
-    ...
-    <img src="{{ $post->user->profile->profileImage() }}" class="rounded-circle w-100" style="max-width: 40px;">
-    ...
-    <a href="/profile/{{ $post->user->id }}">
-        <span class="text-dark">{{ $post->user->username }}</span>
-    </a>
---------------------------------------------------------------------------------------------
-                            many Users --- many Following (profiles)
-
->> php artisan create_el_user_pivot_table --create profile_user       
-    (migration  --- up -- create) --- 
-            $table->unsignedBigInteger('profile_id');
-            $table->unsignedBigInteger('user_id');
-    >> php artisan migrate 
-    (User.php)
-            public function following()
-            {
-                return $this->belongsToMany(Profile::class);
-            }
-    (Profile.php) 
-            public function followers()
-            {
-                return $this->belongsToMany(User::class);
-            }
-(ProfilesController)
-    public function index(User $user)
-    {
-        $follows = (auth()->user()) ? auth()->user()->following->contains($user->id) : false;
-
-        $postCount = Cache::remember(
-            'count.posts.' . $user->id,
-            now()->addSeconds(30),
-            function () use ($user) {
-                return $user->posts->count();
-            });
-
-        $followersCount = Cache::remember(
-            'count.followers.' . $user->id,
-            now()->addSeconds(30),
-            function () use ($user) {
-                return $user->profile->followers->count();
-            });
-
-        $followingCount = Cache::remember(
-            'count.following.' . $user->id,
-            now()->addSeconds(30),
-            function () use ($user) {
-                return $user->following->count();
-            });
-
-        return view('profiles.index', compact('user', 'follows', 'postCount', 'followersCount', 'followingCount'));
-    }
-
-(views/profiles/index.blade.php)
-    <div class="d-flex">
-        <div class="pr-5"><strong>{{ $postCount }}</strong> posts</div>
-        <div class="pr-5"><strong>{{ $followersCount }}</strong> followers</div>
-        <div class="pr-5"><strong>{{ $followingCount }}</strong> following</div>
-    </div>
-    ......
-    <div class="d-flex justify-content-between align-items-baseline">
-        <div class="d-flex align-items-center pb-3">
-            <div class="h4">{{ $user->username }}</div>
-            <follow-button user-id="{{ $user->id }}" follows="{{ $follows }}"></follow-button>
-        </div>
-        @can('update', $user->profile)
-            <a href="/p/create">Add New Post</a>
-        @endcan
-
-    </div>
-    .....
-    <div class="row pt-5">
-        @foreach($user->posts as $post)
-            <div class="col-4 pb-4">
-                <a href="/p/{{ $post->id }}">
-                    <img src="/storage/{{ $post->image }}" class="w-100">
-                </a>
-            </div>
-        @endforeach
-    </div>
-------------
-VUE.js
-________
-!!! after changes: > npm run dev     ------or ---- > npm run watch
-(resources/js/components/FollowBtnComponent.vue) ----- 
-change in (app.js)  --- Vue.component('follow-btn', require('./components/FollowBtnComponent.vue').default);
-!!! include in template:  <follow-btn></follow-btn> ---- see above (views/profiles/index.blade.php)
----------------
-<template>
-    <div>
-        <button class="btn btn-primary ml-4" @click="followUser" v-text="buttonText"></button>
-    </div>
-</template>
-        !!! v-text   --- to dynamically show text ---- calls vue's computed -- buttonText()
-<script>
-    export default {
-        props: ['userId', 'follows'],           
-        mounted() {
-            console.log('Component mounted.')
-        },
-        data: function () {
-            return {
-                status: this.follows,
-            }
-        },
-        methods: {
-            followUser() {
-                axios.post('/follow/' + this.userId)                !!!axios installed.. see app.js
-                    .then(response => {
-                        this.status = ! this.status;
-                        console.log(response.data);
-                    })
-                    .catch(errors => {
-                        if (errors.response.status == 401) {          !!! 401 -- unauthorized
-                            window.location = '/login';
-                        }
-                    });
-            }
-        },
-        computed: {
-            buttonText() {
-                return (this.status) ? 'Unfollow' : 'Follow';
-            }
-        }
-    }
------------------------------------------------------------------------------------------------
-                        MY FOLLOWYING (PFOFILES) -> POSTS 
-
-Route::get('/', 'PostsController@index');
-(PostsController)
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-    public function index()
-    {
-        $users = auth()->user()->following()->pluck('profiles.user_id');
-        $posts = Post::whereIn('user_id', $users)->with('user')->latest()->paginate(5);
-        return view('posts.index', compact('posts'));
-    }
+> laravel new laravel-vue-startup 
+proj > composer require laravel/ui
+> php artisan ui vue
+> npm install && npm run dev
+> npm install vue-router vuex  @fortawesome/fontawesome-free --save

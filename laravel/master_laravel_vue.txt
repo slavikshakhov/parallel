@@ -90,7 +90,7 @@ ADD FRONTENT (VUE) --- laravel docs --- Frontend scaffolding
                               Vue   ----- <Root>   ---- but no components rendered yet 
 -------------------------------------------------------------------------------------------
                             ROUTING 
-LARAVEL LAYER  (web.php)   --- change A -> B
++ LARAVEL LAYER  (web.php)   --- change A -> B
     A.
         Route::get('/', function () {
             return view('welcome');
@@ -101,10 +101,11 @@ LARAVEL LAYER  (web.php)   --- change A -> B
         })->where('any', '^(?!api\/)[\/\w\.\,-]*');
     -----
     8000/api/lala    --> 404 Not Found 
-    8000/lalala/lala   --> renders Vue (see devTools)
+    8000/lalala/lala   --> renders Vue (see devTools) ---- still no Vue routing 
 --------------------------------------------------
 VUE LAYER  --- takes over routing from laravel 
     > npm install vue-router 
+
     (resources/js/routes.js)
         import VueRouter from "vue-router";
         import ExampleComponent from "./components/ExampleComponent";
@@ -116,8 +117,8 @@ VUE LAYER  --- takes over routing from laravel
             routes, 
         });
         export default router;
-    (resources/app.js) --- change 
 
+    (resources/app.js) --- change 
         import VueRouter from "vue-router";       ++
         import router from "./routes";            ++
         Vue.use(VueRouter);                       ++
@@ -130,12 +131,15 @@ VUE LAYER  --- takes over routing from laravel
         ----
         !!! Vue.component( ... )    --- for Component1 with its route 
             Vue.component(....)     --- for Component2 with its route 
-                !!! globally registered components 
+                !!! globally registered components can by used in all components' templates 
+
     (views/welcome.blade.php)  --- add --- in body 
 
         <div id="app">
             <router-view></router-view>      ++   (here if "/" --> ExampleComponent)
         </div>
+        -----
+        !!! <router-view> can be used in any template as long as it's component registered in app.js 
 ----------------------------------------------------------------
 HTTP5 HISTORY MODE IN VUE ROUTER 
     /  --> /#     ----- was used to indicate that router is from front, remove it: 
@@ -454,9 +458,9 @@ ADD ROWS/COLS DYNAMICALLY based on available els in array
         ---in script: 
                 data() {
                     return {
-                    bookables: null,                       
-                    loading: false,
-                    columns: 3                                      ++
+                        bookables: null,                       
+                        loading: false,
+                        columns: 3                                      ++
                     };
                 },
                  methods: {
@@ -484,4 +488,349 @@ ADD ROWS/COLS DYNAMICALLY based on available els in array
                 --------
                 !!! computed watches for changes in data, reruns after data changes 
                 !!! rows() return value accessed from template as {{ rows }}
+                !!! placeholder: if row has 3 els, and 1 el in row, placeholder --> 2 els 
+                        to prevent col stratching 100% width of row if not rull row 
 *******************************************************************************************************
+                            DB CONNECTION 
+XAMPP --- run apache, MySql 
+b: localhost:8080/phpmyadmin      !!! 8080 is port of apache 
+    new db --> dbName --- urg8mb4_unicode_ci  --- CREATE 
+(config/database.php) --- 'default' => env('DB_CONNECTION', 'mysql'),   ---aut
+                           'mysql' => [
+                               'port' => env('DB_PORT', '3306'),   !!! 2nd par -- devault val, if not in .env 
+                               'collation' => 'utf8mb4_unicode_ci',
+                               .....
+                               ]
+                           ---
+                            
+(.evn) --- aut 
+        DB_CONNECTION=mysql
+        DB_HOST=127.0.0.1
+        DB_PORT=3306                    !!! see mysql port in xampp
+        DB_DATABASE=dbName
+        DB_USERNAME=root
+        DB_PASSWORD=myPw
+----
+(app/Providers/AppServiceProvider.php)
+    use Illuminate\Support\Facades\Schema;          ++
+    .....
+    public function boot()
+    {    
+        Schema::defaultStringLength(191);           ++     
+    }
+    ---
+    !!! in migrations unique --- is  key, in MySql !> 191 chars
+            if string length > 191 --> default is set to 191
+------------------------------------------------------
+MODEL  > php artisan make:model Bookable -m 
+    (Bookable.php) --- in up fun
+        Schema::create('bookables', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->timestamps();
+            $table->string('title');                  ++
+            $table->text('description');              ++    !!! 2nd par -- length (def 191)
+        });
+    > php artisan:migrate                       --- check in phpMyAdmin
+--------------
+SEED FAKE DATA 
+    laravel docs --- testing - database --generating factories / writing factories 
+    uses Faker php library: https://github.com/fzaninotto/Faker
+    seeder (to insert data into db) --- laravel docs - database - seeding --Useing Modal Factories 
+    --------
+    GENERATE FACTORY: php artisan make:factory BookableFactory --model=Bookable
+        --> (database/factories/BookableFactory.php)
+
+        <?php        
+
+        use App\Bookable;                                                              
+        use Faker\Generator as Faker;                                                  
+        use Illuminate\Support\Arr;                                                    ++
+
+        $suffix = [                                                                    ++
+            'Villa',
+            'House',
+            'Cottage',
+            'Luxury Villas',
+            'Cheap House',
+            'Rooms',
+            'Cheap Rooms',
+            'Luxury Rooms',
+            'Fancy Rooms'
+        ];
+        $factory->define(Bookable::class, function (Faker $faker) use ($suffix) {      + use ($suffix)
+            return [
+                'title' => $faker->city . ' ' . Arr::random($suffix),                   ++
+                'description' => $faker->text()                                         ++
+            ];
+        });
+        ------
+        !!! use($suffix)   --- to bring var in closure's scope 
+    -------
+    SEEDING: php artisan make:seeder BookablesTableSeeder 
+        --> (database/seeds/BookablesTableSeeder.php)
+
+            <?php
+            use App\Bookable;                                                       ++
+            use Illuminate\Database\Seeder;
+
+            class BookablesTableSeeder extends Seeder
+            {                
+                public function run()
+                {
+                    factory(Bookable::class, 100)->create();                        ++
+                }
+            }
+            ----
+            see -- laravel docs - database - seeding --Useing Modal Factories                 
+                !!! create --- creates 100 instances of model 
+                               fill instances with data by factory
+                               saves in db 
+                !!! ->make( .... )->create()      ---- make w/o saving, modify data, then ->creae()
+            ------------
+        --> (database/seeds/DatabaseSeeder.php)
+                public function run()
+                {                    
+                    $this->call(BookablesTableSeeder::class);                     ++ 
+                }
+                -----
+                !!! BookablesTableSeeder --- no need to import, same namespace 
+        ------------
+        > php artisan migrate:refresh --seed                       !!! check phpMyAdmin
+        ----
+        !!! deletes all data, resets to initial state, seeds data 
+---------------------------------------------------------------------------------------------
+GET DATA FROM API (from db) --- ALL ELS 
+
+    (routes/api.php)  --- add under auth route group 
+        use App\Bookable;
+        ----
+        Route::get('bookables', function (Request $request) {
+            return Bookable::all();                         !!! -> json
+        });
+    ------
+    !!! to see all routes: > php artisan route:list 
+    -------
+    8000/api/bookables    ---> json with all data in browser page 
+                                !!! not safe, not recommended 
+    ------
+    test in postman --- 8000/api/bookables -- get --- application/json 
+--------------------------------
+GET DATA FROM API (from db) ---- ONE EL 
+
+    (routes/api.php)
+        Route::get('bookables/{id}', function (Request $request, $id) {
+            return Bookable::find($id);    
+        });
+        ---
+        !!! 'bookables/{id}' ----------- (Request $request, $bookableId)
+            'bookables/{id}/{tata}' ---- (Request $request, $bookableId, $lala)
+            'bookables/{id}/{opt?}' ----------- (Request $request, $id, $opt = "lala")}{ dd($x, $opt); }
+                    8000/great     -->  'great', 'lala' 
+                    8000/great/day  --?  'great', 'day'
+        !!! ::findOrFail($id)   ---> if not found --> failed with 404 Not Found 
+
+---------------------------------
+API ROUTES USING CONTROLLERS: (rafactor):
+
+    Route::get('bookables', 'Api\BookableController@index');
+    Route::get('bookables/{id}', 'Api\BookableController@show');
+    ---------
+        !!! Route::apiResource('bookables', 'Api\BookableController')->only(['index', 'show']);
+
+    (app/Http/Controllers/Api/BookableController.php) ---- inside class:         
+        
+            public function index()
+            {
+                return Bookable::all();             !!! returns json with all Bookable properties
+            }
+
+            public function show($id)
+            {
+                return Bookable::findOrFail($id);
+            }
+    ----
+    !!! to create controller in folder custom created other than Controllers dir: 
+            > php artisan make:controller Api/BookableController
+    !!! Providers/RouteServiceProvider.php ---- 
+                defined path to Controllers --- namespace (App\Http\Controllers) 
+                    from api.php (routes)
+
+    --------API RESOURCES
+
+    !!! if need to withhold some of properties before returning json (ex. pw, token, ...):
+            use Api Resources (seed laravel docs)
+        > php artisan make:resource BookableIndexResource 
+                                    BookableShowResource 
+            --> (app/Http/Resources/BookableIndexResource.php) --- in class: 
+                    public function toArray($request)          -aut- (empty fun)
+                        {
+                            return parent::toArray($request);                   --
+                            return [
+                                'id' => $this->id,                              ++
+                                'title' => $this->title,                        ++
+                                'description' => $this->description             ++
+                            ];
+                        }
+            --> (app/Http/Resources/BookableShowResource.php) --- in class: 
+                         public function toArray($request)
+                        {
+                            return [
+                                'id' => $this->id,
+                                'title' => $this->title,
+                                'description' => $this->description
+                            ];
+                        }
+                    -----
+                    !!! return parent::toArray($request) ---- all fields from model -> array 
+        -----
+        (app/Http/Controllers/Api/BookableController.php) ---- inside class:   (refactor)
+            public function index()
+            {               
+                return BookableIndexResource::collection(Bookable::all());
+            }
+
+            public function show($id)
+            {               
+                return new BookableShowResource(Bookable::findOrFail($id));    
+            }
+            ----
+            pass model as json to resource instance 
+        ------
+        (resources/js/bookable/Bookable.php) --- refactor 
+            axios.get(`/api/bookables/${this.$route.params.id}`).then(response => {                
+                this.bookable = response.data.data;
+                this.loading = false;
+            }
+        ----
+        (resources/js/bookable/Bookables.php) --- refactor 
+            const request = axios.get("/api/bookables").then(response => {      
+                this.bookables = response.data.data;
+                this.loading = false;
+            }
+        ----
+        !!! resources --> returns data obj that wraps data 
+            !!! not to wrap, if needed: 
+                (app/Providers/AppServiceProvider.php) --- in boot fun: 
+                    JsonResource::withoutWrapping();
+-----------------------------------------------------------------------------------------------
+PROMISES (JS)
+   
+    const p = new Promise((resolve, reject) => {                !!! resolve, reject are funs
+        setTimeout(() => resolve("Hello"), 3000);               !!! async fun --> resolves
+    })
+        .then(result => "Hello again " + result)                !!! "Hello" assigned to result 
+        .then(result => console.log(result))                    
+        .catch(result => console.log(`Error ${result}`));
+        console.log(p);
+        ----
+        !!! if promise returns reject('lala') ----> .catch(er => console.log(er)) 
+                !!! 'lala' assigned to er
+        !!! setTimeout(() => reject("no"), 3000);  ---- catch(er => console.log(er));
+                'no' assigned to er 
+------------------------------
+AXIOS --- GET DATA 
+    (resources/js/bootstrap.js)  ---- window.axios = require('axios');      -aut-
+    (resources/bookables/Bookables.vue) ---    -+ 
+
+        created(){ 
+            this.loading = true; 
+            const request = axios.get("/api/bookables").then(response => {                
+                this.bookables = response.data;
+                this.loading = false;
+            });
+        }
+
+    (resources/bookables/BookableListItem.vue) 
+
+        in template --- 
+            <div class="card">
+                <div class="card-body">
+                <h5 class="card-title">{{ itemTitle }}</h5>                
+                <p class="card-text">{{ itemDescription }}</p>
+                </div>
+            </div>
+
+        in script ---  props: { itemTitle: String, itemDescription: String, price: Number }
+    -------
+    8000/     --> list of els displayed (cards with BookableListItems)
+
+---------------------------------------------------
+ADD ROUTES AND CONTROLLERS TO Bookable, GET DATA FOR ONE EL 
+    (resources/js/routes.js)   --- replace: 
+
+        import Bookable from "./bookable/Bookable";
+        ----
+         const routes = [        
+            { path: "/bookable/:id", component: Bookable, name: "bookable" }  
+        ];
+    (resources/js/bookable/Bookable.vue)   ??
+
+        <template>           
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <div v-if="!loading">
+                                <h2>{{ bookable.title }}</h2>
+                                <hr />
+                                <article>{{ bookable.description }}</article>
+                            </div>
+                            <div v-else>Loading...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">availability & prices</div>
+            </div>
+        </template>
+
+        <script>
+            export default {
+                data() {
+                    return {                       
+                        bookable: null,
+                        loading: false
+                    };
+                },
+                created() {                    
+                    this.loading = true;
+                    axios.get(`/api/bookables/${this.$route.params.id}`).then(response => {
+                        this.bookable = response.data;
+                        this.loading = false;
+                    });
+                }
+            };
+        </script>
+    -----
+    8000/bokable/1   ---- see devTools -- Vue --- router 
+--------------------------------
+PASS PROPS FROM PAR -> CH AS A WHOLE 
+    (resources/js/bookable/Bookables.vue)
+
+         <bookable-list-item v-bind="bookable"></bookable-list-item>
+         ---
+         !!! bookable is result of iteration <- bookables <- data <- db 
+         !!! v-bind --- if names of properties of obj match props of component 
+    (resources/js/bookable/BookableListItem.vue)
+
+         <template>
+            <div class="card w-100">
+                <div class="card-body">                
+                    <h5 class="card-title">{{ title }}</h5>              !!! not itemTitle
+                    <p class="card-text">{{ description }}</p>
+                </div>
+            </div>
+        </template>
+        <script>
+            export default {            
+                props: { title: String, description: String, id: Number }  !!! not itemTitle 
+            };
+        </script>
+-------------------------------------------
+link from BookableListItem to Bookable (where can do orders)
+    (resources/bookables/BookableListItem.vue)  ---- in template
+
+        <router-link :to="{ name: 'bookable', params: { id } }">
+            <h5 class="card-title">{{ title }}</h5>
+        </router-link>
+-------------------------------------------------------------------
+

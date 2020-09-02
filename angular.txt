@@ -1,0 +1,387 @@
+SETUP, RUN    -------- docs 
+-----------------
+FORMS -- template-driven --- GitHub:  https://github.com/ramsatt/Angular-5-Template-driven-forms/tree/master/src/app
+-----------------
+ROUTING  ---  docs:  https://angular.io/guide/router
+-----------------
+
+                        OBSERVABLES 
+
+(Consumer) 
+    // Create simple observable that emits three values
+    const myObservable = of(1, 2, 3);
+
+    // Create observer object
+    const myObserver = {
+        next: x => console.log('value: ' + x),
+        error: err => console.error('Observer got an error: ' + err),
+        complete: () => console.log('Observer got a complete notification'),
+    };
+
+    // Execute with the observer object
+    myObservable.subscribe(myObserver);
+    
+        // value: 1
+        // value: 2
+        // value: 3
+            // Observer got a complete notification
+            
+    !!! same as:    myObservable.subscribe(
+                        x => console.log('Observer got a next value: ' + x),
+                        err => console.error('Observer got an error: ' + err),
+                        () => console.log('Observer got a complete notification')
+                    );
+    !!! only next required 
+
+-------------------
+-------------------
+                        Subject as Observable (see docs -- angular subject)
+
+(service)
+    elChanged = new Subject<number>();  --- import { Subject } from 'rxjs';
+    f(val) {
+        this.elChanged.next(val);
+    }
+(comp) 
+    ngOnInit() {
+        this.elSubsctiption = this.elService.elChanged.subscribe(res => ... res ...)
+    }
+    ff() {
+        this.elService.f(5)
+    }
+
+    !!! ngOnInit reruns subscription if elChanged changed val, ex. by ff()
+    !!! elSubsctiption: Subscription;     ---- import {Subscription} from 'rxjs/Subscription'
+    !!! elService --- inject as private 
+    !!! new Subject<rt>()   ---- rt --- can be Interface, ex. User 
+    !!! fields in service private
+    !!! in service f(val){ f2() } ... private f2() { ... }
+    !!! data passed to service from comp, if object, can use Interface 
+
+
+    --------------------------------------------------------------------------------------------
+                            ANGULARFIRE AUTH 
+
+    https://medium.com/javascript-in-plain-english/how-to-add-firebase-authentication-to-pwa-or-angular-project-using-angularfire-83a8f61d367c
+
+    1. npm install firebase @angular/fire --save
+    2. (environment.js)  --- add configuration (from firebase project)
+    3. Enable and create firestore database (in firebase's console after creating project)
+        database --- create 
+    4. (app.module.ts)  first: ng g s service/auth
+        import { AngularFireModule } from '@angular/fire';
+        import { AngularFirestore } from '@angular/fire/firestore';
+        import { AngularFireAuthModule } from '@angular/fire/auth';
+        import { AngularFireMessagingModule } from '@angular/fire/messaging';
+        import { AngularFireStorageModule } from '@angular/fire/storage';
+        import { AuthService } from './auth.service';                     
+
+        ...
+        imports: [
+            BrowserModule,
+            AngularFireModule.initializeApp(environment.firebase),
+            AngularFireAuthModule,
+            AngularFireMessagingModule,
+            AngularFireStorageModule,
+            ...
+        ],
+        providers: [
+            ...
+            AngularFirestore,          
+            AuthService
+            ...
+        ],
+    5. (firebase's console)
+        authentication -- sign-in method --- email/password 
+
+    6.  (auth.service.ts)
+            
+            import { AngularFireAuth } from '@angular/fire/auth';
+            import { Observable, Subject } from 'rxjs';           
+
+            ...
+            export class AuthService {
+                user: Observable<firebase.User>;
+                authChange = new Subject<boolean>();
+
+                constructor(private firebaseAuth: AngularFireAuth) {
+                    this.user = firebaseAuth.authState;
+                }
+
+                signup(email: string, password: string) {
+                    this.firebaseAuth
+                    .createUserWithEmailAndPassword(email, password)
+                    .then(value => {
+                        console.log('Success!', value);
+                        this.authChange.next(true);
+                    })
+                    .catch(err => {
+                        console.log('Something went wrong:',err.message);
+                        this.authChange.next(false);
+                    });
+                }
+
+                login(email: string, password: string) {
+                    this.firebaseAuth
+                    .signInWithEmailAndPassword(email, password)
+                    .then(value => {
+                        console.log('Nice, it worked!');
+                        this.authChange.next(true);
+                    })
+                    .catch(err => {
+                        console.log('Something went wrong:',err.message);
+                        this.authChange.next(false);
+                    });
+                }
+
+                logout() {
+                    this.firebaseAuth.signOut();
+                    this.authChange.next(false);
+                }
+            }
+    7. (comp)
+        import { AuthService } from './service/auth.service';
+        import { Subscription } from 'rxjs';
+        ...
+        export class AppComponent {
+            email: string;
+            password: string;
+
+            authSubscription: Subscription;
+            isAuth = false;
+
+            ...
+
+            constructor(public authService: AuthService) {}
+            ngOnInit() {
+                this.authSubscription = this.authService.authChange.subscribe(
+                    (authStatus) => {
+                        this.isAuth = authStatus;    
+                        this.authService.user.subscribe((user) => console.log(user));                    
+                    }
+                );
+            }
+
+            signup() {
+                this.authService.signup(this.email, this.password);
+                this.email = this.password = '';
+            }
+
+            login() {
+                this.authService.login(this.email, this.password);
+                this.email = this.password = '';    
+            }
+
+            logout() {
+                this.authService.logout();
+            }
+        }
+    8. (template)
+        <div>            
+            <h1 *ngIf="isAuth | async">
+                Welcome User: {{ (authService.user | async)?.email }}!        ??????
+            </h1>            
+            <div *ngIf="!(isAuth | async)">               
+                <input type="text" [(ngModel)]="email" placeholder="Enter email"/>
+                <input type="password" [(ngModel)]="password" placeholder="Enter password"/>                
+                <button (click)="signup()" [disabled]="!email || !password">
+                    Signup
+                </button>                
+                <button (click)="login()" [disabled]="!email || !password">
+                    Login
+                </button>
+            </div>            
+            <button (click)="logout()" *ngIf="isAuth">
+                Logout
+            </button>
+        </div>
+
+-----------------------------------------------------------------------------
+                                   GUARDS
+1. ng g guard auth   ---- select CanActivate 
+2. (auth.guard.ts)
+    import { Injectable } from '@angular/core';
+    import {
+        CanActivate,
+        ActivatedRouteSnapshot,
+        RouterStateSnapshot,
+        Router,                                      
+    } from '@angular/router';
+
+    import { AuthService } from './auth/auth.service';
+
+    @Injectable({
+    providedIn: 'root',
+    })
+    export class AuthGuard implements CanActivate {
+        constructor(private authService: AuthService, private router: Router) {}
+        canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+            if (this.authService.isAuthenticated) {
+                return true;
+            } else {
+                this.router.navigate(['/login']);
+            }
+        }
+    }
+    !!! only add Router, change canActivate, do injections 
+
+3. (app-routing.module.ts)   ---- in routes array: 
+     { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
+
+-----------------------------------------------------------------------------------------
+                            ON PAGE REFRESH --- PERSIST LOGIN 
+
+
+
+-----------------------------------------------------------------------------------------
+                            CRUD - ANGULARFIRE --- CLOUD FIRESTORE
+
+https://github.com/angular/angularfire/tree/master/docs/firestore
+
+COLLECTIONS 
+
+1. (comp)     
+    import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
+    import { Observable } from 'rxjs';
+
+    ...
+    export class AppComponent {
+        private els: AngularFirestoreCollection<El>;        !!! El is interface
+        items: Observable<El[]>;
+        constructor(private afs: AngularFirestore) {
+            this.els = afs.collection<El>('els');
+            this.els = this.els.valueChanges();
+        }
+        addEl(el: El) {
+            this.els.add(el);
+        }
+    }
+    !!! ADD ID TO NEW EL: 
+        addEl(el: El) {
+            const id = this.afs.createId();
+            const el: El = {...el, id}
+            this.elsCollection.doc(id).set(el);
+        }
+    
+-------
+export interface El { name: string; }
+
+2. (template)
+    <ul>
+      <li *ngFor="let item of items | async">
+        {{ item.name }}
+      </li>
+    </ul>
+------------------------------------
+LIST COLLECTION WITHOUT METADATA (valueChanges)  --- see above 
+
+LIST COLLECTION WITH METADATA, + id (snapshotChanges): 
+    constructor(private afs: AngularFirestore) {
+            this.els = afs.collection<El>('els');               !!! id in El interface is string 
+            this.els = this.els.snapshotChanges().pipe(
+                map(actions => actions.map(a => {               !!! import { map } from 'rxjs/operators';
+                    const data = a.payload.doc.data() as El;
+                    const id = a.payload.doc.id;
+                    return { id, ...data };
+                }))
+            );
+        }
+        !!! alternative to return { id, ...data }   ---- each field separately:
+            return {
+                id: doc.payload.doc.id,
+                name: doc.payload.doc.data()name,
+                age: doc.payload.doc.data()age
+            }
+        !!! after map --- 
+            .subscribe(
+                (els: El[]) => {
+                    this.store.dispatch(setEls(els));           !!! see NgRx below          
+                },
+                error => {
+                    ... error ....
+                }
+            )
+
+QUERYING COLLECTION  ---- see https://github.com/angular/angularfire/tree/master/docs/firestore
+-------------------------------------------
+DOCUMENTS 
+
+(in comp's class)
+    private elDoc: AngularFirestoreDocument<El>;
+    el: Observable<El>;
+    constructor(private afs: AngularFirestore) {
+        this.elDoc = afs.doc<El>('els/1');
+        this.el = this.elDoc.valueChanges();
+    }
+    update(el: El) {
+        this.elDoc.update(el);
+    }
+(template)  {{ (item | async)?.name }}
+
+GET NESTED COLLECTION 
+
+        this.elDoc = afs.doc<El>('user/david');
+        this.tasks = this.elDoc.collection<Task>('tasks').valueChanges();
+
+
+-----------------------------------------------------------------------------------------
+                            NgRx (global state, like Redux)
+
+https://ngrx.io/guide/store
+
+1. (counter.actions.ts)
+
+    import { createAction } from '@ngrx/store';
+    export const increment = createAction('[Counter Component] Increment');
+    ...
+
+2. (counter.reducer.ts)
+
+    import { createReducer, on } from '@ngrx/store';
+    import { increment } from './counter.actions';
+
+    export const initialState = 0;
+
+    const _counterReducer = createReducer(
+        initialState,
+        on(increment, (state) => state + 1),
+        ...
+    );
+
+    export function counterReducer(state, action) {
+        return _counterReducer(state, action);
+    }
+
+3. (app.module.ts)
+
+    import { StoreModule } from '@ngrx/store';
+    import { counterReducer } from './counter.reducer';
+
+   
+    in imports --- [StoreModule.forRoot({ count: counterReducer }), ...]
+
+4. (comp)
+
+    
+    import { Store, select } from '@ngrx/store';
+    import { Observable } from 'rxjs';
+    import { increment, ... } from '../counter.actions';
+
+    ...
+    export class MyCounterComponent {
+        count$: Observable<number>
+
+        constructor(private store: Store<{ count: number }>) {            
+            this.count$ = store.pipe(select('count'));            !!! current store's count
+        }
+
+        increment() {
+            this.store.dispatch(increment());
+        }
+        ...        
+    }
+        
+5. (template)
+    
+    <button (click)="increment()">Increment</button> 
+    <div>Current Count: {{ count$ | async }}</div>        

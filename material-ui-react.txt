@@ -1,0 +1,9 @@
+                        SETUP 
+
+> create-react-app MyProj 
+(npm) --- react-router-dom
+
+material-ui docs ---- @material-ui/core... add link to public/index.html 
+------
+remove: App.css, index.css, App.test.js
+
