@@ -1,4 +1,4 @@
-SETUP, RUN    -------- docs 
+lSETUP, RUN    -------- docs 
 -----------------
 FORMS -- template-driven --- GitHub:  https://github.com/ramsatt/Angular-5-Template-driven-forms/tree/master/src/app
 -----------------
@@ -50,6 +50,7 @@ ROUTING  ---  docs:  https://angular.io/guide/router
         this.elService.f(5)
     }
 
+
     !!! ngOnInit reruns subscription if elChanged changed val, ex. by ff()
     !!! elSubsctiption: Subscription;     ---- import {Subscription} from 'rxjs/Subscription'
     !!! elService --- inject as private 
@@ -57,6 +58,9 @@ ROUTING  ---  docs:  https://angular.io/guide/router
     !!! fields in service private
     !!! in service f(val){ f2() } ... private f2() { ... }
     !!! data passed to service from comp, if object, can use Interface 
+
+    !!! if need initial value of Subject --> new BehaviourSubject<number>(5)
+            To re-render component when value changes, place fetching code in constructor.
 
 
     --------------------------------------------------------------------------------------------
@@ -238,41 +242,85 @@ ROUTING  ---  docs:  https://angular.io/guide/router
 
 https://github.com/angular/angularfire/tree/master/docs/firestore
 
-COLLECTIONS 
+***************************************
+***************************************
 
-1. (comp)     
-    import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
-    import { Observable } from 'rxjs';
+!!! return types for collections:
+        
+            AngularFirestoreCollection<Post>  ---- this.afs.collection('...')
+            Observable<Post[]>               ----- this.afs.collection('...').snapshotChanges()
+            Post[]                           ----- this.afs.collection('...')
+                                                        .snapshotChanges()
+                                                        .subscribe(....)
 
-    ...
-    export class AppComponent {
-        private els: AngularFirestoreCollection<El>;        !!! El is interface
-        items: Observable<El[]>;
-        constructor(private afs: AngularFirestore) {
-            this.els = afs.collection<El>('els');
-            this.els = this.els.valueChanges();
-        }
-        addEl(el: El) {
-            this.els.add(el);
-        }
-    }
-    !!! ADD ID TO NEW EL: 
-        addEl(el: El) {
-            const id = this.afs.createId();
-            const el: El = {...el, id}
-            this.elsCollection.doc(id).set(el);
-        }
+    !!! return types for document (el): 
+            AngularFirestoreDocument<Post>  ----- this.afs.doc<Post>('...');
+            Observable<Post>                ----- this.afs.doc<Post>('...').snapshotChanges()
+            Post                            ----- this.afs.doc<Post>('...')
+                                                        .snapshotChanges()
+                                                        .subscribe(...)
+            
+        !!! in html if Observable -- need  | async
+        !!! service returns Observable, in comp .subscrube  or .map -> .subscribe
+                (In service) 
+                    get els:            this.firestore.collection('els').snapshotChanges();
+                    add el to els:      this.firestore.collection('els').add(el);         !!! el is obj 
+                    update el in els:   this.firestore.doc('policies/' + policyId).update(policy);  
+                    delete el from els: this.firestore.doc('policies/' + policyId).delete();
+                (in comp)
+                    .subscribe(res => ... ).then(x =>  ... ).catch(err => ... )
+
+                !!! .add(el) adds id aut, or: 
+                   
+                        addEl(el: El) {
+                            const id = this.afs.createId();
+                            const el: El = {...el, id}
+                            this.elsCollection.doc(id).set(el);
+                        }
     
--------
-export interface El { name: string; }
+(COLLECTION)
+    --- imports: 
+            import 'rxjs/add/operator/map';
+            import { Observable } from 'rxjs';
+            import { AngularFirestore, AngularFirestoreCollection} from '@angular/fire/firestore';
+    --- injections: private afs: AngularFirestore
 
-2. (template)
-    <ul>
-      <li *ngFor="let item of items | async">
-        {{ item.name }}
-      </li>
-    </ul>
-------------------------------------
+(a) ---- return Observable:
+
+    private shirtCollection: AngularFirestoreCollection<Shirt>;
+    shirts: Observable<ShirtId[]>;
+    constructor(private readonly afs: AngularFirestore) {
+        this.shirtCollection = afs.collection<Shirt>('shirts');    
+        this.shirts = this.shirtCollection.snapshotChanges()
+    }
+    
+    (html) <li ngFor="let el of els | async"></li>
+
+(b) ---- return normal []:  (here nested collection, by UserId, get it from authService)
+
+    private postCollection: AngularFirestoreCollection<Post>;
+    posts: Post[] = [];
+    constructor(private readonly afs: AngularFirestore) {
+        this.postCollection = this.afs.collection(`posts/${this.userId}/postId`);
+        this.postCollection.snapshotChanges()
+            .subscribe((arr) =>  arr.map((el) => this.posts.push(el.payload.doc.data()))
+        );
+    }
+
+    (html) <li ngFor="let post of posts>{{ post.title}} - {{post.pages}}</li>
+
+    
+(DOCUMENT)
+
+    --- imports 
+            import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/firestore';
+            import { Observable } from 'rxjs';
+    --- injections: private afs: AngularFirestore
+
+++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++
+
+
 LIST COLLECTION WITHOUT METADATA (valueChanges)  --- see above 
 
 LIST COLLECTION WITH METADATA, + id (snapshotChanges): 
@@ -292,39 +340,50 @@ LIST COLLECTION WITH METADATA, + id (snapshotChanges):
                 name: doc.payload.doc.data()name,
                 age: doc.payload.doc.data()age
             }
-        !!! after map --- 
-            .subscribe(
-                (els: El[]) => {
-                    this.store.dispatch(setEls(els));           !!! see NgRx below          
-                },
-                error => {
-                    ... error ....
-                }
-            )
+        
 
-QUERYING COLLECTION  ---- see https://github.com/angular/angularfire/tree/master/docs/firestore
--------------------------------------------
-DOCUMENTS 
+**********************************
+*********************************
+User - Posts - post1   ---> posts - (userId) - postId - (postId) - postData1
+                                                        (postId) - postData2
+    (comp) 
+        import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
+        ----in class ----
+        posts: AngularFirestoreCollection<Post> = null;
+        userId = null;
+        constructor(private afs: AngularFirestore, private authService: AuthService) {
+            this.authService.user.subscribe((user) => (this.userId = user.uid));
+        }
+        addPost() {
+            const post = { title: 'First Post', pages: 100 };
+            this.posts = this.afs.collection(`posts/${this.userId}/postId`);
+            this.posts.add(post);           
+        }
+    --> (in firestore console) posts - (userId) - postId - (postId) - (postObj)
+    ----------------------
+    READ NESTED POST 
+        import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/firestore';
+        import { Observable } from 'rxjs';
+        -------(in class)-----
+        private postEl: AngularFirestoreDocument<Post>;
+        post: Post = null;
+        userId = null;
 
-(in comp's class)
-    private elDoc: AngularFirestoreDocument<El>;
-    el: Observable<El>;
-    constructor(private afs: AngularFirestore) {
-        this.elDoc = afs.doc<El>('els/1');
-        this.el = this.elDoc.valueChanges();
-    }
-    update(el: El) {
-        this.elDoc.update(el);
-    }
-(template)  {{ (item | async)?.name }}
+        constructor(private afs: AngularFirestore, private authService: AuthService) {
+            this.authService.user.subscribe((user) => (this.userId = user.uid));
+        }
+        getPost(postId){
+            this.postEl = this.afs.doc<Post>(`posts/${this.userId}/postId/${postId}`);
+            this.postEl.snapshotChanges().subscribe((el) => {
+                this.post = el.payload.data();
+                console.log(el.payload.data());
+            });
+        }
+        !!! postId ex. XTtOhu5XRZlMAE0zriUm (in firestore console)
+++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++
+------------------------------------------------------------------------------------------------
 
-GET NESTED COLLECTION 
-
-        this.elDoc = afs.doc<El>('user/david');
-        this.tasks = this.elDoc.collection<Task>('tasks').valueChanges();
-
-
------------------------------------------------------------------------------------------
                             NgRx (global state, like Redux)
 
 https://ngrx.io/guide/store
