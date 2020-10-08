@@ -1,0 +1,22 @@
+conflicts in remote origin, force push:  git push -f origin master 
+-------------
+duplicate repository: copy old repo --> create new repo --> push old into new: result 2 identical repos 
+    git clone --bare <old-repository>
+    old-repository-project.git > git push --mirror <new-repository>     // pushes copy of old to new 
+    old-repository-project.git > cd .. 
+       > rm -rf <old-repository-project.git>                  // removes temporary local repository
+
+*************************************************************************************
+SHOW GIT SETTINGS           git config --list           --> user.name=slavikshakhov  (and more)
+                        !!! git config user.name        --> slavikshakhov
+
+HELP                        git <command> -h            ex. git add -h 
+SEE ALL BRANCHES            git branch -a 
+DELETE BRANCH               git branch -d <branch>
+SEE ALL REPOSITORIES        git remote -v 
+
+CHANGE REPOSITORY           git remote -v      !!! to see existing REPOSITORIES
+                            git remote set-url origin <remote url>       !!! origin is name, ex. heroku
+CHANGE REPOSITORY'S BRANCH  git branch -M master 
+ADD REPOSITORY              git remote add origin <remote url>
+REMOVE REFS TO OLD REPOSITORY       git remote rm origin  // ... heroku

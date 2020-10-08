@@ -1,0 +1,114 @@
+                             SOCKET.IO 
+
+npm:  (nodejs):  socket.io  
+      (react): socket.io-client
+
+
+------------------------------------
+         
+    !!!    SUMMERY ALGORYTHM: 
+    1. put in one place (ex. root component...) socket connection, then save socket in redux: 
+            const socket = io("http://localhost:4000").on("connect", () => {
+                console.log("connected to server");
+            });
+
+            !!! import io from "socket.io-client";
+
+    2. connect this user, in server add this user to rest of connected users, send them back to client
+           (client) socket.emit("connect-user", { userName: JSON.parse(currentUser).name });
+
+                    !!! socket <-- redux, saved after initializing/connecting, see step 1;
+
+           (server) 
+                    const chatMembers = [];
+
+                    io.on("connection", (socket) => {                        
+                        socket.on("connect-user", ({ userName }) => {                            
+                            chatMembers.push({ userName, socketId: socket.id });
+                            socket.broadcast.emit("all-users", chatMembers);                       
+                        });
+                    }
+                   
+
+                   !!! server setup: 
+                        const express = require("express");
+                        const port = 4000;
+                        const app = express();
+                        const http = require("http").Server(app);
+                        const io = require("socket.io")(http);
+
+                        ... here io.on(...)
+                        const users = require("./routes/users");
+
+                        app.use(bodyParser.urlencoded({ extended: false }));
+                        app.use(bodyParser.json());
+                        app.use(cors());
+                        app.use("/auth", users);
+                        ...
+                        http.listen(port, () => {
+                            console.log(`server running on port ${port}`);
+                        });
+            (client) 
+                    socket.on("all-users", (members) => {
+                        setConnectedUsers(members);                     // save in useState
+                        dispatch({ type: "SET_CONNECTED_USERS", payload: members });  //save in redux 
+                      
+                    });
+
+    3. SENDING MESSAGE FROM THIS USER (A) TO SPECIFIC USER (B)
+        1. client A:  identify with whom to chat, ex click on user card --> 
+                const startChat = () => {
+                    dispatch({ type: "SET_CHATTER", payload: userFromSocket });     // in redux --> chatter 
+                    history.push("chat");
+                };
+                !!! userFromSocket <-- see step 1.2, SET_CONNECTED_USERS, find in arr user with user name to get user with socketId
+        2.in chat, client A get message from input: 
+            const onFormSubmit = (e) => {   
+                e.preventDefault();             
+                const messageToSend = { text, chatter, sender: JSON.parse(currentUser) };         
+                socket.emit("new-contact", messageToSend);
+            };
+            !!! text <-- onChange (input), saved in useState,  
+                chatter <-- redux, saved in step 3.1,
+                currentUser <-- redux, saved when logged in
+
+        3. server 
+                io.on("connection", (socket) => {         
+                    ...
+                    socket.on("new-contact", ({ text, chatter, sender }) => {
+                        
+                        const memberSocketId = chatter.socketId;
+                        
+                        let senderWithSocketId = null;
+                        if (chatMembers.length !== 0) {
+                            senderWithSocketId = chatMembers.filter(
+                                (el) => el.userName === sender.name
+                            );
+                        }
+                        socket.broadcast
+                        .to(memberSocketId)
+                        .emit("message-received", { text, chatter, sender: senderWithSocketId });
+                        //socket.broadcast.emit("message-received", text);    // if need to emit to all users
+                    });
+                }
+                !!! chatter is receiver, from client sent with {userName, socketId}
+                    sender is from client as currentUser, no socketId
+                    need to convert sender as normal currentUser (id, pw,...) to {userName, socketId}
+        4. client 
+                socket.on("message-received", ({ text, chatter, sender }) => {                    
+                    setMessage({
+                        from: sender[0].userName,
+                        to: JSON.parse(currentUser).name,
+                        text,
+                    });
+                    dispatch({
+                        type: "SET_MESSAGE",
+                        payload: {
+                            from: sender[0].userName,
+                            to: JSON.parse(currentUser).name,
+                            text,
+                        },
+                    });                    
+                    dispatch({ type: "SET_CHATTER", payload: sender[0] });
+                    });
+                !!! in SET_CHATTER, reverse chatter, now what used to be sender...

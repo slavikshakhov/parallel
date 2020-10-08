@@ -1,0 +1,120 @@
+npm init 
+npm install --save-dev node-sass
+(scripts) "compile:sass": "node-sass sass/main.scss css/style.css -w"
+(html)  <link rel="stylesheet" href="css/style.css" />
+
+------------------------------------------------------------
+sass/abstracts/_variables.scss          $color-primary: #55c57a;
+sass/main.scss                          @import "abstracts/variables;
+
+---------------- ANIMATIONS
+
+sass/base/_animations.scss      
+    @keyframes moveRight {
+        0% { ... }
+        80% { ... }
+        100% { ... }
+    }
+----------------- MIXINS (centering, ...)
+
+sass/abstracts/_mixins.scss 
+    @mixin absCenter {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+!!! import it to sass/main.scss
+(in component scss) .la {
+    ...
+     @include absCenter;
+}
+
+
+-------------------- MIXINS (medial queries, ...)
+
+sass/abstracts/_mixins.scss
+    @mixin respond($breakpoint) {
+        @if $breakpoint == phone {
+            @media only screen and (max-width: 37.5em) { @content };    // <600px 
+        }
+        @if $breakpoint == tab-port {
+            @media only screen and (max-width: 56.25em) { @content };     // 600 - 900px
+        }
+        @if $breakpoint == tab-land {
+            @media only screen and (max-width: 75em) { @content };    // 900 - 1200px
+        }
+        @if $breakpoint == big-desktop {
+            @media only screen and (min-width: 112.5em) { @content };    // 1200 - 1800
+        }
+    }
+
+    !!! 0 - 600px:      Phone
+        600 - 900px:    Tablet portrait
+        900 - 1200px:   Tablet landscape
+        [1200 - 1800] is where our normal styles apply
+        1800px + :      Big desktop
+
+(in component scss) .la {
+    ...
+    @include respond(tab-port) {
+        padding: 2rem;
+    }
+}
+----------------- FOLDER STRUCTURE 
+
+sass/main.scss  (import here all scss files)
+    abstracts/_mixins.scss
+    base/_animations.scss     (keyframes)
+        /_base.scss           (global css: body, html)
+        /_typography          (fonts, letter-spacing, animations...  for headings, paragraphs, ...)
+        /_utilities           (spacing... ex. .u-margin-bottom-sm)  
+    components/               (sections of website, components like buttons...)
+
+
+
+---------------- 
+(scss)
+
+.btn {
+    &, &:link, &:visited {}                 btn
+    &:hover { 
+        ...       
+        &::after {}
+    }    
+    &:active, &:focus {}    
+    &--white {                              btn--white
+        ...
+        &::after {}
+    }
+    &--green {                              btn--green 
+        ...
+        &::after {}
+    }    
+    &::after {
+        content: "";
+        display: inline-block;
+        ...
+    }   
+}
+
+(html)
+    <button class="btn btn--white btn--animated">...</button>
+    ---------
+    <div class="feature-box">
+        <i class="feature-box__icon"></i>
+        <p class="feature-box__text">...</p>
+    </div>
+    --------
+    <div class="card">
+        <div class="card__side card__side--front">
+            <div class="card__picture card__picture--1">
+                &nbsp;
+            </div>
+            <h4 class="card__heading">
+                <span class="card__heading-span card__heading-span--1">...</span>
+            </h4>
+            <div class="card__details">
+                <ul> ....
+
+

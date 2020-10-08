@@ -3,7 +3,27 @@ lSETUP, RUN    -------- docs
 FORMS -- template-driven --- GitHub:  https://github.com/ramsatt/Angular-5-Template-driven-forms/tree/master/src/app
 -----------------
 ROUTING  ---  docs:  https://angular.io/guide/router
------------------
+---------------------------------------------------------------------------------------------
+                        LIFECYCLES 
+1. same comp: 
+    field -> constructor -> ngOnInit -> template  
+    !!! when resetting field from constructor or ngOnInit --> reflets in them and in template 
+        !!! if resetting with setTimeout delay --> not reflected in them, in template yes with delay 
+    !!! template showes field before and after change 
+2. props to child 
+    if field changes in parent --> both parend and  child rerenders with old and new value in template 
+    child sees parent's field (via @Input) in template, not in constructor (undefined),
+                                                        but in ngOnInit yes, only older value 
+
+3. general order: parent K -> child K -> parent ngOnInit -> child ngOnInit
+4. BehaviourSubject when subscribed in K --> re-assigns parent field --> same rules as in (1)
+5. both parent and child can get value from service's BehaviourSubject, 
+        both K and ngOnInit reflect change (when field assigned value from BehaviourSubject by subscribe);
+        !!! to assign BehaviourSubject's value to field, field must be declared, but not initialized
+
+
+
+----------------------------------------------------------------------------------------------
 
                         OBSERVABLES 
 
@@ -277,6 +297,11 @@ https://github.com/angular/angularfire/tree/master/docs/firestore
                             const el: El = {...el, id}
                             this.elsCollection.doc(id).set(el);
                         }
+
+!!! to add new doc to collection: col-doc-col  + docId + docData 
+        1. get col // col-doc-col  as AngularFirestoreCollection<El>
+        2. add new doc:  colRef.add({.....})   --> automatically adds docId 
+            or:          colRef.doc('customDocId').set({...}) 
     
 (COLLECTION)
     --- imports: 
@@ -444,3 +469,8 @@ https://ngrx.io/guide/store
     
     <button (click)="increment()">Increment</button> 
     <div>Current Count: {{ count$ | async }}</div>        
+
+-------------------------------------------------------------------------------------------------
+                THIRD PARTY LIBRARIES 
+                PARTICLES BACKGROUND 
+docs --- angular particle npm (google)

@@ -97,6 +97,11 @@ let history = useHistory();
 
 <div  className={`burger ${regMode ? 'remove-burger' : ''}`}> ... </div>
  <h1 style={{color: "red"}}> ... </h1>
+-------
+import StartStyles from "./Start.module.css";
+className={`${StartStyles.passwordError} ${StartStyles.errors}`}
+className={StartStyles.passwordError}
+-------
 
 ************************************************************************************************************
                                     EVENTS
@@ -317,7 +322,7 @@ const invalidPasswordInputLong = passwordErrors?.maxLength;
 const Par = () => {
   const runEvent = () => { ... };
   return (
-           <Ch changeFunc={runEvent} />        
+           <Ch changeFn={runEvent} />        
   );
 };
 const Ch = props => {
@@ -413,7 +418,15 @@ wrap components or routes inside    <DataContext> ... </DataContext>
     ----------
      const { la, fff } = useContext(DataContext);    // now has access to la, fff
 
+*************************************************************************************************************
+                                ADD EL TO DOM WHEN MOUNTS AND REMOVE WHEN UNMOUNTS 
 
+1. data for DOM in DataContext 
+2. set data from any component 
+3. show DOM el if data (in DataContext);
+4. useEffect(() => {
+    return () => setData(null)               !!! when unmounting 
+    }, []);
 
 *************************************************************************************************************
                                         ROUTING

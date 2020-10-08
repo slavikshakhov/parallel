@@ -1,0 +1,19 @@
+                            ENV VARS 
+
+process.env.PORT  // DATABASE_URL / 
+
+    !!! (git.bash) PORT=4200 node server.js
+
+
+**********************************************************************
+                            DEVELOPMENT VS PRODUCTION 
+
+ "scripts": {
+    "start": "node server.js",
+    "start:dev": "nodemon server.js"
+    .....    
+  },
+
+
+***********************************************************************
+ 
