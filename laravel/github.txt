@@ -20,3 +20,6 @@ CHANGE REPOSITORY           git remote -v      !!! to see existing REPOSITORIES
 CHANGE REPOSITORY'S BRANCH  git branch -M master 
 ADD REPOSITORY              git remote add origin <remote url>
 REMOVE REFS TO OLD REPOSITORY       git remote rm origin  // ... heroku
+SEE ON WHICH LOCAL BRANCH NOW (ex. main, master)      >> git branch --show-current
+LOCAL BRANCH REF    >> git show-ref 
+
