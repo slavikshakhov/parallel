@@ -4,9 +4,10 @@ npm:  (nodejs):  socket.io
       (react): socket.io-client
 
 
-------------------------------------
+------------------------------------(1)
          
-    !!!    SUMMERY ALGORYTHM: 
+    !!!    SUMMERY ALGORYTHM:  (or, better, see (2))
+
     1. put in one place (ex. root component...) socket connection, then save socket in redux: 
             const socket = io("http://localhost:4000").on("connect", () => {
                 console.log("connected to server");
@@ -112,3 +113,56 @@ npm:  (nodejs):  socket.io
                     dispatch({ type: "SET_CHATTER", payload: sender[0] });
                     });
                 !!! in SET_CHATTER, reverse chatter, now what used to be sender...
+
+********************************************************************************************(2)
+EXPRESS 
+    var app = require('express')();
+    const http = require('http').createServer(app, (req, res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    });
+
+    const io = require('socket.io')(http);    
+    var cors = require("cors");
+    const PORT = process.env.PORT || 5000
+    ..........
+    let users = {};
+    let publicMessages = [];
+    let privateMessages = [];
+    ........
+    app.use(cors())
+    ..........
+    io.on("connection", (socket) => {
+        console.log("a user connected");
+        socket.on("EVENT-NAME", ({ userName }) => {
+            ......
+            socket.broadcast.emit("all-users", chatMembers);            
+            //socket.broadcast.emit("user-connected", { userId, socketId: socket.id }); // to all clients, exc for this
+            // socket.broadcast.to(memberSocketId).emit("message-received", { text, chatter, sender: senderWithSocketId });  // to certain user
+        });  
+        socket.on("disconnect", () => {        
+                ...
+            }
+        });
+});     
+  });
+
+CLIENT (REACT)
+    import io from "socket.io-client";
+    ......
+    const [socket, setSocket] = useState(null);
+    .....
+     useEffect(() => {
+        console.log(currentUser);
+        const socket = io(URL).on("connect", () => {
+            console.log("connected to server");
+        });
+        dispatch({ type: "SET_SOCKET", payload: socket });    // or save socket in any other global state 
+     }
+
+     (other comps)  .... get socket from global state 
+     ....
+     socket.emit('EVENT-NAME', dataToSendToFront)
+     .....
+     socket.on("EV-NAME", (dataFromFront) => {
+      ...
+    });

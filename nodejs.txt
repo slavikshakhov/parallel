@@ -16,4 +16,10 @@ process.env.PORT  // DATABASE_URL /
 
 
 ***********************************************************************
- 
+1. in root of server:   
+    (.env)   PORT=4000       // PORT=process.env.PORT 
+
+2. >> npm i -D dotenv    // npm install --save-dev dotenv 
+3. (in package.json, scripts)
+      "start:dev": "nodemon -r dotenv/config bin/www.js"
+4. use vars like process.env.YOUR_VARIABLE_NAME;

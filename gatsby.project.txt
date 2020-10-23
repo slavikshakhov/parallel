@@ -1,4 +1,5 @@
                                     SETUP
+!!! Netlify --- login via github, or v.shakhov@yahoo.ca
 
 1. VS Code (see VisualStudioCode.txt -> extensions, settings)
 2. Create project

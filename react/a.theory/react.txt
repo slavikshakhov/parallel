@@ -32,6 +32,35 @@ process.env.REACT_APP_LALA                  -> lala
 
 !!! must start with REACT_APP_
 
+**********************************************************************************************************
+                            IMPORT 
+import lala from './....image.jpg'
+
+(jsx)  <img src={lala} />
+
+***********************************************************************************************************
+                                DEVELOPMENT VS PRODUCTION
+
+(Constants.js)
+    const prod = {
+        url: {
+            API_URL: ‘https://myapp.herokuapp.com',
+            API_URL_USERS: ‘https://myapp.herokuapp.com/users'
+        }
+    };
+    const dev = {
+        url: {
+            API_URL: ‘http://localhost:3000'
+        }
+    };
+    export const config = process.env.NODE_ENV === ‘development’ ? dev : prod;
+
+----------------
+(Component.js)
+
+    import { config } from './Constants'
+    var url = config.url.API_URL
+    var url_users = config.url.API_URL_USERS
 
 *************************************************************************************************************
                                 JSX

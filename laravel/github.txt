@@ -22,4 +22,32 @@ ADD REPOSITORY              git remote add origin <remote url>
 REMOVE REFS TO OLD REPOSITORY       git remote rm origin  // ... heroku
 SEE ON WHICH LOCAL BRANCH NOW (ex. main, master)      >> git branch --show-current
 LOCAL BRANCH REF    >> git show-ref 
+REMOVE .git FOLDER FROM PROJ   (gitbash) >> rm -rf .git     --> git init ---- recommit, re-push to new remote repository
+------------------
+>> git commit -am "...."
+>> git push -u origin master    .... git push heroku master     (origin is name of repository)
+
+*****************************************************
+error: failed to push some refs to 'github.com:slavikshakhov/checkers_Redux.git'
+Method 1: 
+    !!! danger (will pull data from last remote commit to local)
+    >> git pull --rebase 
+
+Method 2: (go to normal commit in remote, push there, delete all commits after this one)
+
+    GO TO PREVIOUS COMMIT, IGNORE LAST ONE:    A - B - C   
+    >> git reset HEAD~1     (now on B)
+    >> git reset HEAD~1     (now on A)
+    ------
+    >> git log    --> list of all commits, choose commit I need
+    >> git checkout <ref of needed commit>
+    >> git branch    --> list of all branches, if not on master:  >> git checkout master 
+    >> git merge <ref of needed commit>
+    (now if changes, >> git add .    >> git commit -m "lala"   >> git push    --> pushes after needed commit, ignoring all later ones)
+   
+****************************************************
+CLONE FROM ALTERNATIVE BRANCH  (ex. alternative, vs master)
+>> git clone git@github.com:slavikshakhov/checkers_Redux.git -b alternative
+
+
 

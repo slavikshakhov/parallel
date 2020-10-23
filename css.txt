@@ -98,6 +98,30 @@ https://css-tricks.com/snippets/css/complete-guide-grid/
 !!! repeat(3, fr)  ===  1fr 1fr 1fr
 !!! grid-template-rows: 50% 50%;
                         25% auto;
+
+
+-------------------------
+.chatsection {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    grid-template-rows: 5fr 1fr;
+    grid-template-areas: 'users messages' 'users input';   
+    grid-gap: 25px;   
+    height: 100%;  
+    width: 60rem;
+    border-radius: 10px;
+    overflow: hidden;
+    
+}
+.users {
+    grid-area: users;           
+}
+.messages {
+    grid-area: messages;   
+}
+.input {
+    grid-area: input;   
+}
                         
 ********************************************************************************************************************
                                     CENTERING
@@ -164,6 +188,10 @@ MOVE-UP
 }
 !!!  animation-fill-mode:forwards;    --> to stop at end 
 
+*********************************************************************************************************
+                              CHANGE ELEMENT ATTRIBUTE (:checked) with javascript 
+
+document.getElementById('el').checked = false;        
 
 *********************************************************************************************************
                                 SHADOW
