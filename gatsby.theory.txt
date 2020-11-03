@@ -19,9 +19,11 @@ SOLUTION
  
                                 SETUP
 
->> npm install -g gatsby-cli
+>> npm install -g gatsby-cli@2.12.54
 >> gatsby new myProj      // gatsby new myProj https://github.com/gatsbyjs/gatsby-starter-hello-world
-F >> gatsby develop
+F >> gatsby develop         !!! runs locally on port 8000
+                            !!! need to rerun after changing data in contentful 
+
 
 
 *******************************************************************************************************************

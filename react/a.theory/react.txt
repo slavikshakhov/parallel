@@ -462,8 +462,7 @@ const Ch = props => {
         
         const fff = (x) => {            
             setLa(x);
-            }
-        };
+            }        
         return (
             <DataContext.Provider value={{ la, fff }}>
                 {props.children}
